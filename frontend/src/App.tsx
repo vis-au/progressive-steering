@@ -61,11 +61,13 @@ export class App extends Component<{}, State> {
   }
 
   private renderDimensionSlider(dimension: string) {
+    const extent = this.dataManager.getExtent(dimension);
+
     return (
       <DoubleSlider
         label={ dimension }
-        min={ 0 }
-        max={ 2 }
+        min={ extent[0] }
+        max={ extent[1] }
         width={ 125 }
         onSelection={ (filter: number[]) => this.dataManager.filterDimension(dimension, filter) }
       />
@@ -98,8 +100,8 @@ export class App extends Component<{}, State> {
           <ScatterplotRenderer
             width={ width * 0.5 }
             height={ height }
-            extentX={ this.dataManager.dimensionExtents.get(dimensionX) || [0, 1] }
-            extentY={ this.dataManager.dimensionExtents.get(dimensionY) || [0, 1]}
+            extentX={ this.dataManager.getExtent(dimensionX) }
+            extentY={ this.dataManager.getExtent(dimensionY) }
             dimensionX={ dimensionX }
             dimensionY={ dimensionY }
             data={ this.dataManager.data }

@@ -22,7 +22,7 @@ export function sendDataChunk(chunk: any[]) {
  */
 export function sendXDomain(extent: number[]) {
   const xDomain = dataManager.xDimension;
-  dataManager.dimensionExtents.set(xDomain, extent);
+  dataManager.setExtent(xDomain, extent);
 }
 
 /**
@@ -31,7 +31,7 @@ export function sendXDomain(extent: number[]) {
  */
 export function sendYDomain(extent: number[]) {
   const yDomain = dataManager.yDimension;
-  dataManager.dimensionExtents.set(yDomain, extent);
+  dataManager.setExtent(yDomain, extent);
 }
 
 /**
@@ -40,7 +40,7 @@ export function sendYDomain(extent: number[]) {
  */
 export function sendDimensionTotalExtent(message: {name: string, min: number, max: number}) {
   const {name, min, max} = message;
-  dataManager.dimensionExtents.set(name, [min, max]);
+  dataManager.setExtent(name, [min, max]);
   return;
 }
 

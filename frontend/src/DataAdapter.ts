@@ -31,7 +31,8 @@ class DataAdapter {
   private _xDimension: string = "";
   private _yDimension: string = "";
 
-  public dimensionExtents: Map<string, number[]> = new Map();
+  private dimensionFilters: Map<string, number[]> = new Map();
+  private dimensionExtents: Map<string, number[]> = new Map();
 
   constructor() {
     this._xDimension = X_DIMENSION;
@@ -56,6 +57,31 @@ class DataAdapter {
 
   public filterDimension(dimension: string, filter: number[]) {
     // TODO
+  }
+
+  /**
+   * Get the upper and lower value bounds for a particular dimension in the data.
+   * @param dimension dimension of the data
+   */
+  public getExtent(dimension: string) {
+    return this.dimensionExtents.get(dimension) || [0, 1];
+  }
+
+  /**
+   * Set the upper and lower value bounds for a particular dimension in the data.
+   * @param dimension dimension of the data
+   * @param extent new upper and lower bound
+   */
+  public setExtent(dimension: string, extent: number[]) {
+    this.dimensionExtents.set(dimension, extent);
+  }
+
+  /**
+   * Get the filters currently set for a particular dimension in the data.
+   * @param dimension dimension of the data
+   */
+  public getFilters(dimension: string) {
+    return this.dimensionFilters.get(dimension) || [];
   }
 
   public getTotalDataSize() {
