@@ -9,7 +9,7 @@ backend
 ## Prerequisites
 The backend requires a Python 3.x environment with pip and a local few packages. These can be obtained launching the following command:
 
-```
+```sh
 > pip install eel bottle bottle-websocket future whichcraft pyinstaller
 ```
 
@@ -22,6 +22,6 @@ To launch the backend, run the following command:
 ```
 
 Your terminal should now show the following output:
-```
+```sh
 Backend launched successfully. Waiting for requests ...
 ```
