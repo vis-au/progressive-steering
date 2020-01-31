@@ -21,6 +21,7 @@ export class App extends Component<{}, State> {
     sayHelloJS( 'Javascript World!' );
     this.dataManager = getEelDataAdapter();
     this.dataManager.registerOnDataChanged(this.onNewDataReceived.bind(this));
+    this.dataManager.registerOnFilterChanged(this.onFilterChanged.bind(this));
 
     eel.say_hello_py('Javascript World!');
 
@@ -31,6 +32,11 @@ export class App extends Component<{}, State> {
 
   private onNewDataReceived() {
     console.log("received new data chunk. Updating ...");
+    this.forceUpdate();
+  }
+
+  private onFilterChanged() {
+    console.log("new filter was set. Updating ...");
     this.forceUpdate();
   }
 
@@ -105,6 +111,7 @@ export class App extends Component<{}, State> {
             dimensionX={ dimensionX }
             dimensionY={ dimensionY }
             data={ this.dataManager.data }
+            filters={ this.dataManager.getAllFilters() }
             onBrushedPoints={ this.onBrushedPoints.bind(this) }
           />
           <MapViewerRenderer

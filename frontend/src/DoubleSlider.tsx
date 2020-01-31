@@ -48,6 +48,11 @@ export default class DoubleSlider extends React.Component<Props, State> {
   }
 
   private onBrush() {
+    // "empty" filters or whenever the brush is destroyed by clicking
+    if (!(d3.event.selection instanceof Array)) {
+      return;
+    }
+
     const [x0, x1] = d3.event.selection;
 
     this.selection = [ this.scale.invert(x0 - DEFAULT_MARGIN), this.scale.invert(x1 - DEFAULT_MARGIN) ];
@@ -60,7 +65,7 @@ export default class DoubleSlider extends React.Component<Props, State> {
   private createBrush() {
     this.brush = d3.brushX()
       .extent([[DEFAULT_MARGIN, 0], [this.props.width + DEFAULT_MARGIN, this.props.height || DEFAULT_HEIGHT]])
-      .on("brush", this.onBrush.bind(this));
+      .on("brush start end", this.onBrush.bind(this));
 
     d3.select(`#${this.props.label}`).call(this.brush);
   }

@@ -27,9 +27,10 @@ function generateRandomData(chunkSize: number): any[] {
 
 class DataAdapter {
   private _data: any[] = [];
-  private _onDataChangedCallbacks: any[] = [];
   private _xDimension: string = "";
   private _yDimension: string = "";
+  private _onDataChangedCallbacks: any[] = [];
+  private _onFilterChangedCallbacks: any[] = [];
 
   private dimensionFilters: Map<string, number[]> = new Map();
   private dimensionExtents: Map<string, number[]> = new Map();
@@ -55,8 +56,22 @@ class DataAdapter {
     this._onDataChangedCallbacks.push(callback);
   }
 
+  public registerOnFilterChanged(callback: any) {
+    this._onFilterChangedCallbacks.push(callback);
+  }
+
   public filterDimension(dimension: string, filter: number[]) {
-    // TODO
+    // TODO: send filters to backend
+
+    this.dimensionFilters.set(dimension, filter);
+
+    this._onFilterChangedCallbacks.forEach(callback => {
+      if (typeof callback !== "function") {
+        return;
+      }
+
+      callback({ dimension, filter });
+    });
   }
 
   /**
@@ -82,6 +97,10 @@ class DataAdapter {
    */
   public getFilters(dimension: string) {
     return this.dimensionFilters.get(dimension) || [];
+  }
+
+  public getAllFilters() {
+    return this.dimensionFilters;
   }
 
   public getTotalDataSize() {

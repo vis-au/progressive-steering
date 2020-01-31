@@ -14,6 +14,7 @@ interface Props {
   extentX: number[],
   extentY: number[],
   data: any[],
+  filters: Map<string, number[]>,
   onBrushedPoints: (points: any[]) => any
 }
 
@@ -178,6 +179,26 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       .call(yAxis);
   }
 
+  private matchesFilter(datum: any) {
+    let matchesFilter = true;
+    const filters = this.props.filters;
+
+    filters.forEach((extent, dim) => {
+      // "empty" filters
+      if (extent[0] - extent[1] === 0) {
+        return;
+      }
+      if (extent === undefined) {
+        return;
+      }
+
+      const value = datum[dim];
+      matchesFilter = matchesFilter && value >= extent[0] && value <= extent[1];
+    });
+
+    return matchesFilter;
+  }
+
   private renderPoints() {
     if (this.svg === null) {
       return;
@@ -188,10 +209,11 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.circle = this.points.selectAll("circle.point").data(this.props.data, (d: any) => d.id)
       .join("circle")
         .attr("class", "point")
-        .attr("r", 2)
         .attr("id", d => d.id)
         .attr("cx", d => this.scaleX(d[this.props.dimensionX]))
         .attr("cy", d => this.scaleY(d[this.props.dimensionY]));
+
+    this.circle.attr("r", d => this.matchesFilter(d) ? 2 : 1);
   }
 
   public render() {
