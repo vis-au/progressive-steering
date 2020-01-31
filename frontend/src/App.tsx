@@ -98,8 +98,8 @@ export class App extends Component<{}, State> {
           <ScatterplotRenderer
             width={ width * 0.5 }
             height={ height }
-            extentX={ this.dataManager.getExtent(dimensionX) }
-            extentY={ this.dataManager.getExtent(dimensionY) }
+            extentX={ this.dataManager.dimensionExtents.get(dimensionX) || [0, 1] }
+            extentY={ this.dataManager.dimensionExtents.get(dimensionY) || [0, 1]}
             dimensionX={ dimensionX }
             dimensionY={ dimensionY }
             data={ this.dataManager.data }

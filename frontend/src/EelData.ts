@@ -1,8 +1,8 @@
 const ALL_DIMENSIONS = ["a", "b", "c", "d", "e"];
 const X_DIMENSION = "a";
-const X_EXTENT = 2.0;
+const X_EXTENT = 1.0;
 const Y_DIMENSION = "b";
-const Y_EXTENT = 2.0;
+const Y_EXTENT = 1.0;
 
 const TOTAL_DATA_SIZE = 1000;
 const TOTAL_DURATION = 10000;
@@ -27,6 +27,15 @@ function generateRandomData(chunkSize: number): any[] {
 class EelDataManagerSingleton {
   private _data: any[] = [];
   private _onDataChangedCallbacks: any[] = [];
+  private _xDimension: string = "";
+  private _yDimension: string = "";
+
+  public dimensionExtents: Map<string, number[]> = new Map();
+
+  constructor() {
+    this._xDimension = X_DIMENSION;
+    this._yDimension = Y_DIMENSION;
+  }
 
   public addData(data: any[]) {
     this._data.push(...data);
@@ -48,22 +57,6 @@ class EelDataManagerSingleton {
     // TODO
   }
 
-  /**
-   * Returns an array of size two, representing the range of values of a given dimension across the
-   * data. Returns [], if the given dimension is not defined in the data or the data is empty.
-   * @param dimension
-   */
-  public getExtent(dimension: string) {
-    if (this._data.length === 0) {
-      return [];
-    }
-    if (this._data[0][dimension] === undefined) {
-      return [];
-    }
-
-    return [0, X_EXTENT];
-  }
-
   public getTotalDataSize() {
     return TOTAL_DATA_SIZE;
   }
@@ -73,11 +66,19 @@ class EelDataManagerSingleton {
   }
 
   public get xDimension(): string {
-    return X_DIMENSION;
+    return this._xDimension;
+  }
+
+  public set xDimension(xDimension: string) {
+    this._xDimension = xDimension;
   }
 
   public get yDimension(): string {
-    return Y_DIMENSION;
+    return this._yDimension;
+  }
+
+  public set yDimension(yDimension: string) {
+    this._yDimension = yDimension;
   }
 
   public get data(): any[] { return this._data; }
