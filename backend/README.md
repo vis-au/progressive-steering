@@ -10,7 +10,7 @@ backend
 The backend requires a Python 3.x environment with pip and a local few packages. These can be obtained launching the following command:
 
 ```
-> pip install bottle bottle-websocket future whichcraft pyinstaller
+> pip install eel bottle bottle-websocket future whichcraft pyinstaller
 ```
 
 
