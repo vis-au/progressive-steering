@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { eel, sayHelloJS } from './EelBridge';
-import { getEelDataManager, EelDataManager } from './EelData';
+import { getEelDataAdapter, EelDataAdapter } from './DataAdapter';
 import ScatterplotRenderer from './ScatterplotRenderer';
 import ProgressBar from './ProgressBar';
 import MapViewerRenderer from './MapViewer';
@@ -12,14 +12,14 @@ interface State {
 }
 
 export class App extends Component<{}, State> {
-  private dataManager: EelDataManager;
+  private dataManager: EelDataAdapter;
 
   constructor(props: {}) {
     super(props);
 
     // Test calling sayHelloJS, then call the corresponding Python function
     sayHelloJS( 'Javascript World!' );
-    this.dataManager = getEelDataManager();
+    this.dataManager = getEelDataAdapter();
     this.dataManager.registerOnDataChanged(this.onNewDataReceived.bind(this));
 
     eel.say_hello_py('Javascript World!');

@@ -1,4 +1,4 @@
-import { getEelDataManager } from './EelData';
+import { getEelDataAdapter } from './DataAdapter';
 
 // Point Eel web socket to the instance
 export const eel = window.eel
@@ -6,7 +6,7 @@ eel.set_host( 'ws://localhost:8080' );
 
 // datamanger is a singleton instance that we reference from different places in the bridge
 // functions
-const dataManager = getEelDataManager();
+const dataManager = getEelDataAdapter();
 
 /**
  * Send a chunk of data of variable size to the frontend.

@@ -25,7 +25,7 @@ function generateRandomData(chunkSize: number): any[] {
   return randomData;
 }
 
-class EelDataManagerSingleton {
+class DataAdapter {
   private _data: any[] = [];
   private _onDataChangedCallbacks: any[] = [];
   private _xDimension: string = "";
@@ -85,11 +85,11 @@ class EelDataManagerSingleton {
   public get data(): any[] { return this._data; }
 }
 
-export type EelDataManager = EelDataManagerSingleton;
+export type EelDataAdapter = DataAdapter;
 
-const instance = new EelDataManagerSingleton();
+const instance = new DataAdapter();
 
-export function getEelDataManager() {
+export function getEelDataAdapter() {
   return instance;
 }
 
