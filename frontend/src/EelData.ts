@@ -1,8 +1,7 @@
 const ALL_DIMENSIONS = ["a", "b", "c", "d", "e"];
 const X_DIMENSION = "a";
-const X_EXTENT = 1.0;
 const Y_DIMENSION = "b";
-const Y_EXTENT = 1.0;
+const DATA_EXTENT = 1.0;
 
 const TOTAL_DATA_SIZE = 1000;
 const TOTAL_DURATION = 10000;
@@ -14,9 +13,11 @@ function generateRandomData(chunkSize: number): any[] {
   for (let i = 0; i < chunkSize; i++) {
     const randomEntry: any = {};
 
-    randomEntry[X_DIMENSION] = Math.random() * X_EXTENT;
-    randomEntry[Y_DIMENSION] = Math.random() * Y_EXTENT;
     randomEntry.id = `datum_${Math.floor(Math.random() * 100000000)}`;
+
+    ALL_DIMENSIONS.forEach(dimension => {
+      randomEntry[dimension] = Math.random() * DATA_EXTENT;
+    });
 
     randomData.push(randomEntry);
   }
@@ -88,6 +89,11 @@ export type EelDataManager = EelDataManagerSingleton;
 
 const instance = new EelDataManagerSingleton();
 
+export function getEelDataManager() {
+  return instance;
+}
+
+// DEBUGGING: Generate random data after a fixed interval and add it to the datamanager
 const interval = window.setInterval(() => {
   const newData = generateRandomData(CHUNK_SIZE);
   instance.addData(newData);
@@ -97,8 +103,3 @@ const interval = window.setInterval(() => {
 window.setTimeout(() => {
   window.clearInterval(interval);
 }, TOTAL_DURATION);
-
-
-export function getEelDataManager() {
-  return instance;
-}
