@@ -1,0 +1,30 @@
+.progressBarContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progressBarLabel {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.progressBar {
+  width: 80%;
+  height: 1rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  border: 1px solid #777;
+  background: #fff;
+}
+.progress {
+  background: steelblue;
+  height: 1rem;
+  padding-left: 1rem;
+  line-height: 0.9rem;
+}

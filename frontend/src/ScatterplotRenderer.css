@@ -1,0 +1,14 @@
+svg circle.point {
+  fill: steelblue;
+  stroke: steelblue;
+  stroke-width: 0px;
+}
+
+svg circle.point.selected {
+  stroke-width: 5px;
+}
+
+rect.brushedRegion {
+  fill: #999;
+  stroke-width: 4px;
+}

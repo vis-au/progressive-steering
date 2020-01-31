@@ -1,0 +1,10 @@
+.double-slider-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.double-slider-container label {
+  margin-right: 1rem;
+}

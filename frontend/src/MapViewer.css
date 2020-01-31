@@ -1,0 +1,7 @@
+circle.poi {
+  fill: steelblue;
+  transition: all 0.15s ease-in-out;
+}
+circle.poi:hover {
+  cursor: pointer;
+}

@@ -1,0 +1,51 @@
+.header,
+.footer {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  background: #fff;
+}
+
+.header {
+  box-shadow: 0 3px 10px #efefef;
+}
+
+.header .dimension-selection {
+  display: flex;
+  flex-direction: row;
+}
+.header .dimension-selection .selection {
+  margin-right: 1rem;
+}
+
+.header .dimension-sliders {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+.header .dimension-sliders .double-slider-container {
+  margin: 0 1rem;
+}
+
+.mainView {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: stretch;
+}
+
+.footer {
+  border-top: 2px solid #efefef;
+}
+
+.footer .metrics {
+  width: 75%;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+}
+.footer .metrics .metric {
+  margin-right: 2rem;
+}
