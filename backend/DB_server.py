@@ -22,12 +22,106 @@ global userRange
 global userDay
 
 
-
-
 global plotted
 global mydb
 
 DIZ_plotted={}
+
+#export from frontend
+#export function sendDataChunk(chunk: any[]) {
+#  dataManager.addData(chunk);
+#}
+#
+#/**
+# * Send the extent of the dimension mapped to the horizontal axis to the frontend.
+# * @param extent minimum and maximum value for the dimension represented on the x axis.
+# */
+#export function sendXDomain(extent: number[]) {
+#  const xDomain = dataManager.xDimension;
+#  dataManager.setExtent(xDomain, extent);
+#}
+#
+#/**
+# * Send the extent of the dimension mapped to the vertical axis to the frontend.
+# * @param extent minimum and maximum value for the dimension represented on the y axis.
+# */
+#export function sendYDomain(extent: number[]) {
+#  const yDomain = dataManager.yDimension;
+#  dataManager.setExtent(yDomain, extent);
+#}
+#
+#/**
+# * Send the lower and upper value bounds for a particular dimension of the data to the frontend.
+# * @param message containing the name and extent of a dimension in the data
+# */
+#export function sendDimensionTotalExtent(message: {name: string, min: number, max: number}) {
+#  const {name, min, max} = message;
+#  dataManager.setExtent(name, [min, max]);
+#  return;
+#}
+#
+#/**
+# * Sends the name of the dimension mapped to the horizontal axis to the frontend.
+# * @param xName name of the x dimension
+# */
+#export function setXName(xName: string) {
+#  dataManager.xDimension = xName;
+#  return;
+#}
+#
+#/**
+# * Send the name of the dimension mapped to the vertical axis to the frontend.
+# * @param yName name of the y dimension
+# */
+#export function setYName(yName: string) {
+#  dataManager.yDimension = yName;
+#}
+#
+#/**
+# * Send the current value of an evaluation metric to the fronted.
+# * @param message name and value of an evaluation metric
+# */
+#export function sendEvaluationMetric(message: {name: string, value: number}) {
+#  return;
+#}
+#
+#/**
+# * Send the name of the city represented by the data and map to the fronted.
+# * @param city name of the city
+# */
+#export function sendCity(city: string) {
+#  return;
+#}
+#
+#/**
+# * Send the minimum number of points that must be contained in a selection to the frontend.
+# * @param minSelectionSize minimum number of data poits to be contained in a filter selection.
+# */
+#export function setMinSelectionSize(minSelectionSize: number) {
+#  return;
+#}
+
+
+
+
+#eel.sendXDomain(extent: number[])
+#eel.sendYDomain(extent: number[])
+
+#eel.setXName(xName: string)
+#eel.setXName("Saving opportunity")
+
+#eel.setYName(yName: string)
+#eel.setYName("Distance")
+
+#eel.sendEvaluationMetric(message: {name: string, value: number})
+
+#eel.sendCity(city: string)
+#eel.sendCity("Paris")
+
+#eel.sendDimensionTotalExtent(message: {name: string, min: number, max: number})
+#eel.setMinSelectionSize(minSelectionSize: number)
+
+
 
 # @eel.expose
 def send_to_backend_userData(x={'lat':48.85565,'lon':2.365492,'moneyRange':(30,70),'day':"2020-04-31"}): #Place des Vosges, VIS deadline
@@ -43,7 +137,7 @@ def send_to_backend_userData(x={'lat':48.85565,'lon':2.365492,'moneyRange':(30,7
 
 
 def sendChunk(chunk):
-    #eel.sendData(chunk)
+    #eel.sendDataChunk(chunk)
     print('----------------------',len(chunk),chunk)
     pass
   
@@ -76,10 +170,12 @@ def aboveMinimum(bbId,actualPrice,lat,long,more=0.3,chunkSize=50):
     mycursor.execute(qq)
     myresult = mycursor.fetchall()
     minimo=actualPrice
+    minimoX=(bbId,0)
     for x in myresult:
         if 0 < distance(userLat,userLon,x[3],x[4])-distance(userLat,userLon,lat,long)<=more:     
             minimo=min(minimo,x[2])
-    return actualPrice-minimo
+            minimoX=(x[0],distance(userLat,userLon,x[3],x[4])-distance(userLat,userLon,lat,long))
+    return {"neighborhood_min":minimo,"saving":actualPrice-minimo,"alternativeId":minimoX[0],"extraSteps":minimoX[1]}
 
 def buildQuery(userLat,userLon,userRange,userDay,att,modifier,chunkSize):
     global LIMIT
@@ -106,7 +202,7 @@ def feedTuples(query,chunkSize):
          actualChunk={}
          for x in myresult:
            mycursor.execute('INSERT INTO plotted (id) VALUES (' +str(x[0])+')')
-           print(chunks,x,'distance=',distance(userLat,userLon,x[3],x[4]),'aboveM=',aboveMinimum(x[0],x[2],userLat,userLon,0.5))
+           print(chunks,x,'distance=',distance(userLat,userLon,x[3],x[4]),'aboveM=',aboveMinimum(x[0],x[2],userLat,userLon,1.5))
            DIZ_plotted[x[0]]={'chunk':chunks,'values':x, 'dist2user':distance(userLat,userLon,x[3],x[4]), 'aboveM':aboveMinimum(x[0],x[2],userLat,userLon,0.5)}
            actualChunk[x[0]]={'chunk':chunks,'values':x, 'dist2user':distance(userLat,userLon,x[3],x[4]), 'aboveM':aboveMinimum(x[0],x[2],userLat,userLon,0.5)}
            plotted+=1
