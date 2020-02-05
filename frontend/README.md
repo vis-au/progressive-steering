@@ -16,7 +16,8 @@ frontend
 The frontend requires [NodeJS v10.15.3](https://nodejs.org/en/) or higher.
 In addition to that, a global installation of [TypeScript](https://www.typescriptlang.org/) is needed.
 You can install it from npm using the following the command.
-```
+
+```sh
 npm install -g typescript
 ```
 
@@ -27,7 +28,7 @@ The packages that will be downloaded are listed inside the `package.json` file u
 ## Launching the Frontend
 To launch the frontend, run the following command
 
-```
+```sh
 > npm start
 ```
 
