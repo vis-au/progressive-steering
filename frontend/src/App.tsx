@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { eel, sayHelloJS } from './EelBridge';
-import { getEelDataAdapter, EelDataAdapter } from './DataAdapter';
+import { getEelDataAdapter, EelDataAdapter, getPOIs } from './DataAdapter';
 import ScatterplotRenderer from './ScatterplotRenderer';
 import ProgressBar from './ProgressBar';
 import MapViewerRenderer from './MapViewer';
@@ -75,7 +75,7 @@ export class App extends Component<{}, State> {
         min={ extent[0] }
         max={ extent[1] }
         width={ 125 }
-        onSelection={ (filter: number[]) => this.dataManager.filterDimension(dimension, filter) }
+        onSelection={ (filter: number[]) => this.dataManager.filterNumericalDimension(dimension, filter) }
       />
     );
   }
@@ -117,6 +117,9 @@ export class App extends Component<{}, State> {
           <MapViewerRenderer
             width={ width * 0.45 }
             height={ height }
+            pois={ getPOIs() }
+            initialPOI={ null }
+            onPOISelected={ (poi: string) => this.dataManager.filterCategoricalDimension("city", poi) }
           />
         </div>
 

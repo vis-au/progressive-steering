@@ -5,3 +5,6 @@ circle.poi {
 circle.poi:hover {
   cursor: pointer;
 }
+circle.poi.selected {
+  fill: firebrick;
+}

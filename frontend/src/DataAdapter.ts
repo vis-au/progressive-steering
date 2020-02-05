@@ -7,6 +7,14 @@ const TOTAL_DATA_SIZE = 1000;
 const TOTAL_DURATION = 10000;
 const CHUNK_SIZE = 10;
 
+const DEFAULT_POIS = [
+  {lon: 600, lat: 100, label: "poi 1"},
+  {lon: 700, lat: 400, label: "poi 2"},
+  {lon: 660, lat: 450, label: "poi 3"},
+  {lon: 576, lat: 900, label: "poi 4"},
+  {lon: 544, lat: 500, label: "poi 5"}
+];
+
 function generateRandomData(chunkSize: number): any[] {
   const randomData: any[] = [];
 
@@ -60,7 +68,12 @@ class DataAdapter {
     this._onFilterChangedCallbacks.push(callback);
   }
 
-  public filterDimension(dimension: string, filter: number[]) {
+  /**
+   * Set a filter for a numerical dimension of the data.
+   * @param dimension dimension of the data
+   * @param filter numerical extent to be included
+   */
+  public filterNumericalDimension(dimension: string, filter: number[]) {
     // TODO: send filters to backend
 
     this.dimensionFilters.set(dimension, filter);
@@ -75,7 +88,17 @@ class DataAdapter {
   }
 
   /**
-   * Get the upper and lower value bounds for a particular dimension in the data.
+   * Filter a categorical dimension by an element of its domain.
+   * @param dimension categorical dimension of the data
+   * @param filter element of that dimension
+   */
+  public filterCategoricalDimension(dimension: string, filter: string) {
+    // TODO: notify backend about new selected filter (i.e. a new poi was selected on the map or a new city was chosen)
+    return;
+  }
+
+  /**
+   * Get the upper and lower value bounds for a particular numerical dimension in the data.
    * @param dimension dimension of the data
    */
   public getExtent(dimension: string) {
@@ -83,7 +106,7 @@ class DataAdapter {
   }
 
   /**
-   * Set the upper and lower value bounds for a particular dimension in the data.
+   * Set the upper and lower value bounds for a particular numerical dimension in the data.
    * @param dimension dimension of the data
    * @param extent new upper and lower bound
    */
@@ -136,6 +159,10 @@ const instance = new DataAdapter();
 
 export function getEelDataAdapter() {
   return instance;
+}
+
+export function getPOIs() {
+  return DEFAULT_POIS;
 }
 
 // DEBUGGING: Generate random data after a fixed interval and add it to the datamanager

@@ -3,20 +3,18 @@ import * as d3 from "d3";
 
 import "./MapViewer.css";
 
+type POI = {lon: number, lat: number, label: string};
+
 interface Props {
   width: number,
-  height: number
+  height: number,
+  pois: POI[],
+  initialPOI: POI | null,
+  onPOISelected: (poi: string) => any
 }
 interface State {
+  selectedPOI: POI
 }
-
-const pois = [
-  {x: 600, y: 100, label: "poi 1"},
-  {x: 700, y: 400, label: "poi 2"},
-  {x: 660, y: 450, label: "poi 3"},
-  {x: 576, y: 900, label: "poi 4"},
-  {x: 544, y: 500, label: "poi 5"}
-];
 
 export default class MapViewRenderer extends React.Component<Props, State> {
   private mapData: any = null;
@@ -28,6 +26,16 @@ export default class MapViewRenderer extends React.Component<Props, State> {
       .then(res => res.json())
       .then(data => this.mapData = data)
       .then(() => this.renderMap());
+
+    this.state = {
+      selectedPOI: this.props.initialPOI || this.props.pois[0]
+    };
+  }
+
+  private selectPOI(poi: POI) {
+    this.setState({
+      selectedPOI: poi
+    });
   }
 
   public renderMap() {
@@ -46,7 +54,14 @@ export default class MapViewRenderer extends React.Component<Props, State> {
       .style('stroke', '#ccc');
   }
 
+  private updateSelectedPOI() {
+    d3.selectAll("svg.map-canvas .overlay circle.poi")
+      .classed("selected", d => d === this.state.selectedPOI);
+  }
+
   public render() {
+    this.updateSelectedPOI();
+
     return (
       <div className="map-view-component">
         <svg className="map-canvas" width={ this.props.width } height={ this.props.height }>
@@ -58,16 +73,14 @@ export default class MapViewRenderer extends React.Component<Props, State> {
   }
 
   public componentDidMount() {
-    d3.select("svg.map-canvas .overlay").selectAll("circle.poi").data(pois)
+    d3.select("svg.map-canvas .overlay").selectAll("circle.poi").data(this.props.pois)
       .join("circle")
         .attr("class", "poi")
-        .attr("cx", d => d.x)
-        .attr("cy", d => d.y)
+        .attr("cx", d => d.lon)
+        .attr("cy", d => d.lat)
         .attr("r", 10)
         .on("mouseenter", function() { d3.select(this).attr("r", 15) })
         .on("mouseout", function() { d3.select(this).attr("r", 10) })
-        .on("click", d => {
-
-        });
+        .on("click", this.selectPOI.bind(this));
   }
 }
