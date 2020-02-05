@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { eel, sayHelloJS } from './EelBridge';
+import { eel, sayHelloJS, sendUserSelection, sendUserSelectionBounds } from './EelBridge';
 import { getEelDataAdapter, EelDataAdapter, getPOIs } from './DataAdapter';
 import ScatterplotRenderer from './ScatterplotRenderer';
 import ProgressBar from './ProgressBar';
@@ -41,7 +41,13 @@ export class App extends Component<{}, State> {
   }
 
   onBrushedPoints(brushedPoints: any[]) {
+    this.dataManager.selectItems(brushedPoints);
+
     this.setState({ selectedPoints: brushedPoints });
+  }
+
+  onBrushedRegion(region: number[][]) {
+    this.dataManager.selectRegion(region);
   }
 
   private renderDimensionSelection(selector: string, label: string) {
@@ -113,6 +119,7 @@ export class App extends Component<{}, State> {
             data={ this.dataManager.data }
             filters={ this.dataManager.getAllFilters() }
             onBrushedPoints={ this.onBrushedPoints.bind(this) }
+            onBrushedRegion={ this.onBrushedRegion.bind(this) }
           />
           <MapViewerRenderer
             width={ width * 0.45 }

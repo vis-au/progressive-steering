@@ -85,6 +85,18 @@ export function setMinSelectionSize(minSelectionSize: number) {
   return;
 }
 
+export function sendUserSelection(ids: string[]) {
+  // TODO
+  // eel.send_user_selection(selectedIds);
+  window.eel.send_to_backend(ids);
+}
+
+export function sendUserSelectionBounds(xMin: number, xMax: number, yMin: number, yMax: number) {
+  // TODO
+  // eel.send_user_selection_bounds({xMin, xMax}, {yMin, yMax});
+
+}
+
 
 // Make functions acessible to the backend via eel
 window.eel.expose(sendDataChunk, 'send_data_chunk');

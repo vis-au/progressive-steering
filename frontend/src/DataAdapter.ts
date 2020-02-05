@@ -1,3 +1,5 @@
+import { sendUserSelectionBounds, sendUserSelection } from "./EelBridge";
+
 const ALL_DIMENSIONS = ["a", "b", "c", "d", "e"];
 const X_DIMENSION = "a";
 const Y_DIMENSION = "b";
@@ -112,6 +114,16 @@ class DataAdapter {
    */
   public setExtent(dimension: string, extent: number[]) {
     this.dimensionExtents.set(dimension, extent);
+  }
+
+  public selectItems(items: any[]) {
+    const selectedIds = items.map(d => d.id);
+    sendUserSelection(selectedIds)
+  }
+
+  public selectRegion(region: number[][]) {
+    const [[xMin, xMax], [yMin, yMax]] = region;
+    sendUserSelectionBounds(xMin, xMax, yMin, yMax);
   }
 
   /**

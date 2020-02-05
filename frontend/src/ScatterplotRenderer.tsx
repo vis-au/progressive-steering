@@ -15,7 +15,8 @@ interface Props {
   extentY: number[],
   data: any[],
   filters: Map<string, number[]>,
-  onBrushedPoints: (points: any[]) => any
+  onBrushedPoints?: (points: any[]) => any,
+  onBrushedRegion?: (extent: number[][]) => any
 }
 
 export default class ScatterplotRenderer extends React.Component<Props, State> {
@@ -55,10 +56,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     };
   }
 
-  private onBrushStart() {
-    if (this.svg === null) {
-      return;
-    }
+  private addCurrentSelectionToBrushedRegions() {
     if (this.selection === null) {
       return;
     }
@@ -76,6 +74,28 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.setState({ brushedRegions });
   }
 
+  private updateCurrentlySelectedPoints() {
+    if (this.points === null) {
+      return;
+    }
+
+    const brushedPoints: any[] = [];
+
+    this.points.selectAll("circle.point.selected").each(d => {
+      brushedPoints.push(d);
+    });
+
+    if (!!this.props.onBrushedPoints) {
+      this.props.onBrushedPoints(brushedPoints);
+    }
+    if (!!this.props.onBrushedRegion) {
+      this.props.onBrushedRegion(this.state.brushedRegions[this.state.brushedRegions.length - 1]);
+    }
+  }
+
+  private onBrushStart() {
+  }
+
   private onBrush() {
     if (this.circle === null) {
       return;
@@ -87,33 +107,26 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       this.circle.classed("selected", false);
     } else {
       const [[x0, y0], [x1, y1]] = this.selection;
+      const selectedPoints: any[] = [];
 
       this.circle.classed("selected", (d) => {
         const x = this.scaleX(d[this.props.dimensionX]);
         const y = this.scaleY(d[this.props.dimensionY]);
 
-        return x0 <= x && x <= x1 && y0 <= y && y <= y1;
-      });
+        const selected = x0 <= x && x <= x1 && y0 <= y && y <= y1;
 
-      window.eel.send_to_backend([
-        [this.scaleX.invert(x0), this.scaleX.invert(x1)],
-        [this.scaleX.invert(x0), this.scaleX.invert(x1)]
-      ]);
+        if (selected) {
+          selectedPoints.push(d);
+        }
+
+        return selected;
+      });
     }
   }
 
   private onBrushEnd() {
-    if (this.points === null) {
-      return;
-    }
-
-    const brushedPoints: any[] = [];
-
-    this.points.selectAll("circle.point.selected").each(d => {
-      brushedPoints.push(d);
-    });
-
-    this.props.onBrushedPoints(brushedPoints);
+    this.addCurrentSelectionToBrushedRegions();
+    this.updateCurrentlySelectedPoints();
   }
 
   private updateScales() {
