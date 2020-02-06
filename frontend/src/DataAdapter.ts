@@ -1,8 +1,6 @@
 import { sendUserSelectionBounds, sendUserSelection } from "./EelBridge";
 
 const ALL_DIMENSIONS = ["a", "b", "c", "d", "e"];
-const X_DIMENSION = "a";
-const Y_DIMENSION = "b";
 const DATA_EXTENT = 1.0;
 
 const TOTAL_DATA_SIZE = 1000;
@@ -37,18 +35,13 @@ function generateRandomData(chunkSize: number): any[] {
 
 class DataAdapter {
   private _data: any[] = [];
-  private _xDimension: string = "";
-  private _yDimension: string = "";
+  private _xDimension: string | null = null;
+  private _yDimension: string | null = null;
   private _onDataChangedCallbacks: any[] = [];
   private _onFilterChangedCallbacks: any[] = [];
 
   private dimensionFilters: Map<string, number[]> = new Map();
   private dimensionExtents: Map<string, number[]> = new Map();
-
-  constructor() {
-    this._xDimension = X_DIMENSION;
-    this._yDimension = Y_DIMENSION;
-  }
 
   public addData(data: any[]) {
     this._data.push(...data);
@@ -103,7 +96,11 @@ class DataAdapter {
    * Get the upper and lower value bounds for a particular numerical dimension in the data.
    * @param dimension dimension of the data
    */
-  public getExtent(dimension: string) {
+  public getExtent(dimension: string | null) {
+    if (dimension === null) {
+      return [0, 1];
+    }
+
     return this.dimensionExtents.get(dimension) || [0, 1];
   }
 
@@ -146,19 +143,19 @@ class DataAdapter {
     return ALL_DIMENSIONS;
   }
 
-  public get xDimension(): string {
+  public get xDimension(): string | null {
     return this._xDimension;
   }
 
-  public set xDimension(xDimension: string) {
+  public set xDimension(xDimension: string | null) {
     this._xDimension = xDimension;
   }
 
-  public get yDimension(): string {
+  public get yDimension(): string | null {
     return this._yDimension;
   }
 
-  public set yDimension(yDimension: string) {
+  public set yDimension(yDimension: string | null) {
     this._yDimension = yDimension;
   }
 

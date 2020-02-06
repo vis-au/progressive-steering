@@ -12,3 +12,7 @@ rect.brushedRegion {
   fill: #999;
   stroke-width: 4px;
 }
+
+svg g.unset-dimension-warning {
+  text-anchor: middle;
+}

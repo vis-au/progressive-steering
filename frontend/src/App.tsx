@@ -11,6 +11,9 @@ interface State {
   selectedPoints: any[]
 }
 
+const X_AXIS_SELECTOR = "x-dimension";
+const Y_AXIS_SELECTOR = "y-dimension";
+
 export class App extends Component<{}, State> {
   private dataManager: EelDataAdapter;
 
@@ -18,7 +21,6 @@ export class App extends Component<{}, State> {
     super(props);
 
     // Test calling sayHelloJS, then call the corresponding Python function
-    sayHelloJS( 'Javascript World!' );
     this.dataManager = getEelDataAdapter();
     this.dataManager.registerOnDataChanged(this.onNewDataReceived.bind(this));
     this.dataManager.registerOnFilterChanged(this.onFilterChanged.bind(this));
@@ -40,14 +42,26 @@ export class App extends Component<{}, State> {
     this.forceUpdate();
   }
 
-  onBrushedPoints(brushedPoints: any[]) {
+  private onBrushedPoints(brushedPoints: any[]) {
     this.dataManager.selectItems(brushedPoints);
 
     this.setState({ selectedPoints: brushedPoints });
   }
 
-  onBrushedRegion(region: number[][]) {
+  private onBrushedRegion(region: number[][]) {
     this.dataManager.selectRegion(region);
+  }
+
+  private onDimensionForAxisSelected(axis: string, dimension: string) {
+    if (axis === X_AXIS_SELECTOR) {
+      this.dataManager.xDimension = dimension;
+    } else if (axis === Y_AXIS_SELECTOR) {
+      this.dataManager.yDimension = dimension;
+    } else {
+      return;
+    }
+
+    this.forceUpdate();
   }
 
   private renderDimensionSelection(selector: string, label: string) {
@@ -56,7 +70,8 @@ export class App extends Component<{}, State> {
     return (
       <div className={ `${selector} selection` }>
         <label htmlFor={ selector }>{ label }</label>
-        <select name={ selector } id={ selector }>{
+        <select name={ selector } id={ selector } onChange={ (e) =>
+          this.onDimensionForAxisSelected(selector, e.target.value) }>{
           allDimensions.map(dim => <option key={dim} value={dim}>{dim}</option>)
         }</select>
       </div>
@@ -66,8 +81,8 @@ export class App extends Component<{}, State> {
   private renderXYDimensionSelection() {
     return (
       <div className="dimension-selection">
-        { this.renderDimensionSelection("x-dimension", "X Axis") }
-        { this.renderDimensionSelection("y-dimension", "Y Axis") }
+        { this.renderDimensionSelection(X_AXIS_SELECTOR, "X Axis") }
+        { this.renderDimensionSelection(Y_AXIS_SELECTOR, "Y Axis") }
       </div>
     );
   }

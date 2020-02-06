@@ -22,6 +22,11 @@ export function sendDataChunk(chunk: any[]) {
  */
 export function sendXDomain(extent: number[]) {
   const xDomain = dataManager.xDimension;
+
+  if (xDomain === null) {
+    return;
+  }
+
   dataManager.setExtent(xDomain, extent);
 }
 
@@ -31,6 +36,11 @@ export function sendXDomain(extent: number[]) {
  */
 export function sendYDomain(extent: number[]) {
   const yDomain = dataManager.yDimension;
+
+  if (yDomain === null) {
+    return;
+  }
+
   dataManager.setExtent(yDomain, extent);
 }
 

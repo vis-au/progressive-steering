@@ -9,8 +9,8 @@ interface State {
 interface Props {
   width: number,
   height: number,
-  dimensionX: string,
-  dimensionY: string,
+  dimensionX: string | null,
+  dimensionY: string | null,
   extentX: number[],
   extentY: number[],
   data: any[],
@@ -89,6 +89,10 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       this.props.onBrushedPoints(brushedPoints);
     }
     if (!!this.props.onBrushedRegion) {
+      // no region was added because brush is empty
+      if (this.state.brushedRegions.length === 0) {
+        return;
+      }
       this.props.onBrushedRegion(this.state.brushedRegions[this.state.brushedRegions.length - 1]);
     }
   }
@@ -100,8 +104,13 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     if (this.circle === null) {
       return;
     }
+    if (this.props.dimensionX === null || this.props.dimensionY === null) {
+      return;
+    }
 
     this.selection = d3.event.selection;
+    const dimX = this.props.dimensionX;
+    const dimY = this.props.dimensionY;
 
     if (this.selection === null) {
       this.circle.classed("selected", false);
@@ -110,8 +119,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       const selectedPoints: any[] = [];
 
       this.circle.classed("selected", (d) => {
-        const x = this.scaleX(d[this.props.dimensionX]);
-        const y = this.scaleY(d[this.props.dimensionY]);
+        const x = this.scaleX(d[dimX]);
+        const y = this.scaleY(d[dimY]);
 
         const selected = x0 <= x && x <= x1 && y0 <= y && y <= y1;
 
@@ -212,19 +221,37 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     return matchesFilter;
   }
 
+  private renderUnsetDimensionsWarning() {
+    if (this.props.dimensionX !== null && this.props.dimensionY !== null) {
+      return null;
+    }
+
+    return (
+      <g className="unset-dimension-warning" transform={ `translate(${this.props.width / 2},${this.props.height / 2})` }>
+        <text>Set the dimensions for X and Y first.</text>
+      </g>
+    );
+  }
+
   private renderPoints() {
     if (this.svg === null) {
       return;
     } else if (this.points === null) {
       return;
     }
+    if (this.props.dimensionX === null || this.props.dimensionY === null) {
+      return;
+    }
+
+    const dimX = this.props.dimensionX;
+    const dimY = this.props.dimensionY;
 
     this.circle = this.points.selectAll("circle.point").data(this.props.data, (d: any) => d.id)
       .join("circle")
         .attr("class", "point")
         .attr("id", d => d.id)
-        .attr("cx", d => this.scaleX(d[this.props.dimensionX]))
-        .attr("cy", d => this.scaleY(d[this.props.dimensionY]));
+        .attr("cx", d => this.scaleX(d[dimX]))
+        .attr("cy", d => this.scaleY(d[dimY]));
 
     this.circle.attr("r", d => this.matchesFilter(d) ? 2 : 1);
   }
@@ -238,6 +265,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       <svg className="scatterplotCanvas" width={ this.props.width } height={ this.props.height }>
         <g className="axes"></g>
         { this.renderBrushedRegions() }
+        { this.renderUnsetDimensionsWarning() }
       </svg>
     );
   }
