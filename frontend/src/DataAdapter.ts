@@ -1,13 +1,9 @@
 import { sendUserSelectionBounds, sendUserSelection } from "./EelBridge";
 
-const ALL_DIMENSIONS = ["a", "b", "c", "d", "e"];
-const DATA_EXTENT = 1.0;
+export const DEFAULT_DIMENSIONS = ["a", "b", "c", "d", "e"];
+export const DEFAULT_TOTAL_DATA_SIZE = 100000;
 
-const TOTAL_DATA_SIZE = 1000;
-const TOTAL_DURATION = 10000;
-const CHUNK_SIZE = 10;
-
-const DEFAULT_POIS = [
+export const DEFAULT_POIS = [
   {lon: 600, lat: 100, label: "poi 1"},
   {lon: 700, lat: 400, label: "poi 2"},
   {lon: 660, lat: 450, label: "poi 3"},
@@ -15,26 +11,9 @@ const DEFAULT_POIS = [
   {lon: 544, lat: 500, label: "poi 5"}
 ];
 
-function generateRandomData(chunkSize: number): any[] {
-  const randomData: any[] = [];
-
-  for (let i = 0; i < chunkSize; i++) {
-    const randomEntry: any = {};
-
-    randomEntry.id = `datum_${Math.floor(Math.random() * 100000000)}`;
-
-    ALL_DIMENSIONS.forEach(dimension => {
-      randomEntry[dimension] = Math.random() * DATA_EXTENT;
-    });
-
-    randomData.push(randomEntry);
-  }
-
-  return randomData;
-}
-
 class DataAdapter {
   private _data: any[] = [];
+  private _dimensions: string[] = [];
   private _xDimension: string | null = null;
   private _yDimension: string | null = null;
   private _onDataChangedCallbacks: any[] = [];
@@ -43,16 +22,17 @@ class DataAdapter {
   private dimensionFilters: Map<string, number[]> = new Map();
   private dimensionExtents: Map<string, number[]> = new Map();
 
+  constructor() {
+    this._dimensions = DEFAULT_DIMENSIONS;
+  }
+
   public addData(data: any[]) {
+    if (this._dimensions.length === 0) {
+      this._dimensions = Object.keys(data[0]);
+    }
+
     this._data.push(...data);
-
-    this._onDataChangedCallbacks.forEach(callback => {
-      if (typeof callback !== "function") {
-        return;
-      }
-
-      callback();
-    });
+    this.notifyDataObservers();
   }
 
   public registerOnDataChanged(callback: any) {
@@ -61,6 +41,24 @@ class DataAdapter {
 
   public registerOnFilterChanged(callback: any) {
     this._onFilterChangedCallbacks.push(callback);
+  }
+
+  private notifyObservers(observerList: any[], message?: any) {
+    observerList.forEach(callback => {
+      if (typeof callback !== "function") {
+        return;
+      }
+
+      callback(message);
+    });
+  }
+
+  private notifyFilterObservers(message?: any) {
+    this.notifyObservers(this._onFilterChangedCallbacks, message);
+  }
+
+  private notifyDataObservers(message?: any) {
+    this.notifyObservers(this._onDataChangedCallbacks, message);
   }
 
   /**
@@ -72,14 +70,7 @@ class DataAdapter {
     // TODO: send filters to backend
 
     this.dimensionFilters.set(dimension, filter);
-
-    this._onFilterChangedCallbacks.forEach(callback => {
-      if (typeof callback !== "function") {
-        return;
-      }
-
-      callback({ dimension, filter });
-    });
+    this.notifyFilterObservers({ dimension, filter });
   }
 
   /**
@@ -89,6 +80,7 @@ class DataAdapter {
    */
   public filterCategoricalDimension(dimension: string, filter: string) {
     // TODO: notify backend about new selected filter (i.e. a new poi was selected on the map or a new city was chosen)
+    this.notifyFilterObservers({ dimension, filter });
     return;
   }
 
@@ -111,6 +103,7 @@ class DataAdapter {
    */
   public setExtent(dimension: string, extent: number[]) {
     this.dimensionExtents.set(dimension, extent);
+    this.notifyDataObservers();
   }
 
   public selectItems(items: any[]) {
@@ -136,11 +129,15 @@ class DataAdapter {
   }
 
   public getTotalDataSize() {
-    return TOTAL_DATA_SIZE;
+    return DEFAULT_TOTAL_DATA_SIZE;
   }
 
   public get dimensions(): string[] {
-    return ALL_DIMENSIONS;
+    return this._dimensions;
+  }
+
+  public set dimensions(dimensions: string[]) {
+    this._dimensions = dimensions;
   }
 
   public get xDimension(): string | null {
@@ -173,14 +170,3 @@ export function getEelDataAdapter() {
 export function getPOIs() {
   return DEFAULT_POIS;
 }
-
-// DEBUGGING: Generate random data after a fixed interval and add it to the datamanager
-const interval = window.setInterval(() => {
-  const newData = generateRandomData(CHUNK_SIZE);
-  instance.addData(newData);
-}, TOTAL_DURATION / (TOTAL_DATA_SIZE / CHUNK_SIZE));
-
-
-window.setTimeout(() => {
-  window.clearInterval(interval);
-}, TOTAL_DURATION);

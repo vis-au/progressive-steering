@@ -1,4 +1,5 @@
 import { getEelDataAdapter } from './DataAdapter';
+import { runDummyBackend } from './EelBackendDummy';
 
 // Point Eel web socket to the instance
 export const eel = window.eel
@@ -6,14 +7,14 @@ eel.set_host( 'ws://localhost:8080' );
 
 // datamanger is a singleton instance that we reference from different places in the bridge
 // functions
-const dataManager = getEelDataAdapter();
+const dataAdapter = getEelDataAdapter();
 
 /**
  * Send a chunk of data of variable size to the frontend.
  * @param chunk contains arbitrary data
  */
 export function sendDataChunk(chunk: any[]) {
-  dataManager.addData(chunk);
+  dataAdapter.addData(chunk);
 }
 
 /**
@@ -21,13 +22,13 @@ export function sendDataChunk(chunk: any[]) {
  * @param extent minimum and maximum value for the dimension represented on the x axis.
  */
 export function sendXDomain(extent: number[]) {
-  const xDomain = dataManager.xDimension;
+  const xDomain = dataAdapter.xDimension;
 
   if (xDomain === null) {
     return;
   }
 
-  dataManager.setExtent(xDomain, extent);
+  dataAdapter.setExtent(xDomain, extent);
 }
 
 /**
@@ -35,13 +36,13 @@ export function sendXDomain(extent: number[]) {
  * @param extent minimum and maximum value for the dimension represented on the y axis.
  */
 export function sendYDomain(extent: number[]) {
-  const yDomain = dataManager.yDimension;
+  const yDomain = dataAdapter.yDimension;
 
   if (yDomain === null) {
     return;
   }
 
-  dataManager.setExtent(yDomain, extent);
+  dataAdapter.setExtent(yDomain, extent);
 }
 
 /**
@@ -50,7 +51,7 @@ export function sendYDomain(extent: number[]) {
  */
 export function sendDimensionTotalExtent(message: {name: string, min: number, max: number}) {
   const {name, min, max} = message;
-  dataManager.setExtent(name, [min, max]);
+  dataAdapter.setExtent(name, [min, max]);
   return;
 }
 
@@ -59,7 +60,7 @@ export function sendDimensionTotalExtent(message: {name: string, min: number, ma
  * @param xName name of the x dimension
  */
 export function setXName(xName: string) {
-  dataManager.xDimension = xName;
+  dataAdapter.xDimension = xName;
   return;
 }
 
@@ -68,7 +69,7 @@ export function setXName(xName: string) {
  * @param yName name of the y dimension
  */
 export function setYName(yName: string) {
-  dataManager.yDimension = yName;
+  dataAdapter.yDimension = yName;
 }
 
 /**
@@ -120,6 +121,8 @@ window.eel.expose(sendCity, 'send_city');
 window.eel.expose(sendEvaluationMetric, 'send_evaluation_metric');
 
 
+runDummyBackend();
+
 // LEGACY FUNCTIONS FOR DEBUGGING
 // Expose the `sayHelloJS` function to Python as `say_hello_js`
 export function sayHelloJS( x: any ) {
@@ -128,9 +131,9 @@ export function sayHelloJS( x: any ) {
 
 export function sendDataToFrontend(data: any) {
   if (!data.length) {
-    dataManager.addData(data as any);
+    dataAdapter.addData(data as any);
   } else {
-    (data as any[]).forEach(d => dataManager.addData(d));
+    (data as any[]).forEach(d => dataAdapter.addData(d));
   }
 }
 

@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { eel, sayHelloJS, sendUserSelection, sendUserSelectionBounds } from './EelBridge';
+import { eel } from './EelBridge';
 import { getEelDataAdapter, EelDataAdapter, getPOIs } from './DataAdapter';
 import ScatterplotRenderer from './ScatterplotRenderer';
 import ProgressBar from './ProgressBar';
@@ -64,13 +64,13 @@ export class App extends Component<{}, State> {
     this.forceUpdate();
   }
 
-  private renderDimensionSelection(selector: string, label: string) {
+  private renderDimensionSelection(selector: string, label: string, activeValue: string) {
     const allDimensions = this.dataAdapter.dimensions;
 
     return (
       <div className={ `${selector} selection` }>
         <label htmlFor={ selector }>{ label }</label>
-        <select name={ selector } id={ selector } onChange={ (e) =>
+        <select name={ selector } id={ selector } value={ activeValue } onChange={ (e) =>
           this.onDimensionForAxisSelected(selector, e.target.value) }>{
           allDimensions.map(dim => <option key={dim} value={dim}>{dim}</option>)
         }</select>
@@ -81,14 +81,14 @@ export class App extends Component<{}, State> {
   private renderXYDimensionSelection() {
     return (
       <div className="dimension-selection">
-        { this.renderDimensionSelection(X_AXIS_SELECTOR, "X Axis") }
-        { this.renderDimensionSelection(Y_AXIS_SELECTOR, "Y Axis") }
+        { this.renderDimensionSelection(X_AXIS_SELECTOR, "X Axis", this.dataAdapter.xDimension || "") }
+        { this.renderDimensionSelection(Y_AXIS_SELECTOR, "Y Axis", this.dataAdapter.yDimension || "") }
       </div>
     );
   }
 
   private renderDimensionSlider(dimension: string) {
-    const extent = this.dataAdapter.getExtent(dimension);
+    const extent = this.dataAdapter.getExtent(dimension).slice();
 
     return (
       <DoubleSlider
