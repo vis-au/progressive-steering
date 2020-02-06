@@ -15,15 +15,15 @@ const X_AXIS_SELECTOR = "x-dimension";
 const Y_AXIS_SELECTOR = "y-dimension";
 
 export class App extends Component<{}, State> {
-  private dataManager: EelDataAdapter;
+  private dataAdapter: EelDataAdapter;
 
   constructor(props: {}) {
     super(props);
 
     // Test calling sayHelloJS, then call the corresponding Python function
-    this.dataManager = getEelDataAdapter();
-    this.dataManager.registerOnDataChanged(this.onNewDataReceived.bind(this));
-    this.dataManager.registerOnFilterChanged(this.onFilterChanged.bind(this));
+    this.dataAdapter = getEelDataAdapter();
+    this.dataAdapter.registerOnDataChanged(this.onNewDataReceived.bind(this));
+    this.dataAdapter.registerOnFilterChanged(this.onFilterChanged.bind(this));
 
     eel.say_hello_py('Javascript World!');
 
@@ -43,20 +43,20 @@ export class App extends Component<{}, State> {
   }
 
   private onBrushedPoints(brushedPoints: any[]) {
-    this.dataManager.selectItems(brushedPoints);
+    this.dataAdapter.selectItems(brushedPoints);
 
     this.setState({ selectedPoints: brushedPoints });
   }
 
   private onBrushedRegion(region: number[][]) {
-    this.dataManager.selectRegion(region);
+    this.dataAdapter.selectRegion(region);
   }
 
   private onDimensionForAxisSelected(axis: string, dimension: string) {
     if (axis === X_AXIS_SELECTOR) {
-      this.dataManager.xDimension = dimension;
+      this.dataAdapter.xDimension = dimension;
     } else if (axis === Y_AXIS_SELECTOR) {
-      this.dataManager.yDimension = dimension;
+      this.dataAdapter.yDimension = dimension;
     } else {
       return;
     }
@@ -65,7 +65,7 @@ export class App extends Component<{}, State> {
   }
 
   private renderDimensionSelection(selector: string, label: string) {
-    const allDimensions = this.dataManager.dimensions;
+    const allDimensions = this.dataAdapter.dimensions;
 
     return (
       <div className={ `${selector} selection` }>
@@ -88,7 +88,7 @@ export class App extends Component<{}, State> {
   }
 
   private renderDimensionSlider(dimension: string) {
-    const extent = this.dataManager.getExtent(dimension);
+    const extent = this.dataAdapter.getExtent(dimension);
 
     return (
       <DoubleSlider
@@ -96,7 +96,7 @@ export class App extends Component<{}, State> {
         min={ extent[0] }
         max={ extent[1] }
         width={ 125 }
-        onSelection={ (filter: number[]) => this.dataManager.filterNumericalDimension(dimension, filter) }
+        onSelection={ (filter: number[]) => this.dataAdapter.filterNumericalDimension(dimension, filter) }
       />
     );
   }
@@ -104,14 +104,14 @@ export class App extends Component<{}, State> {
   private renderDimensionSliders() {
     return (
       <div className="dimension-sliders">
-        { this.dataManager.dimensions.map(this.renderDimensionSlider.bind(this)) }
+        { this.dataAdapter.dimensions.map(this.renderDimensionSlider.bind(this)) }
       </div>
     );
   }
 
   public render() {
-    const dimensionX = this.dataManager.xDimension;
-    const dimensionY = this.dataManager.yDimension;
+    const dimensionX = this.dataAdapter.xDimension;
+    const dimensionY = this.dataAdapter.yDimension;
 
     const width = window.innerWidth - 10;
     const height = window.innerHeight - 100;
@@ -127,12 +127,12 @@ export class App extends Component<{}, State> {
           <ScatterplotRenderer
             width={ width * 0.5 }
             height={ height }
-            extentX={ this.dataManager.getExtent(dimensionX) }
-            extentY={ this.dataManager.getExtent(dimensionY) }
+            extentX={ this.dataAdapter.getExtent(dimensionX) }
+            extentY={ this.dataAdapter.getExtent(dimensionY) }
             dimensionX={ dimensionX }
             dimensionY={ dimensionY }
-            data={ this.dataManager.data }
-            filters={ this.dataManager.getAllFilters() }
+            data={ this.dataAdapter.data }
+            filters={ this.dataAdapter.getAllFilters() }
             onBrushedPoints={ this.onBrushedPoints.bind(this) }
             onBrushedRegion={ this.onBrushedRegion.bind(this) }
           />
@@ -141,19 +141,19 @@ export class App extends Component<{}, State> {
             height={ height }
             pois={ getPOIs() }
             initialPOI={ null }
-            onPOISelected={ (poi: string) => this.dataManager.filterCategoricalDimension("city", poi) }
+            onPOISelected={ (poi: string) => this.dataAdapter.filterCategoricalDimension("city", poi) }
           />
         </div>
 
         <div className="footer">
           <div className="metrics">
             <div className="metric">{ this.state.selectedPoints.length } Points selected</div>
-            <div className="metric">{ this.dataManager.data.length } Data points received</div>
+            <div className="metric">{ this.dataAdapter.data.length } Data points received</div>
           </div>
           <ProgressBar
             label="items processed"
-            max={ this.dataManager.getTotalDataSize() }
-            current={ this.dataManager.data.length }
+            max={ this.dataAdapter.getTotalDataSize() }
+            current={ this.dataAdapter.data.length }
           />
         </div>
 
