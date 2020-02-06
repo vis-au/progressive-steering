@@ -17,7 +17,7 @@ The backend also assumes that you have a [MySQL](https://dev.mysql.com/downloads
 Change the user name and password properties defined in `DB_server.py:192` to reflect your configuration.
 
 To work with the airbnb data, create a new schema on your MySQL instance and name it `airbnb`.
-Then import the data from `MySQL data/listings.csv` into a new table and name it `listings`  (see the [MySQL workbench documentation](https://dev.mysql.com/doc/workbench/en/wb-admin-export-import-table.html) for a description on how to import CSV files into a database).
+Then import the data from `MySQL data/listings.csv` into a new table and name it `listings` (see the [MySQL workbench documentation](https://dev.mysql.com/doc/workbench/en/wb-admin-export-import-table.html) for a description on how to import CSV files into a database). Likewise, import the data from `plotted.csv` into a table named `plotted`.
 
 ## Launching the Backend
 To launch the backend, run the following command:
