@@ -35,7 +35,8 @@ export default class DoubleSlider extends React.Component<Props, State> {
   private createBrush() {
     this.brush = d3.brushX()
       .extent([[DEFAULT_MARGIN, 0], [this.props.width + DEFAULT_MARGIN, this.props.height || DEFAULT_HEIGHT]])
-      .on("brush start end", this.onBrush.bind(this));
+      .on("start brush", this.onBrush.bind(this))
+      .on("end", this.onBrushEnd.bind(this));
   }
 
   private onBrush() {
@@ -47,6 +48,12 @@ export default class DoubleSlider extends React.Component<Props, State> {
     const [x0, x1] = d3.event.selection;
 
     this.selection = [ this.scale.invert(x0 - DEFAULT_MARGIN), this.scale.invert(x1 - DEFAULT_MARGIN) ];
+  }
+
+  private onBrushEnd() {
+    if (this.selection[0] - this.selection[1] === 0) {
+      this.selection = [];
+    }
 
     if (this.props.onSelection !== undefined) {
       this.props.onSelection(this.selection);
