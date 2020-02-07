@@ -21,8 +21,8 @@ class DataAdapter {
   private _onFilterChangedCallbacks: any[] = [];
   private _chunkSize: number = 0;
 
-  private dimensionFilters: Map<string, number[]> = new Map();
-  private dimensionExtents: Map<string, number[]> = new Map();
+  private dimensionFilters: Map<string, [number, number]> = new Map();
+  private dimensionExtents: Map<string, [number, number]> = new Map();
 
   constructor() {
     this._dimensions = DEFAULT_DIMENSIONS;
@@ -69,7 +69,7 @@ class DataAdapter {
    * @param dimension dimension of the data
    * @param filter numerical extent to be included
    */
-  public filterNumericalDimension(dimension: string, filter: number[]) {
+  public filterNumericalDimension(dimension: string, filter: [number, number]) {
     // TODO: send filters to backend
 
     this.dimensionFilters.set(dimension, filter);
@@ -91,7 +91,7 @@ class DataAdapter {
    * Get the upper and lower value bounds for a particular numerical dimension in the data.
    * @param dimension dimension of the data
    */
-  public getExtent(dimension: string | null) {
+  public getExtent(dimension: string | null): [number, number] {
     if (dimension === null) {
       return [0, 1];
     }
@@ -104,8 +104,8 @@ class DataAdapter {
    * @param dimension dimension of the data
    * @param extent new upper and lower bound
    */
-  public setExtent(dimension: string, extent: number[]) {
-    this.dimensionExtents.set(dimension, extent.slice());
+  public setExtent(dimension: string, extent: [number, number]) {
+    this.dimensionExtents.set(dimension, extent);
     this.notifyDataObservers();
   }
 

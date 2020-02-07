@@ -21,7 +21,7 @@ export function sendDataChunk(chunk: any[]) {
  * Send the extent of the dimension mapped to the horizontal axis to the frontend.
  * @param extent minimum and maximum value for the dimension represented on the x axis.
  */
-export function sendXDomain(extent: number[]) {
+export function sendXDomain(extent: [number, number]) {
   const xDomain = dataAdapter.xDimension;
 
   if (xDomain === null) {
@@ -35,7 +35,7 @@ export function sendXDomain(extent: number[]) {
  * Send the extent of the dimension mapped to the vertical axis to the frontend.
  * @param extent minimum and maximum value for the dimension represented on the y axis.
  */
-export function sendYDomain(extent: number[]) {
+export function sendYDomain(extent: [number, number]) {
   const yDomain = dataAdapter.yDimension;
 
   if (yDomain === null) {

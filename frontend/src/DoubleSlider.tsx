@@ -10,7 +10,7 @@ interface Props {
   height?: number,
   margin?: number,
   bins?: number[],
-  onSelection: (selection: number[]) => any
+  onSelection: (selection: [number, number]) => any
 }
 interface State {
   currentLowerBound: number,

@@ -11,10 +11,10 @@ interface Props {
   height: number,
   dimensionX: string | null,
   dimensionY: string | null,
-  extentX: number[],
-  extentY: number[],
+  extentX: [number, number],
+  extentY: [number, number],
   data: any[],
-  chunkSize: number,
+  chunkSize?: number,
   filters: Map<string, number[]>,
   onBrushedPoints?: (points: any[]) => any,
   onBrushedRegion?: (extent: number[][]) => any
@@ -35,6 +35,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   private scaleX: d3.ScaleLinear<number, number>;
   private scaleY: d3.ScaleLinear<number, number>;
 
+  private quadtree: d3.Quadtree<[number, number]>;
+
   constructor(props: Props) {
     super(props);
 
@@ -47,12 +49,15 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.canvas = null;
     this.selection = null;
 
+    this.quadtree = d3.quadtree()
+      .extent([[0, 0], [this.props.width, this.props.height]])
+      .x((d: any) => this.scaleX(d[this.props.dimensionX || ""]))
+      .y((d: any) => this.scaleY(d[this.props.dimensionY || ""]));
+
     this.scaleX = d3.scaleLinear()
-      .domain(this.props.extentX)
       .range([0, this.props.width]);
 
     this.scaleY = d3.scaleLinear()
-      .domain(this.props.extentY)
       .range([0, this.props.height]);
 
     this.state = {
@@ -69,38 +74,85 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.scaleY.domain(this.props.extentY);
   }
 
-  private updateCurrentlySelectedPoints() {
-    // if (this.points === null) {
-    //   return;
-    // }
+  private getCurrentlyBrushedPoints() {
+    if (this.selection === null || this.selection.length === 0) {
+      return [];
+    }
+    if (this.props.dimensionX === null || this.props.dimensionY === null) {
+      return [];
+    }
 
-    // const brushedPoints: any[] = [];
+    const currentlyBrushedPoints: any[] = [];
+    const extent = this.selection;
+    const dimX = this.props.dimensionX;
+    const dimY = this.props.dimensionY;
 
-    // this.points.selectAll("circle.point.selected").each(d => {
-    //   brushedPoints.push(d);
+    // this.quadtree.visit((node: any, x0, y0, x1, y1) => {
+    //   if (!Array.isArray(node)) {
+    //     do {
+    //       let d = node.data;
+    //       const inBounds =
+    //         d[0] >= extent[0][0] &&
+    //         d[0] < extent[1][0] &&
+    //         d[1] >= extent[0][1] &&
+    //         d[1] < extent[1][1];
+
+    //       currentlyBrushedPoints.push(node);
+    //     } while ((node = node.next));
+    //   }
+    //   return (
+    //     x0 >= extent[1][0] ||
+    //     y0 >= extent[1][1] ||
+    //     x1 < extent[0][0] ||
+    //     y1 < extent[0][1]
+    //   );
     // });
 
-    // if (!!this.props.onBrushedPoints) {
-    //   this.props.onBrushedPoints(brushedPoints);
-    // }
-    // if (!!this.props.onBrushedRegion) {
-    //   // no region was added because brush is empty
-    //   if (this.state.brushedRegions.length === 0) {
-    //     return;
-    //   }
-    //   this.props.onBrushedRegion(this.state.brushedRegions[this.state.brushedRegions.length - 1]);
-    // }
+    this.props.data.forEach(datum => {
+      const x = this.scaleX(datum[dimX]);
+      const y = this.scaleY(datum[dimY]);
+
+      if (x > extent[0][0] && x < extent[1][0] && y > extent[0][1] && y < extent[1][1]) {
+        currentlyBrushedPoints.push(datum);
+      }
+    });
+
+    return currentlyBrushedPoints;
+  }
+
+  private updateCurrentlySelectedPoints() {
+    const brushedPoints: any[] = this.getCurrentlyBrushedPoints();
+
+    if (!!this.props.onBrushedPoints) {
+      this.props.onBrushedPoints(brushedPoints);
+    }
+    if (!!this.props.onBrushedRegion) {
+      // no region was added because brush is empty
+      if (this.state.brushedRegions.length === 0) {
+        return;
+      }
+      this.props.onBrushedRegion(this.state.brushedRegions[this.state.brushedRegions.length - 1]);
+    }
   }
 
   private addCurrentSelectionToBrushedRegions() {
+    const brushedRegions = this.state.brushedRegions;
+
     if (this.selection === null) {
+      brushedRegions.splice(0, 1);
       return;
     }
     if (this.selection[0][0] - this.selection[1][0] === 0) {
+      brushedRegions.splice(0, 1);
+      this.selection = null;
+      return;
+    }
+    if (this.selection === brushedRegions[brushedRegions.length - 1]) {
+      brushedRegions.splice(0, 1);
+      this.selection = null;
       return;
     }
 
-    const brushedRegions = this.state.brushedRegions;
     brushedRegions.push(this.selection);
 
     if (brushedRegions.length > 10) {
@@ -110,60 +162,12 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.setState({ brushedRegions });
   }
 
-  private matchesFilter(datum: any) {
-    let matchesFilter = true;
-    const filters = this.props.filters;
-
-    filters.forEach((extent, dim) => {
-      // "empty" filters
-      if (extent[0] - extent[1] === 0) {
-        return;
-      }
-      if (extent === undefined) {
-        return;
-      }
-
-      const value = datum[dim];
-      matchesFilter = matchesFilter && value >= extent[0] && value <= extent[1];
-    });
-
-    return matchesFilter;
-  }
-
   private onBrushStart() {
   }
 
   private onBrush() {
-    // if (this.circle === null) {
-    //   return;
-    // }
-    // if (this.props.dimensionX === null || this.props.dimensionY === null) {
-    //   return;
-    // }
-
-    // this.selection = d3.event.selection;
-    // const dimX = this.props.dimensionX;
-    // const dimY = this.props.dimensionY;
-
-    // if (this.selection === null) {
-    //   this.circle.classed("selected", false);
-    // } else {
-    //   const [[x0, y0], [x1, y1]] = this.selection;
-    //   const selectedPoints: any[] = [];
-
-    //   this.circle.classed("selected", (d) => {
-    //     const x = this.scaleX(d[dimX]);
-    //     const y = this.scaleY(d[dimY]);
-
-    //     const selected = x0 <= x && x <= x1 && y0 <= y && y <= y1;
-
-    //     if (selected) {
-    //       selectedPoints.push(d);
-    //     }
-
-    //     return selected;
-    //   });
-    // }
+    // udpate the reference to the selected rectangle
+    this.selection = d3.event.selection;
   }
 
   private onBrushEnd() {
@@ -252,8 +256,12 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     context.strokeStyle = DEFAULT_POINT_COLOR;
     context.lineWidth = DEFAULT_POINT_STROKE_WIDTH;
     const itemCount = this.props.data.length;
+    // if chunksize property is not defined, render the full dataset
+    const chunk = this.props.data.slice(itemCount - (this.props.chunkSize || itemCount), itemCount);
 
-    this.props.data.slice(itemCount - this.props.chunkSize, itemCount).forEach(datum => {
+    this.quadtree.addAll(chunk);
+
+    chunk.forEach(datum => {
       const px = this.scaleX(datum[dimX]);
       const py = this.scaleY(datum[dimY]);
 

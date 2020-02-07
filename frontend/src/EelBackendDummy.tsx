@@ -3,7 +3,7 @@ import { setXName, setYName, sendXDomain, sendYDomain, sendDimensionTotalExtent,
 
 // interval in which new points are received should stay well above 0.2s, otherwise rendering times
 // exceed the time to the next interval.
-const TOTAL_DURATION = 100000;
+const TOTAL_DURATION = 1000;
 const CHUNK_SIZE = 100;
 const DATA_EXTENT = 1.0;
 

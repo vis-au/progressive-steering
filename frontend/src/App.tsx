@@ -98,7 +98,7 @@ export class App extends Component<{}, State> {
         max={ extent[1] }
         width={ 125 }
         // bins={ bins }
-        onSelection={ (filter: number[]) => this.dataAdapter.filterNumericalDimension(dimension, filter) }
+        onSelection={ (filter: [number, number]) => this.dataAdapter.filterNumericalDimension(dimension, filter) }
       />
     );
   }
