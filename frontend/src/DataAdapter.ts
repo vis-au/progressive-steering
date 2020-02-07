@@ -1,14 +1,14 @@
 import { sendUserSelectionBounds, sendUserSelection } from "./EelBridge";
 
 export const DEFAULT_DIMENSIONS = ["a", "b", "c", "d", "e"];
-export const DEFAULT_TOTAL_DATA_SIZE = 100000;
+export const DEFAULT_TOTAL_DATA_SIZE = 10000;
 
 export const DEFAULT_POIS = [
-  {lon: 600, lat: 100, label: "poi 1"},
-  {lon: 700, lat: 400, label: "poi 2"},
-  {lon: 660, lat: 450, label: "poi 3"},
-  {lon: 576, lat: 900, label: "poi 4"},
-  {lon: 544, lat: 500, label: "poi 5"}
+  {lon: 540, lat: 100, label: "poi 1"},
+  {lon: 200, lat: 300, label: "poi 2"},
+  {lon: 360, lat: 250, label: "poi 3"},
+  {lon: 276, lat: 400, label: "poi 4"},
+  {lon: 344, lat: 100, label: "poi 5"}
 ];
 
 class DataAdapter {
@@ -35,11 +35,11 @@ class DataAdapter {
     this.notifyDataObservers();
   }
 
-  public registerOnDataChanged(callback: any) {
+  public subscribeOnDataChanged(callback: any) {
     this._onDataChangedCallbacks.push(callback);
   }
 
-  public registerOnFilterChanged(callback: any) {
+  public subscribeOnFilterChanged(callback: any) {
     this._onFilterChangedCallbacks.push(callback);
   }
 
@@ -102,7 +102,7 @@ class DataAdapter {
    * @param extent new upper and lower bound
    */
   public setExtent(dimension: string, extent: number[]) {
-    this.dimensionExtents.set(dimension, extent);
+    this.dimensionExtents.set(dimension, extent.slice());
     this.notifyDataObservers();
   }
 

@@ -22,8 +22,8 @@ export class App extends Component<{}, State> {
 
     // Test calling sayHelloJS, then call the corresponding Python function
     this.dataAdapter = getEelDataAdapter();
-    this.dataAdapter.registerOnDataChanged(this.onNewDataReceived.bind(this));
-    this.dataAdapter.registerOnFilterChanged(this.onFilterChanged.bind(this));
+    this.dataAdapter.subscribeOnDataChanged(this.onNewDataReceived.bind(this));
+    this.dataAdapter.subscribeOnFilterChanged(this.onFilterChanged.bind(this));
 
     eel.say_hello_py('Javascript World!');
 
@@ -125,7 +125,7 @@ export class App extends Component<{}, State> {
 
         <div className="mainView">
           <ScatterplotRenderer
-            width={ width * 0.5 }
+            width={ width * 0.66 }
             height={ height }
             extentX={ this.dataAdapter.getExtent(dimensionX) }
             extentY={ this.dataAdapter.getExtent(dimensionY) }
@@ -137,7 +137,7 @@ export class App extends Component<{}, State> {
             onBrushedRegion={ this.onBrushedRegion.bind(this) }
           />
           <MapViewerRenderer
-            width={ width * 0.45 }
+            width={ width * 0.3 }
             height={ height }
             pois={ getPOIs() }
             initialPOI={ null }
