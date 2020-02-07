@@ -134,6 +134,7 @@ export class App extends Component<{}, State> {
             dimensionX={ dimensionX }
             dimensionY={ dimensionY }
             data={ this.dataAdapter.data }
+            chunkSize={ this.dataAdapter.chunkSize }
             filters={ this.dataAdapter.getAllFilters() }
             onBrushedPoints={ this.onBrushedPoints.bind(this) }
             onBrushedRegion={ this.onBrushedRegion.bind(this) }
