@@ -3,10 +3,10 @@ import { eel } from './EelBridge';
 import { getEelDataAdapter, EelDataAdapter, getPOIs, DEFAULT_EVALUATION_METRICS } from './DataAdapter';
 import ScatterplotRenderer from './ScatterplotRenderer';
 import ProgressBar from './ProgressBar';
-import MapViewerRenderer from './MapViewer';
+import MapViewerRenderer, { POI } from './MapViewer';
 import DoubleSlider from './DoubleSlider';
-import './App.css';
 import EvaluationMetric from './EvaluationMetric';
+import './App.css';
 
 interface State {
   selectedPoints: any[]
@@ -174,7 +174,7 @@ export class App extends Component<{}, State> {
             height={ height }
             pois={ getPOIs() }
             initialPOI={ null }
-            onPOISelected={ (poi: string) => this.dataAdapter.filterCategoricalDimension("city", poi) }
+            onPOISelected={ (poi: POI) => this.dataAdapter.filterCategoricalDimension("city", poi.label) }
           />
         </div>
 

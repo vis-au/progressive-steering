@@ -3,14 +3,14 @@ import * as d3 from "d3";
 
 import "./MapViewer.css";
 
-type POI = {lon: number, lat: number, label: string};
+export type POI = {lon: number, lat: number, label: string};
 
 interface Props {
   width: number,
   height: number,
   pois: POI[],
   initialPOI: POI | null,
-  onPOISelected: (poi: string) => any
+  onPOISelected: (poi: POI) => any
 }
 interface State {
   selectedPOI: POI
@@ -33,6 +33,7 @@ export default class MapViewRenderer extends React.Component<Props, State> {
   }
 
   private selectPOI(poi: POI) {
+    this.props.onPOISelected(poi);
     this.setState({
       selectedPOI: poi
     });
