@@ -2,7 +2,7 @@ import { sendUserSelectionBounds, sendUserSelection } from "./EelBridge";
 import * as d3 from 'd3';
 
 export const DEFAULT_DIMENSIONS = ["a", "b", "c", "d", "e"];
-export const DEFAULT_TOTAL_DATA_SIZE = 100000;
+export const DEFAULT_TOTAL_DATA_SIZE = 1000;
 
 export const DEFAULT_POIS = [
   {lon: 540, lat: 100, label: "poi 1"},
