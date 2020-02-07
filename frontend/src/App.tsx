@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { eel } from './EelBridge';
-import { getEelDataAdapter, EelDataAdapter, getPOIs } from './DataAdapter';
+import { getEelDataAdapter, EelDataAdapter, getPOIs, DEFAULT_EVALUATION_METRICS } from './DataAdapter';
 import ScatterplotRenderer from './ScatterplotRenderer';
 import ProgressBar from './ProgressBar';
 import MapViewerRenderer from './MapViewer';
@@ -25,6 +25,7 @@ export class App extends Component<{}, State> {
     this.dataAdapter = getEelDataAdapter();
     this.dataAdapter.subscribeOnDataChanged(this.onNewDataReceived.bind(this));
     this.dataAdapter.subscribeOnFilterChanged(this.onFilterChanged.bind(this));
+    this.dataAdapter.subscribeOnMetricChanged(this.onMetricChanged.bind(this));
 
     eel.say_hello_py('Javascript World!');
 
@@ -40,6 +41,11 @@ export class App extends Component<{}, State> {
 
   private onFilterChanged() {
     console.log("new filter was set. Updating ...");
+    this.forceUpdate();
+  }
+
+  private onMetricChanged() {
+    console.log("metric has changed. Updating ...");
     this.forceUpdate();
   }
 
@@ -94,6 +100,7 @@ export class App extends Component<{}, State> {
 
     return (
       <DoubleSlider
+        key={ dimension }
         label={ dimension }
         min={ extent[0] }
         max={ extent[1] }
@@ -108,6 +115,26 @@ export class App extends Component<{}, State> {
     return (
       <div className="dimension-sliders">
         { this.dataAdapter.dimensions.map(this.renderDimensionSlider.bind(this)) }
+      </div>
+    );
+  }
+
+  private renderEvaluationMetrics() {
+    return (
+      <div className="metrics">
+        <EvaluationMetric label={ "Points selected" } value={ this.state.selectedPoints.length } />
+        <EvaluationMetric label={ "Points received" } value={ this.dataAdapter.data.length } />
+        {
+          DEFAULT_EVALUATION_METRICS.map(metric => {
+            return (
+              <EvaluationMetric
+                key={ metric }
+                label={metric}
+                value={ this.dataAdapter.getEvaluationMetric(metric) }
+              />
+            );
+          })
+        }
       </div>
     );
   }
@@ -150,10 +177,8 @@ export class App extends Component<{}, State> {
         </div>
 
         <div className="footer">
-          <div className="metrics">
-            <EvaluationMetric label={ "Points selected" } value={ this.state.selectedPoints.length } />
-            <EvaluationMetric label={ "Points received" } value={ this.dataAdapter.data.length } />
-          </div>
+          { this.renderEvaluationMetrics() }
+
           <ProgressBar
             label="items processed"
             max={ this.dataAdapter.getTotalDataSize() }

@@ -60,14 +60,17 @@ export function runDummyBackend() {
     });
   }, 0);
 
-  window.setTimeout(() => {
+  window.setInterval(() => {
     sendEvaluationMetric({
-      name: "precision", value: 0.1
+      name: "precision", value: Math.floor(33 * Math.random()) / 100
     });
+  }, 2200);
+
+  window.setInterval(() => {
     sendEvaluationMetric({
-      name: "recall", value: 0.1
+      name: "recall", value: Math.floor(76 * Math.random()) / 100
     });
-  }, 0);
+  }, 5403);
 
   window.setTimeout(() => {
     sendCity("Rome");

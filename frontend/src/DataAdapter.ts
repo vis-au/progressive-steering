@@ -3,6 +3,7 @@ import * as d3 from 'd3';
 
 export const DEFAULT_DIMENSIONS = ["a", "b", "c", "d", "e"];
 export const DEFAULT_TOTAL_DATA_SIZE = 1000;
+export const DEFAULT_EVALUATION_METRICS = ["recall", "precision"];
 
 export const DEFAULT_POIS = [
   {lon: 540, lat: 100, label: "poi 1"},
@@ -19,10 +20,12 @@ class DataAdapter {
   private _yDimension: string | null = null;
   private _onDataChangedCallbacks: any[] = [];
   private _onFilterChangedCallbacks: any[] = [];
+  private _onMetricChangedCallbacks: any[] = [];
   private _chunkSize: number = 0;
 
   private dimensionFilters: Map<string, [number, number]> = new Map();
   private dimensionExtents: Map<string, [number, number]> = new Map();
+  private evaluationMetrics: Map<string, number> = new Map();
 
   constructor() {
     this._dimensions = DEFAULT_DIMENSIONS;
@@ -46,6 +49,10 @@ class DataAdapter {
     this._onFilterChangedCallbacks.push(callback);
   }
 
+  public subscribeOnMetricChanged(callback: any) {
+    this._onMetricChangedCallbacks.push(callback);
+  }
+
   private notifyObservers(observerList: any[], message?: any) {
     observerList.forEach(callback => {
       if (typeof callback !== "function") {
@@ -62,6 +69,10 @@ class DataAdapter {
 
   private notifyDataObservers(message?: any) {
     this.notifyObservers(this._onDataChangedCallbacks, message);
+  }
+
+  private notifyMetricObservers(message?: any) {
+    this.notifyObservers(this._onMetricChangedCallbacks, message);
   }
 
   /**
@@ -124,6 +135,15 @@ class DataAdapter {
     const values = histogram.map(bin => bin.length);
 
     return values;
+  }
+
+  public getEvaluationMetric(label: string) {
+    return this.evaluationMetrics.get(label) || -1;
+  }
+
+  public setEvaluationMetric(label: string, value: number) {
+    this.evaluationMetrics.set(label, value);
+    this.notifyMetricObservers();
   }
 
   public selectItems(items: any[]) {

@@ -77,6 +77,7 @@ export function setYName(yName: string) {
  * @param message name and value of an evaluation metric
  */
 export function sendEvaluationMetric(message: {name: string, value: number}) {
+  dataAdapter.setEvaluationMetric(message.name, message.value);
   return;
 }
 
