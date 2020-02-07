@@ -33,6 +33,18 @@ def say_hello_py(x):
 def send_to_backend(x):
   print("received data")
 
+@eel.expose
+def send_user_selection(selected_items):
+    print("new selected items received")
+
+@eel.expose
+def send_selection_bounds(x_bounds, y_bounds):
+    print("new selected region received")
+
+@eel.expose
+def send_user_params(parameters):
+    print("new user parameters received")
+
 def start_eel(develop):
     """Start Eel with either production or development configuration."""
 

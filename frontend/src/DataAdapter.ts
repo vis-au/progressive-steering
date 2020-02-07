@@ -1,4 +1,4 @@
-import { sendUserSelectionBounds, sendUserSelection } from "./EelBridge";
+import { sendUserSelectionBounds, sendUserSelection, sendUserParameters } from "./EelBridge";
 import * as d3 from 'd3';
 
 export const DEFAULT_DIMENSIONS = ["a", "b", "c", "d", "e"];
@@ -14,6 +14,7 @@ export const DEFAULT_POIS = [
 ];
 
 class DataAdapter {
+  private _chunkSize: number = 0;
   private _data: any[] = [];
   private _dimensions: string[] = [];
   private _xDimension: string | null = null;
@@ -21,7 +22,6 @@ class DataAdapter {
   private _onDataChangedCallbacks: any[] = [];
   private _onFilterChangedCallbacks: any[] = [];
   private _onMetricChangedCallbacks: any[] = [];
-  private _chunkSize: number = 0;
 
   private dimensionFilters: Map<string, [number, number]> = new Map();
   private dimensionExtents: Map<string, [number, number]> = new Map();
@@ -81,10 +81,14 @@ class DataAdapter {
    * @param filter numerical extent to be included
    */
   public filterNumericalDimension(dimension: string, filter: [number, number]) {
-    // TODO: send filters to backend
-
     this.dimensionFilters.set(dimension, filter);
     this.notifyFilterObservers({ dimension, filter });
+
+    sendUserParameters([{
+      name: dimension,
+      type: "numerical",
+      interval: filter
+    }]);
   }
 
   /**
@@ -93,16 +97,20 @@ class DataAdapter {
    * @param filter element of that dimension
    */
   public filterCategoricalDimension(dimension: string, filter: string) {
-    // TODO: notify backend about new selected filter (i.e. a new poi was selected on the map or a new city was chosen)
     this.notifyFilterObservers({ dimension, filter });
-    return;
+
+    sendUserParameters([{
+      name: dimension,
+      type: "categorical",
+      interval: filter
+    }]);
   }
 
   /**
    * Get the upper and lower value bounds for a particular numerical dimension in the data.
    * @param dimension dimension of the data
    */
-  public getExtent(dimension: string | null): [number, number] {
+  public getDomain(dimension: string | null): [number, number] {
     if (dimension === null) {
       return [0, 1];
     }
@@ -111,11 +119,11 @@ class DataAdapter {
   }
 
   /**
-   * Set the upper and lower value bounds for a particular numerical dimension in the data.
+   * Set the domain bounds for a particular numerical dimension in the data.
    * @param dimension dimension of the data
    * @param extent new upper and lower bound
    */
-  public setExtent(dimension: string, extent: [number, number]) {
+  public setDomain(dimension: string, extent: [number, number]) {
     this.dimensionExtents.set(dimension, extent);
     this.notifyDataObservers();
   }

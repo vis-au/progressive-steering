@@ -28,7 +28,7 @@ export function sendXDomain(extent: [number, number]) {
     return;
   }
 
-  dataAdapter.setExtent(xDomain, extent);
+  dataAdapter.setDomain(xDomain, extent);
 }
 
 /**
@@ -42,7 +42,7 @@ export function sendYDomain(extent: [number, number]) {
     return;
   }
 
-  dataAdapter.setExtent(yDomain, extent);
+  dataAdapter.setDomain(yDomain, extent);
 }
 
 /**
@@ -51,7 +51,7 @@ export function sendYDomain(extent: [number, number]) {
  */
 export function sendDimensionTotalExtent(message: {name: string, min: number, max: number}) {
   const {name, min, max} = message;
-  dataAdapter.setExtent(name, [min, max]);
+  dataAdapter.setDomain(name, [min, max]);
   return;
 }
 
@@ -98,15 +98,15 @@ export function setMinSelectionSize(minSelectionSize: number) {
 }
 
 export function sendUserSelection(ids: string[]) {
-  // TODO
-  // eel.send_user_selection(selectedIds);
-  window.eel.send_to_backend(ids);
+  window.eel.send_user_selection(ids);
 }
 
 export function sendUserSelectionBounds(xMin: number, xMax: number, yMin: number, yMax: number) {
-  // TODO
-  // eel.send_user_selection_bounds({xMin, xMax}, {yMin, yMax});
+  window.eel.send_selection_bounds({xMin, xMax}, {yMin, yMax});
+}
 
+export function sendUserParameters(parameters: {name: string, type: string, interval: [number, number] | string}[]) {
+  window.eel.send_user_params(parameters);
 }
 
 

@@ -97,7 +97,7 @@ export class App extends Component<{}, State> {
   }
 
   private renderDimensionSlider(dimension: string) {
-    const extent = this.dataAdapter.getExtent(dimension).slice();
+    const extent = this.dataAdapter.getDomain(dimension).slice();
     // const bins = this.dataAdapter.getHistogram(dimension);
 
     return (
@@ -159,8 +159,8 @@ export class App extends Component<{}, State> {
           <ScatterplotRenderer
             width={ width * 0.66 }
             height={ height }
-            extentX={ this.dataAdapter.getExtent(dimensionX) }
-            extentY={ this.dataAdapter.getExtent(dimensionY) }
+            extentX={ this.dataAdapter.getDomain(dimensionX) }
+            extentY={ this.dataAdapter.getDomain(dimensionY) }
             dimensionX={ dimensionX }
             dimensionY={ dimensionY }
             data={ this.dataAdapter.data }
