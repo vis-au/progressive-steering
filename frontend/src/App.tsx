@@ -50,12 +50,14 @@ export class App extends Component<{}, State> {
   }
 
   private onBrushedPoints(brushedPoints: any[]) {
+    console.log(`user selected ${brushedPoints.length} points. Updating steering ...`);
     this.dataAdapter.selectItems(brushedPoints);
 
     this.setState({ selectedPoints: brushedPoints });
   }
 
   private onBrushedRegion(region: number[][]) {
+    console.log(`user selected region from [${region[0]}] to [${region[1]}]. Updating steering ...`);
     this.dataAdapter.selectRegion(region);
   }
 
