@@ -6,6 +6,7 @@ import ProgressBar from './ProgressBar';
 import MapViewerRenderer from './MapViewer';
 import DoubleSlider from './DoubleSlider';
 import './App.css';
+import EvaluationMetric from './EvaluationMetric';
 
 interface State {
   selectedPoints: any[]
@@ -150,8 +151,8 @@ export class App extends Component<{}, State> {
 
         <div className="footer">
           <div className="metrics">
-            <div className="metric">{ this.state.selectedPoints.length } Points selected</div>
-            <div className="metric">{ this.dataAdapter.data.length } Data points received</div>
+            <EvaluationMetric label={ "Points selected" } value={ this.state.selectedPoints.length } />
+            <EvaluationMetric label={ "Points received" } value={ this.dataAdapter.data.length } />
           </div>
           <ProgressBar
             label="items processed"
