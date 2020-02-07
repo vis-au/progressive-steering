@@ -1,4 +1,5 @@
 import { sendUserSelectionBounds, sendUserSelection } from "./EelBridge";
+import * as d3 from 'd3';
 
 export const DEFAULT_DIMENSIONS = ["a", "b", "c", "d", "e"];
 export const DEFAULT_TOTAL_DATA_SIZE = 10000;
@@ -104,6 +105,23 @@ class DataAdapter {
   public setExtent(dimension: string, extent: number[]) {
     this.dimensionExtents.set(dimension, extent.slice());
     this.notifyDataObservers();
+  }
+
+  /**
+   * Computes the histogram for a dimension in the data. Is not progressive.
+   * @param dimension dimension of the data
+   */
+  public getHistogram(dimension: string | null) {
+    if (dimension === null) {
+      return;
+    }
+    const histogramGenerator = d3.histogram()
+      .value((d: any) => d[dimension]);
+
+    const histogram: d3.Bin<number, number>[] = histogramGenerator(this._data);
+    const values = histogram.map(bin => bin.length);
+
+    return values;
   }
 
   public selectItems(items: any[]) {

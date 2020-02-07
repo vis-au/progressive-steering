@@ -9,6 +9,7 @@ interface Props {
   width: number,
   height?: number,
   margin?: number,
+  bins?: number[],
   onSelection: (selection: number[]) => any
 }
 interface State {
@@ -25,24 +26,16 @@ export default class DoubleSlider extends React.Component<Props, State> {
   private brush: any;
   private selection: any;
 
-  private updateScale() {
-    this.scale
-      .domain([this.props.min, this.props.max])
-      .range([0, this.props.width]);
+  constructor(props: Props) {
+    super(props);
+
+    this.createBrush();
   }
 
-  private renderAxis() {
-    const axis = d3.axisTop(this.scale).ticks(DEFAULT_TICK_NUMBER);
-    const height = this.props.height || DEFAULT_HEIGHT;
-    const margin = this.props.margin || DEFAULT_MARGIN;
-    const svg = d3.select(`#${this.props.label}`);
-
-    svg.selectAll(".axis").remove();
-
-    svg.select("g.boundary-scale").append("g")
-      .attr("class", "axis")
-      .attr("transform", `translate(${margin},${height - 1})`)
-      .call(axis);
+  private createBrush() {
+    this.brush = d3.brushX()
+      .extent([[DEFAULT_MARGIN, 0], [this.props.width + DEFAULT_MARGIN, this.props.height || DEFAULT_HEIGHT]])
+      .on("brush start end", this.onBrush.bind(this));
   }
 
   private onBrush() {
@@ -60,18 +53,69 @@ export default class DoubleSlider extends React.Component<Props, State> {
     }
   }
 
-  private createBrush() {
-    this.brush = d3.brushX()
-      .extent([[DEFAULT_MARGIN, 0], [this.props.width + DEFAULT_MARGIN, this.props.height || DEFAULT_HEIGHT]])
-      .on("brush start end", this.onBrush.bind(this));
+  private updateScale() {
+    this.scale
+      .domain([this.props.min, this.props.max])
+      .range([0, this.props.width]);
+  }
 
-    d3.select(`#${this.props.label}`).call(this.brush);
+  private renderAxis() {
+    if (this.props.bins !== undefined) {
+      return;
+    }
+
+    const axis = d3.axisTop(this.scale).ticks(DEFAULT_TICK_NUMBER);
+    const height = this.props.height || DEFAULT_HEIGHT;
+    const margin = this.props.margin || DEFAULT_MARGIN;
+    const svg = d3.select(`#${this.props.label}`);
+
+    svg.selectAll(".axis").remove();
+
+    svg.call(this.brush);
+
+    svg.select("g.boundary-scale").append("g")
+      .attr("class", "axis")
+      .attr("transform", `translate(${margin},${height - 1})`)
+      .call(axis);
+  }
+
+  private renderHistogram() {
+    if (this.props.bins === undefined) {
+      return;
+    }
+
+    const svg = d3.select(`#${this.props.label}`);
+    const histogram = svg.select("g.histogram");
+
+    const numberOfBins = this.props.bins.length;
+    const binSize = this.props.width / numberOfBins;
+    const maxValue = Math.max(...this.props.bins);
+
+    const binScale = d3.scaleLinear()
+      .domain([0, numberOfBins])
+      .range([0, this.props.width]);
+
+    const barScale = d3.scaleLinear()
+      .domain([maxValue, 0])
+      .range([0, this.props.height || DEFAULT_HEIGHT]);
+
+    svg.call(this.brush);
+
+    // histogram.selectAll("rect.bin").remove();
+
+    histogram.selectAll("rect.bin").data(this.props.bins)
+      .join("rect")
+        .attr("class", "bin")
+        .attr("width", binSize)
+        .attr("height", d => barScale(0) - barScale(d))
+        .attr("x", (d, i) => binScale(i + 1.5))
+        .attr("y", barScale);
   }
 
   public render() {
     this.updateScale();
     this.renderAxis();
-    this.createBrush();
+    this.renderHistogram();
 
     return (
       <div className="double-slider-container">
@@ -82,6 +126,7 @@ export default class DoubleSlider extends React.Component<Props, State> {
           width={ this.props.width + 2*(this.props.margin || DEFAULT_MARGIN) }
           height={ this.props.height || DEFAULT_HEIGHT }>
 
+          <g className="histogram"></g>
           <g className="boundary-scale"></g>
         </svg>
       </div>
