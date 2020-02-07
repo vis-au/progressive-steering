@@ -21,14 +21,12 @@ const DEFAULT_MARGIN = 10;
 const DEFAULT_TICK_NUMBER = 6;
 
 export default class DoubleSlider extends React.Component<Props, State> {
-  private scale: d3.ScaleLinear<number, number>;
+  private scale: d3.ScaleLinear<number, number> = d3.scaleLinear();
   private brush: any;
   private selection: any;
 
-  constructor(props: Props) {
-    super(props);
-
-    this.scale = d3.scaleLinear()
+  private updateScale() {
+    this.scale
       .domain([this.props.min, this.props.max])
       .range([0, this.props.width]);
   }
@@ -71,6 +69,7 @@ export default class DoubleSlider extends React.Component<Props, State> {
   }
 
   public render() {
+    this.updateScale();
     this.renderAxis();
     this.createBrush();
 
