@@ -183,6 +183,7 @@ export class App extends Component<{}, State> {
 
           <ProgressBar
             label="items processed"
+            width={ 300 }
             max={ this.dataAdapter.getTotalDataSize() }
             current={ this.dataAdapter.data.length }
           />

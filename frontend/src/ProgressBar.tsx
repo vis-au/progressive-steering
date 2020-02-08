@@ -4,6 +4,7 @@ import "./ProgressBar.css";
 interface Props {
   max: number,
   current: number,
+  width: number,
   label: string
 }
 interface State {
@@ -14,10 +15,10 @@ export default class ProgressBar extends React.Component<Props, State> {
     const progress = Math.floor((this.props.current / this.props.max) * 1000) / 10;
 
     return (
-      <div className="progressBarContainer">
+      <div className="progressBarContainer" style={{ width: this.props.width }}>
         <div className="progressBarLabel">
-          <div className="label">{ this.props.label }:</div>
-          <div className="value">{ progress }%</div>
+          <span className="label">{ this.props.label }: </span>
+          <span className="value">{ progress }%</span>
         </div>
         <div className="progressBar">
           <div className="progress" style={{ width: `${progress}%`}}>

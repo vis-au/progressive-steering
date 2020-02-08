@@ -6,14 +6,8 @@
   align-items: center;
 }
 
-.progressBarLabel {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-}
-
 .progressBar {
-  width: 80%;
+  width: 40%;
   height: 1rem;
   display: flex;
   flex-direction: row;
