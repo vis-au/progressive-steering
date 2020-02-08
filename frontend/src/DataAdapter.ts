@@ -28,7 +28,7 @@ class DataAdapter {
 
   public addData(data: any[]) {
     if (this._dimensions.length === 0) {
-      this._dimensions = Object.keys(data[0]);
+      this._dimensions = Object.keys(data[0]).filter(d => d !== "id");
     }
 
     this._chunkSize = data.length;
