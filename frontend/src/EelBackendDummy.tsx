@@ -1,14 +1,12 @@
-import { getEelDataAdapter, DEFAULT_TOTAL_DATA_SIZE } from "./DataAdapter"
-import { setXName, setYName, sendXDomain, sendYDomain, sendDimensionTotalExtent, sendEvaluationMetric, sendCity, sendDataChunk, setMinSelectionSize } from "./EelBridge";
+import { DEFAULT_TOTAL_DATA_SIZE } from "./DataAdapter"
+import { setXName, sendXDomain, sendYDomain, sendDimensionTotalExtent, sendEvaluationMetric, sendCity, sendDataChunk, setMinSelectionSize, setYName } from "./EelBridge";
 
 // interval in which new points are received should stay well above 0.2s, otherwise rendering times
 // exceed the time to the next interval.
 const TOTAL_DURATION = 1000;
 const CHUNK_SIZE = 100;
 const DATA_EXTENT = 1.0;
-
-const dataAdapter = getEelDataAdapter();
-
+const DEFAULT_DIMENSIONS = ["a", "b", "c", "d", "e"];
 
 function generateRandomData(chunkSize: number): any[] {
   const randomData: any[] = [];
@@ -18,7 +16,7 @@ function generateRandomData(chunkSize: number): any[] {
 
     randomEntry.id = `datum_${Math.floor(Math.random() * 100000000)}`;
 
-    dataAdapter.dimensions.forEach(dimension => {
+    DEFAULT_DIMENSIONS.forEach(dimension => {
       randomEntry[dimension] = Math.random() * DATA_EXTENT;
     });
 

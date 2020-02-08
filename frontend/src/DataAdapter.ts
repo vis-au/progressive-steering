@@ -1,7 +1,6 @@
 import { sendUserSelectionBounds, sendUserSelection, sendUserParameters } from "./EelBridge";
 import * as d3 from 'd3';
 
-export const DEFAULT_DIMENSIONS = ["a", "b", "c", "d", "e"];
 export const DEFAULT_TOTAL_DATA_SIZE = 1000;
 export const DEFAULT_EVALUATION_METRICS = ["recall", "precision"];
 
@@ -26,10 +25,6 @@ class DataAdapter {
   private dimensionFilters: Map<string, [number, number]> = new Map();
   private dimensionExtents: Map<string, [number, number]> = new Map();
   private evaluationMetrics: Map<string, number> = new Map();
-
-  constructor() {
-    this._dimensions = DEFAULT_DIMENSIONS;
-  }
 
   public addData(data: any[]) {
     if (this._dimensions.length === 0) {

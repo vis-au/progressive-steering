@@ -98,7 +98,7 @@ export class App extends Component<{}, State> {
 
   private renderDimensionSlider(dimension: string) {
     const extent = this.dataAdapter.getDomain(dimension).slice();
-    // const bins = this.dataAdapter.getHistogram(dimension);
+    const bins = this.dataAdapter.getHistogram(dimension);
 
     return (
       <DoubleSlider
@@ -107,7 +107,7 @@ export class App extends Component<{}, State> {
         min={ extent[0] }
         max={ extent[1] }
         width={ 125 }
-        // bins={ bins }
+        bins={ bins }
         onSelection={ (filter: [number, number]) => this.dataAdapter.filterNumericalDimension(dimension, filter) }
       />
     );
