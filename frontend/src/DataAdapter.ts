@@ -1,16 +1,6 @@
 import { sendUserSelectionBounds, sendUserSelection, sendUserParameters } from "./EelBridge";
 import * as d3 from 'd3';
-
-export const DEFAULT_TOTAL_DATA_SIZE = 1000;
-export const DEFAULT_EVALUATION_METRICS = ["recall", "precision"];
-
-export const DEFAULT_POIS = [
-  {lon: 540, lat: 100, label: "poi 1"},
-  {lon: 200, lat: 300, label: "poi 2"},
-  {lon: 360, lat: 250, label: "poi 3"},
-  {lon: 276, lat: 400, label: "poi 4"},
-  {lon: 344, lat: 100, label: "poi 5"}
-];
+import { DEFAULT_TOTAL_DATA_SIZE, DEFAULT_POIS } from "./EelBackendDummy";
 
 class DataAdapter {
   private _chunkSize: number = 0;

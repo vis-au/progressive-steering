@@ -1,12 +1,22 @@
-import { DEFAULT_TOTAL_DATA_SIZE } from "./DataAdapter"
 import { setXName, sendXDomain, sendYDomain, sendDimensionTotalExtent, sendEvaluationMetric, sendCity, sendDataChunk, setMinSelectionSize, setYName } from "./EelBridge";
 
 // interval in which new points are received should stay well above 0.2s, otherwise rendering times
 // exceed the time to the next interval.
-const TOTAL_DURATION = 1000;
-const CHUNK_SIZE = 100;
-const DATA_EXTENT = 1.0;
-const DEFAULT_DIMENSIONS = ["a", "b", "c", "d", "e"];
+export const TOTAL_DURATION = 1000;
+export const CHUNK_SIZE = 100;
+export const DATA_EXTENT = 1.0;
+export const DEFAULT_DIMENSIONS = ["a", "b", "c", "d", "e"];
+
+export const DEFAULT_TOTAL_DATA_SIZE = 1000;
+export const DEFAULT_EVALUATION_METRICS = ["recall", "precision"];
+
+export const DEFAULT_POIS = [
+  {lon: 540, lat: 100, label: "poi 1"},
+  {lon: 200, lat: 300, label: "poi 2"},
+  {lon: 360, lat: 250, label: "poi 3"},
+  {lon: 276, lat: 400, label: "poi 4"},
+  {lon: 344, lat: 100, label: "poi 5"}
+];
 
 function generateRandomData(chunkSize: number): any[] {
   const randomData: any[] = [];

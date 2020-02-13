@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 import { eel } from './EelBridge';
-import { getEelDataAdapter, EelDataAdapter, getPOIs, DEFAULT_EVALUATION_METRICS } from './DataAdapter';
+import { getEelDataAdapter, EelDataAdapter, getPOIs } from './DataAdapter';
 import ScatterplotRenderer from './ScatterplotRenderer';
 import ProgressBar from './ProgressBar';
 import MapViewerRenderer, { POI } from './MapViewer';
 import DoubleSlider from './DoubleSlider';
 import EvaluationMetric from './EvaluationMetric';
+import { DEFAULT_EVALUATION_METRICS } from './EelBackendDummy';
 import './App.css';
 
 interface State {
@@ -107,7 +108,7 @@ export class App extends Component<{}, State> {
         min={ extent[0] }
         max={ extent[1] }
         width={ 125 }
-        bins={ bins }
+        // bins={ bins }
         onSelection={ (filter: [number, number]) => this.dataAdapter.filterNumericalDimension(dimension, filter) }
       />
     );
