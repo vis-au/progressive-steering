@@ -24,12 +24,12 @@ button.toggle-map:hover {
 }
 
 circle.poi {
-  fill: steelblue;
+  fill: white;
   transition: all 0.15s ease-in-out;
 }
 circle.poi:hover {
   cursor: pointer;
 }
 circle.poi.selected {
-  fill: firebrick;
+  fill: steelblue;
 }
