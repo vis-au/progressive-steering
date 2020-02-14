@@ -146,7 +146,7 @@ export class App extends Component<{}, State> {
     const dimensionX = this.dataAdapter.xDimension;
     const dimensionY = this.dataAdapter.yDimension;
 
-    const width = window.innerWidth - 10;
+    const width = window.innerWidth - 1;
     const height = window.innerHeight - 100;
 
     return (

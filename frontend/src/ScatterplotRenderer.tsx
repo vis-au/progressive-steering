@@ -21,7 +21,7 @@ interface Props {
 }
 
 const DEFAULT_POINT_RADIUS = 2;
-const DEFAULT_POINT_COLOR = "steelblue";
+const DEFAULT_POINT_COLOR = "rgba(70, 130, 180, 0.3)";
 const DEFAULT_POINT_STROKE_WIDTH = 0;
 const DEFAULT_POINT_HIGHLIGHTED_STROKE_WIDTH = 5;
 
