@@ -255,7 +255,9 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     context.fillStyle = DEFAULT_POINT_COLOR;
     context.strokeStyle = DEFAULT_POINT_COLOR;
     context.lineWidth = DEFAULT_POINT_STROKE_WIDTH;
+
     const itemCount = this.props.data.length;
+
     // if chunksize property is not defined, render the full dataset
     const chunk = this.props.data.slice(itemCount - (this.props.chunkSize || itemCount), itemCount);
 

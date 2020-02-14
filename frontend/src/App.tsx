@@ -156,9 +156,9 @@ export class App extends Component<{}, State> {
           { this.renderDimensionSliders() }
         </div>
 
-        <div className="mainView">
+        <div className="mainView" style={ {minHeight: height} }>
           <ScatterplotRenderer
-            width={ width * 0.66 }
+            width={ width }
             height={ height }
             extentX={ this.dataAdapter.getDomain(dimensionX) }
             extentY={ this.dataAdapter.getDomain(dimensionY) }

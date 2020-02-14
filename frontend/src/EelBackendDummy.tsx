@@ -2,12 +2,12 @@ import { setXName, sendXDomain, sendYDomain, sendDimensionTotalExtent, sendEvalu
 
 // interval in which new points are received should stay well above 0.2s, otherwise rendering times
 // exceed the time to the next interval.
-export const TOTAL_DURATION = 1000;
+export const TOTAL_DURATION = 100000;
 export const CHUNK_SIZE = 100;
 export const DATA_EXTENT = 1.0;
 export const DEFAULT_DIMENSIONS = ["a", "b", "c", "d", "e"];
 
-export const DEFAULT_TOTAL_DATA_SIZE = 1000;
+export const DEFAULT_TOTAL_DATA_SIZE = 100000;
 export const DEFAULT_EVALUATION_METRICS = ["recall", "precision"];
 
 export const DEFAULT_POIS = [

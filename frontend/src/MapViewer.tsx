@@ -10,14 +10,17 @@ interface Props {
   height: number,
   pois: POI[],
   initialPOI: POI | null,
+  buttonWidth?: number,
   onPOISelected: (poi: POI) => any
 }
 interface State {
-  selectedPOI: POI
+  selectedPOI: POI,
+  mapVisible: boolean
 }
 
 export default class MapViewRenderer extends React.Component<Props, State> {
   private mapData: any = null;
+  private buttonWidth: number = 75;
 
   constructor(props: Props) {
     super(props);
@@ -27,8 +30,11 @@ export default class MapViewRenderer extends React.Component<Props, State> {
       .then(data => this.mapData = data)
       .then(() => this.renderMap());
 
+    this.buttonWidth = this.props.buttonWidth || this.buttonWidth;
+
     this.state = {
-      selectedPOI: this.props.initialPOI || this.props.pois[0]
+      selectedPOI: this.props.initialPOI || this.props.pois[0],
+      mapVisible: true
     };
   }
 
@@ -51,7 +57,7 @@ export default class MapViewRenderer extends React.Component<Props, State> {
       .data(this.mapData.features)
       .enter().append('path')
       .attr('d', path as any)
-      .style('fill', 'white')
+      .style('fill', '#333')
       .style('stroke', '#ccc');
   }
 
@@ -60,15 +66,36 @@ export default class MapViewRenderer extends React.Component<Props, State> {
       .classed("selected", d => d === this.state.selectedPOI);
   }
 
+  private updateMapPosition() {
+    const svg = d3.select("svg.map-canvas");
+    const button = d3.select("button.toggle-map");
+    const mapPosition = this.state.mapVisible ? 0 : -this.props.width;
+    const buttonPosition = this.state.mapVisible ? this.props.width - this.buttonWidth : 0;
+
+    svg.transition().duration(150).ease(d3.easeLinear).style("right", mapPosition + "px");
+    button.transition().duration(150).ease(d3.easeLinear).style("right", buttonPosition + "px");
+  }
+
+  private toggleMap() {
+    this.setState({ mapVisible: !this.state.mapVisible })
+  }
+
   public render() {
     this.updateSelectedPOI();
+    this.updateMapPosition();
 
     return (
-      <div className="map-view-component">
+      <div className="map-view-component" style={ { width: this.props.width, height: this.props.height} }>
         <svg className="map-canvas" width={ this.props.width } height={ this.props.height }>
           <g className="map"></g>
           <g className="overlay"></g>
         </svg>
+        <button
+          className="toggle-map"
+          style={{ width: this.buttonWidth }}
+          onClick={ this.toggleMap.bind(this) }>
+            POI Map
+        </button>
       </div>
     );
   }
