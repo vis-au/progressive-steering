@@ -1,11 +1,12 @@
 .map-view-component {
   position: absolute;
   right: 0;
-  overflow: hidden;
+  height: 0;
+  transition: all 0.25 ease-in-out;
 }
 .map-view-component svg {
   position: absolute;
-  transition: all 0.25 ease-in-out;
+  right: 0;
   background: rgba(255, 255, 255, 0.3);
 }
 button.toggle-map {

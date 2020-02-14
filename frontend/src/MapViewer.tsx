@@ -66,27 +66,21 @@ export default class MapViewRenderer extends React.Component<Props, State> {
       .classed("selected", d => d === this.state.selectedPOI);
   }
 
-  private updateMapPosition() {
-    const svg = d3.select("svg.map-canvas");
-    const button = d3.select("button.toggle-map");
-    const mapPosition = this.state.mapVisible ? 0 : -this.props.width;
-    const buttonPosition = this.state.mapVisible ? this.props.width - this.buttonWidth : 0;
-
-    svg.transition().duration(150).ease(d3.easeLinear).style("right", mapPosition + "px");
-    button.transition().duration(150).ease(d3.easeLinear).style("right", buttonPosition + "px");
-  }
-
   private toggleMap() {
     this.setState({ mapVisible: !this.state.mapVisible })
   }
 
   public render() {
     this.updateSelectedPOI();
-    this.updateMapPosition();
 
     return (
-      <div className="map-view-component" style={ { width: this.props.width, height: this.props.height} }>
-        <svg className="map-canvas" width={ this.props.width } height={ this.props.height }>
+      <div className="map-view-component"
+        style={ { width: this.state.mapVisible ? this.props.width : this.buttonWidth } }>
+        <svg
+          className="map-canvas"
+          width={ this.props.width }
+          height={ this.props.height }
+          style={{display: this.state.mapVisible ? "block" : "none" }}>
           <g className="map"></g>
           <g className="overlay"></g>
         </svg>
