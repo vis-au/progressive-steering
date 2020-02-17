@@ -1,13 +1,20 @@
 svg.axisCanvas,
+svg.densityCanvas,
 canvas.scatterplotCanvas {
   position: absolute;
 }
 
 rect.brushedRegion {
-  fill: #999;
-  stroke-width: 4px;
+  stroke: black;
+  fill: none;
+  stroke-width: 1px;
 }
 
 svg g.unset-dimension-warning {
   text-anchor: middle;
+}
+
+svg.densityCanvas path.density-region {
+  fill-opacity: 0.05;
+  fill: black;
 }

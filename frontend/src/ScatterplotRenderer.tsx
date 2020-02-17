@@ -24,6 +24,8 @@ const DEFAULT_POINT_RADIUS = 2;
 const DEFAULT_POINT_COLOR = "rgba(70, 130, 180, 0.3)";
 const DEFAULT_POINT_STROKE_WIDTH = 0;
 const DEFAULT_POINT_HIGHLIGHTED_STROKE_WIDTH = 5;
+const DEFAULT_KERNEL_STD = 10;
+const DEFAULT_DENSITY_LEVELS = 5;
 
 export default class ScatterplotRenderer extends React.Component<Props, State> {
   private brush: any;
@@ -36,6 +38,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   private scaleY: d3.ScaleLinear<number, number>;
 
   private quadtree: d3.Quadtree<[number, number]>;
+  private densityContourGenerator: d3.ContourDensity<[number, number]>;
 
   constructor(props: Props) {
     super(props);
@@ -53,6 +56,13 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       .extent([[0, 0], [this.props.width, this.props.height]])
       .x((d: any) => this.scaleX(d[this.props.dimensionX || ""]))
       .y((d: any) => this.scaleY(d[this.props.dimensionY || ""]));
+
+    this.densityContourGenerator = d3.contourDensity()
+      .size([this.props.width, this.props.height])
+      .x((d: any) => this.scaleX(d[this.props.dimensionX || ""]))
+      .y((d: any) => this.scaleY(d[this.props.dimensionY || ""]))
+      .bandwidth(DEFAULT_KERNEL_STD)
+      .thresholds(DEFAULT_DENSITY_LEVELS);
 
     this.scaleX = d3.scaleLinear()
       .range([0, this.props.width]);
@@ -75,6 +85,15 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   }
 
   private getCurrentlyBrushedPoints() {
+    const extent = this.selection;
+    const currentlyBrushedPoints: any[] = this.getPointsInRegion(extent);
+
+    return currentlyBrushedPoints;
+  }
+
+  private getPointsInRegion(region: number[][]) {
+    const pointsInRegion: any[] = [];
+
     if (this.selection === null || this.selection.length === 0) {
       return [];
     }
@@ -82,8 +101,6 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       return [];
     }
 
-    const currentlyBrushedPoints: any[] = [];
-    const extent = this.selection;
     const dimX = this.props.dimensionX;
     const dimY = this.props.dimensionY;
 
@@ -92,19 +109,19 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     //     do {
     //       let d = node.data;
     //       const inBounds =
-    //         d[0] >= extent[0][0] &&
-    //         d[0] < extent[1][0] &&
-    //         d[1] >= extent[0][1] &&
-    //         d[1] < extent[1][1];
+    //         d[0] >= region[0][0] &&
+    //         d[0] < region[1][0] &&
+    //         d[1] >= region[0][1] &&
+    //         d[1] < region[1][1];
 
     //       currentlyBrushedPoints.push(node);
     //     } while ((node = node.next));
     //   }
     //   return (
-    //     x0 >= extent[1][0] ||
-    //     y0 >= extent[1][1] ||
-    //     x1 < extent[0][0] ||
-    //     y1 < extent[0][1]
+    //     x0 >= region[1][0] ||
+    //     y0 >= region[1][1] ||
+    //     x1 < region[0][0] ||
+    //     y1 < region[0][1]
     //   );
     // });
 
@@ -112,12 +129,12 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       const x = this.scaleX(datum[dimX]);
       const y = this.scaleY(datum[dimY]);
 
-      if (x > extent[0][0] && x < extent[1][0] && y > extent[0][1] && y < extent[1][1]) {
-        currentlyBrushedPoints.push(datum);
+      if (x > region[0][0] && x < region[1][0] && y > region[0][1] && y < region[1][1]) {
+        pointsInRegion.push(datum);
       }
     });
 
-    return currentlyBrushedPoints;
+    return pointsInRegion;
   }
 
   private updateCurrentlySelectedPoints() {
@@ -180,7 +197,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     const y = brushedRegion[0][1];
     const width = Math.abs(brushedRegion[0][0] - brushedRegion[1][0]);
     const height = Math.abs(brushedRegion[0][1] - brushedRegion[1][1]);
-    const opacity = index / this.state.brushedRegions.length + 0.1;
+    // const opacity = index / this.state.brushedRegions.length + 0.1;
+    const opacity = 1;
 
     return (
       <rect
@@ -274,14 +292,29 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     });
   }
 
+  private renderDensityPlots() {
+    const pointsInBrushedRegions = this.state.brushedRegions
+      .map(this.getPointsInRegion.bind(this))
+      .flat();
+
+    const canvas = d3.select("svg.densityCanvas");
+
+    canvas.selectAll("path.density-region").data(this.densityContourGenerator(pointsInBrushedRegions))
+      .join("path")
+        .attr("class", "density-region")
+        .attr("d", d3.geoPath());
+  }
+
   public render() {
     this.updateScales();
     this.renderAxes();
     this.renderPoints();
+    this.renderDensityPlots();
 
     return (
       <div className="scatterplotRenderer" style={ { width: this.props.width } }>
         <canvas className="scatterplotCanvas" width={ this.props.width } height={ this.props.height }></canvas>
+        <svg className="densityCanvas" width={ this.props.width } height={ this.props.height } />
         <svg className="axisCanvas" width={ this.props.width } height={ this.props.height }>
           <g className="axes"></g>
           { this.renderBrushedRegions() }

@@ -34,7 +34,7 @@ export default class MapViewRenderer extends React.Component<Props, State> {
 
     this.state = {
       selectedPOI: this.props.initialPOI || this.props.pois[0],
-      mapVisible: true
+      mapVisible: false
     };
   }
 
