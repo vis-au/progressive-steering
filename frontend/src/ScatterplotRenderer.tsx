@@ -104,35 +104,36 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     const dimX = this.props.dimensionX;
     const dimY = this.props.dimensionY;
 
-    // this.quadtree.visit((node: any, x0, y0, x1, y1) => {
-    //   if (!Array.isArray(node)) {
-    //     do {
-    //       let d = node.data;
-    //       const inBounds =
-    //         d[0] >= region[0][0] &&
-    //         d[0] < region[1][0] &&
-    //         d[1] >= region[0][1] &&
-    //         d[1] < region[1][1];
+    this.quadtree.visit((node: any, x0, y0, x1, y1) => {
+      if (!Array.isArray(node)) {
+        do {
+          let d = node.data;
+          const inBounds = (this.scaleX(d[dimX]) >= region[0][0])
+            && (this.scaleX(d[dimX]) < region[1][0])
+            && (this.scaleY(d[dimY]) >= region[0][1])
+            && (this.scaleY(d[dimY]) < region[1][1]);
 
-    //       currentlyBrushedPoints.push(node);
-    //     } while ((node = node.next));
-    //   }
-    //   return (
-    //     x0 >= region[1][0] ||
-    //     y0 >= region[1][1] ||
-    //     x1 < region[0][0] ||
-    //     y1 < region[0][1]
-    //   );
-    // });
-
-    this.props.data.forEach(datum => {
-      const x = this.scaleX(datum[dimX]);
-      const y = this.scaleY(datum[dimY]);
-
-      if (x > region[0][0] && x < region[1][0] && y > region[0][1] && y < region[1][1]) {
-        pointsInRegion.push(datum);
+          if (inBounds) {
+            pointsInRegion.push(d);
+          }
+        } while ((node = node.next));
       }
+      return (
+        x0 >= region[1][0] ||
+        y0 >= region[1][1] ||
+        x1 < region[0][0] ||
+        y1 < region[0][1]
+      );
     });
+
+    // this.props.data.forEach(datum => {
+    //   const x = this.scaleX(datum[dimX]);
+    //   const y = this.scaleY(datum[dimY]);
+
+    //   if (x > region[0][0] && x < region[1][0] && y > region[0][1] && y < region[1][1]) {
+    //     pointsInRegion.push(datum);
+    //   }
+    // });
 
     return pointsInRegion;
   }
