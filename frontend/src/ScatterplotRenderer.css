@@ -5,9 +5,10 @@ canvas.scatterplotCanvas {
 }
 
 rect.brushedRegion {
-  stroke: black;
+  stroke: #ccc;
   fill: none;
   stroke-width: 1px;
+  shape-rendering: crispEdges;
 }
 
 svg g.unset-dimension-warning {
