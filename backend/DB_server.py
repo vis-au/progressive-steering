@@ -8,7 +8,7 @@ eel.init('web')
 #simple sync with Steering module
 global modifier
 global queryAtt
-global treeReady
+global treeReady #it is used to interrupt the main chunking cycle
 treeReady=False
 
 modifier='True'
@@ -20,6 +20,8 @@ global userLat
 global userLon
 global userRange
 global userDay
+global userMaxDistance
+userMaxDistance=10 #likely this value shouild be included in the user 
 
 
 global plotted
@@ -104,36 +106,41 @@ DIZ_plotted={}
 
 
 
-#eel.sendXDomain(extent: number[])
-#eel.sendYDomain(extent: number[])
+#eel.sendXDomain(extent: number[])  #???
+#eel.sendYDomain(extent: number[])  #???
 
-#eel.setXName(xName: string)
-#eel.setXName("Saving opportunity")
 
-#eel.setYName(yName: string)
-#eel.setYName("Distance")
 
 #eel.sendEvaluationMetric(message: {name: string, value: number})
 
 #eel.sendCity(city: string)
-#eel.sendCity("Paris")
+
 
 #eel.sendDimensionTotalExtent(message: {name: string, min: number, max: number})
-#eel.setMinSelectionSize(minSelectionSize: number)
 
 
+
+#eel.sendCity("Paris")
+#eel.setXName("Saving opportunity")
+#eel.setYName("Distance")
+#eel.setMinSelectionSize(minSelectionSize: 5) #or ???
 
 # @eel.expose
-def send_to_backend_userData(x={'lat':48.85565,'lon':2.365492,'moneyRange':(30,70),'day':"2020-04-31"}): #Place des Vosges, VIS deadline
+def send_to_backend_userData(x={'lat':48.85565,'lon':2.365492,'moneyRange':(30,70),'day':"2020-04-31", "userMaxDistance":10}): #Place des Vosges, VIS deadline
   global userLat
   global userLon
   global userRange
-  global userDay  
+  global userDay
+  global userMaxDistance  
   print("received data",x)
   userLat=x['lat']
   userLon=x['lon']
   userRange=x['moneyRange']
-  userDay=x['lat']
+  userDay=x['day']
+  userMaxDistance=x['userMaxDistance']
+  #eel.setMinSelectionSize({"name": "Distance", "min": 0, "max": 10}) #max value  deserves more thinking
+  #eel.setMinSelectionSize({"name": "Saving opportunity", "min": 0, "max": x["moneyRange"][1]-["moneyRange"][0]})
+  
 
 
 def sendChunk(chunk):
@@ -188,7 +195,7 @@ def buildQuery(userLat,userLon,userRange,userDay,att,modifier,chunkSize):
 def feedTuples(query,chunkSize):
     global modifier
     global DIZ_plotted
-    global treeReady
+    global treeReady #it is used to interrupt the main chunking cycle
     mydb=dbConnect("localhost",'root','Pk1969beppe','airbnb')
     mycursor = mydb.cursor()
     mycursor.execute('DELETE FROM plotted')
@@ -208,7 +215,7 @@ def feedTuples(query,chunkSize):
            plotted+=1
            mydb.commit()  
            if chunks==2:
-               treeReady=True  #sumulate tree  ready,should be set by the Steering module 
+               treeReady=True  #sumulate decision tree intervention,should be set by the Steering module 
          sendChunk(actualChunk)      
          mycursor.execute(query)
          myresult = mycursor.fetchall()   
