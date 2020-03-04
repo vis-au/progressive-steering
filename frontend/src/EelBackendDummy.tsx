@@ -5,7 +5,7 @@ import { setXName, sendXDomain, sendYDomain, sendDimensionTotalExtent, sendEvalu
 export const TOTAL_DURATION = 100000;
 export const CHUNK_SIZE = 100;
 export const DATA_EXTENT = 1.0;
-export const DEFAULT_DIMENSIONS = ["id", "street", "price", "longitude", "latitude"];
+export const DEFAULT_DIMENSIONS = ["id", "street", "price"];
 
 export const DEFAULT_TOTAL_DATA_SIZE = 100000;
 export const DEFAULT_EVALUATION_METRICS = ["recall", "precision"];

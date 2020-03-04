@@ -30,6 +30,9 @@ function serializeChunk(chunk: any) {
       datum[dimension] = chunk[id].values[i];
     });
 
+    datum["Saving opportunity"] = chunk[id].aboveM.saving;
+    datum["Distance"] = chunk[id].dist2user;
+
     serializedChunk.push(datum);
   });
 

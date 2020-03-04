@@ -242,8 +242,8 @@ def send_to_backend_userData(x):
   eel.set_x_name("Saving opportunity")
   eel.set_y_name("Distance")
   eel.set_min_selection_size({"name": "Distance", "min": 0, "max": 10}) #max value  deserves more thinking
-  eel.send_dimension_total_extent({"name": "Saving opportunity", "min": 0, "max": 1000})
-  eel.send_dimension_total_extent({"name": "Distance", "min": 0, "max": 1000})
+  eel.send_dimension_total_extent({"name": "Saving opportunity", "min": 0, "max": 30})
+  eel.send_dimension_total_extent({"name": "Distance", "min": 0, "max": 10})
 
   #eel.set_min_selection_size({"name": "Saving opportunity", "min": 0, "max": x["moneyRange"][1]-["moneyRange"][0]})
 
