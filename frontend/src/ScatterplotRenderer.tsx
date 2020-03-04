@@ -40,6 +40,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   private quadtree: d3.Quadtree<[number, number]>;
   private densityContourGenerator: d3.ContourDensity<[number, number]>;
 
+  private lastChunk: any[] = [];
+
   constructor(props: Props) {
     super(props);
 
@@ -280,6 +282,10 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     // if chunksize property is not defined, render the full dataset
     const chunk = this.props.data.slice(itemCount - (this.props.chunkSize || itemCount), itemCount);
 
+    if (chunk[0] !== undefined && chunk[0] === this.lastChunk[0]) {
+      return;
+    }
+    this.lastChunk = chunk;
     this.quadtree.addAll(chunk);
 
     chunk.forEach(datum => {

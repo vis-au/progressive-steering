@@ -1,9 +1,13 @@
-import eel
 import mysql.connector
 import math
 import time
+import os
+import platform
+import random
+import sys
 
-eel.init('web')
+import eel
+
 
 #simple sync with Steering module
 global modifier
@@ -16,12 +20,14 @@ modifier='price >69' #for testing chunks transicion
 
 queryAtt='id, street, price, latitude, longitude'
 
+USER_PW = 'password' # configure according to MySQL setup
+
 global userLat
 global userLon
 global userRange
 global userDay
 global userMaxDistance
-userMaxDistance=10 #likely this value shouild be included in the user 
+userMaxDistance=10 #likely this value should be included in the user
 
 
 global plotted
@@ -104,50 +110,19 @@ DIZ_plotted={}
 #}
 
 
-
-
 #eel.sendXDomain(extent: number[])  #???
 #eel.sendYDomain(extent: number[])  #???
 
-
-
 #eel.sendEvaluationMetric(message: {name: string, value: number})
 
-#eel.sendCity(city: string)
-
-
-#eel.sendDimensionTotalExtent(message: {name: string, min: number, max: number})
-
-
-
-#eel.sendCity("Paris")
-#eel.setXName("Saving opportunity")
-#eel.setYName("Distance")
 #eel.setMinSelectionSize(minSelectionSize: 5) #or ???
-
-# @eel.expose
-def send_to_backend_userData(x={'lat':48.85565,'lon':2.365492,'moneyRange':(30,70),'day':"2020-04-31", "userMaxDistance":10}): #Place des Vosges, VIS deadline
-  global userLat
-  global userLon
-  global userRange
-  global userDay
-  global userMaxDistance  
-  print("received data",x)
-  userLat=x['lat']
-  userLon=x['lon']
-  userRange=x['moneyRange']
-  userDay=x['day']
-  userMaxDistance=x['userMaxDistance']
-  #eel.setMinSelectionSize({"name": "Distance", "min": 0, "max": 10}) #max value  deserves more thinking
-  #eel.setMinSelectionSize({"name": "Saving opportunity", "min": 0, "max": x["moneyRange"][1]-["moneyRange"][0]})
-  
 
 
 def sendChunk(chunk):
-    #eel.sendDataChunk(chunk)
+    eel.send_data_chunk(chunk)
     print('----------------------',len(chunk),chunk)
     pass
-  
+
 
 def distance(lat1, long1, lat2, long2, sleep=0.001):
     degrees_to_radians = math.pi/180.0
@@ -171,7 +146,7 @@ def dbConnect(h,u,p,d):
      )
     return mydb
 
-def aboveMinimum(bbId,actualPrice,lat,long,more=0.3,chunkSize=50): 
+def aboveMinimum(bbId,actualPrice,lat,long,more=0.3,chunkSize=50):
     mycursor = mydb.cursor()
     qq=buildQuery(userLat,userLon,userRange,userDay,queryAtt,'True',chunkSize)
     mycursor.execute(qq)
@@ -179,7 +154,7 @@ def aboveMinimum(bbId,actualPrice,lat,long,more=0.3,chunkSize=50):
     minimo=actualPrice
     minimoX=(bbId,0)
     for x in myresult:
-        if 0 < distance(userLat,userLon,x[3],x[4])-distance(userLat,userLon,lat,long)<=more:     
+        if 0 < distance(userLat,userLon,x[3],x[4])-distance(userLat,userLon,lat,long)<=more:
             minimo=min(minimo,x[2])
             minimoX=(x[0],distance(userLat,userLon,x[3],x[4])-distance(userLat,userLon,lat,long))
     return {"neighborhood_min":minimo,"saving":actualPrice-minimo,"alternativeId":minimoX[0],"extraSteps":minimoX[1]}
@@ -187,7 +162,7 @@ def aboveMinimum(bbId,actualPrice,lat,long,more=0.3,chunkSize=50):
 def buildQuery(userLat,userLon,userRange,userDay,att,modifier,chunkSize):
     global LIMIT
     SELECT = "SELECT "+att+"  "
-    FROM   = "FROM listings " 
+    FROM   = "FROM listings "
     WHERE  = "WHERE price >="+str(userRange[0])+" AND price <="+str(userRange[1])+"  AND id NOT IN (SELECT id from plotted ) "
     LIMIT  = "LIMIT 0,50"
     return SELECT+' '+FROM+' '+ WHERE + ' AND '+modifier+' LIMIT 0,'+str(chunkSize)
@@ -196,7 +171,7 @@ def feedTuples(query,chunkSize):
     global modifier
     global DIZ_plotted
     global treeReady #it is used to interrupt the main chunking cycle
-    mydb=dbConnect("localhost",'root','Pk1969beppe','airbnb')
+    mydb=dbConnect("localhost",'root', USER_PW,'airbnb')
     mycursor = mydb.cursor()
     mycursor.execute('DELETE FROM plotted')
     mydb.commit()
@@ -204,21 +179,27 @@ def feedTuples(query,chunkSize):
     chunks=0
     mycursor.execute(query)
     myresult = mycursor.fetchall()
+
     while len(myresult)>0 and not treeReady:
          chunks+=1
          actualChunk={}
          for x in myresult:
            mycursor.execute('INSERT INTO plotted (id) VALUES (' +str(x[0])+')')
            print(chunks,x,'distance=',distance(userLat,userLon,x[3],x[4]),'aboveM=',aboveMinimum(x[0],x[2],userLat,userLon,1.5))
+
            DIZ_plotted[x[0]]={'chunk':chunks,'values':x, 'dist2user':distance(userLat,userLon,x[3],x[4]), 'aboveM':aboveMinimum(x[0],x[2],userLat,userLon,0.5)}
+
            actualChunk[x[0]]={'chunk':chunks,'values':x, 'dist2user':distance(userLat,userLon,x[3],x[4]), 'aboveM':aboveMinimum(x[0],x[2],userLat,userLon,0.5)}
+
            plotted+=1
-           mydb.commit()  
+           mydb.commit()
+
            if chunks==2:
-               treeReady=True  #sumulate decision tree intervention,should be set by the Steering module 
-         sendChunk(actualChunk)      
+               treeReady=True  #sumulate decision tree intervention,should be set by the Steering module
+         sendChunk(actualChunk)
          mycursor.execute(query)
-         myresult = mycursor.fetchall()   
+         myresult = mycursor.fetchall()
+
     print('plotted',plotted,'tuples in',chunks,'chunks')
     modifier='True'            #should be set by the Steering module
     query=buildQuery(userLat,userLon,userRange,userDay,queryAtt,modifier,chunkSize)
@@ -235,15 +216,88 @@ def feedTuples(query,chunkSize):
            plotted+=1
            actualChunk[x[0]]={'chunk':chunks,'values':x, 'dist2user':distance(userLat,userLon,x[3],x[4]), 'aboveM':aboveMinimum(x[0],x[2],userLat,userLon,0.5)}
            mydb.commit()
-         sendChunk(actualChunk)   
+         sendChunk(actualChunk)
          mycursor.execute(query)
-         myresult = mycursor.fetchall()   
+         myresult = mycursor.fetchall()
     print('plotted',plotted,'tuples in',chunks,'chunks')
-    
-    
-send_to_backend_userData() #simulate frontend provided data 
 
-sql=buildQuery(userLat,userLon,userRange,userDay,queryAtt,modifier,10)
+@eel.expose
+def send_to_backend_userData(x):
+  global userLat
+  global userLon
+  global userRange
+  global userDay
+  global userMaxDistance
 
-feedTuples(sql,10)
+  print("received user selection",x)
 
+  userLat=x['lat']
+  userLon=x['lon']
+  userRange=x['moneyRange']
+  userDay=x['day']
+  userMaxDistance=x['userMaxDistance']
+
+  # send parameters to frontend before sending data
+  eel.send_city("Paris")
+  eel.set_x_name("Saving opportunity")
+  eel.set_y_name("Distance")
+  eel.set_min_selection_size({"name": "Distance", "min": 0, "max": 10}) #max value  deserves more thinking
+  eel.send_dimension_total_extent({"name": "Saving opportunity", "min": 0, "max": 1000})
+  eel.send_dimension_total_extent({"name": "Distance", "min": 0, "max": 1000})
+
+  #eel.set_min_selection_size({"name": "Saving opportunity", "min": 0, "max": x["moneyRange"][1]-["moneyRange"][0]})
+
+  sql=buildQuery(userLat,userLon,userRange,userDay,queryAtt,modifier,10)
+  feedTuples(sql,10)
+
+@eel.expose
+def send_user_selection(selected_items):
+    print("new selected items received")
+
+@eel.expose
+def send_selection_bounds(x_bounds, y_bounds):
+    print("new selected region received")
+
+@eel.expose
+def send_user_params(parameters):
+    print("new user parameters received")
+
+def start_eel(develop):
+    """Start Eel with either production or development configuration."""
+
+    if develop:
+        directory = '../frontend/src'
+        app = None
+        page = {'port': 3000}
+    else:
+        directory = 'build'
+        app = 'chrome-app'
+        page = 'index.html'
+
+    eel.init(directory, ['.tsx', '.ts', '.jsx', '.js', '.html'])
+
+    print('Backend launched successfully. Waiting for requests ...')
+
+    # These will be queued until the first connection is made, but won't be repeated on a page reload
+    eel.say_hello_js('Python World!')   # Call a JavaScript function (must be after `eel.init()`)
+
+    eel_kwargs = dict(
+        host='localhost',
+        port=8080,
+        size=(1280, 800),
+    )
+    try:
+        eel.start(page, mode=None, **eel_kwargs)
+    except EnvironmentError:
+        # If Chrome isn't found, fallback to Microsoft Edge on Win10 or greater
+        if sys.platform in ['win32', 'win64'] and int(platform.release()) >= 10:
+            eel.start(page, mode='edge', **eel_kwargs)
+        else:
+            raise
+
+
+if __name__ == '__main__':
+    import sys
+
+    # Uses the production version in the "build" directory if passed a second argument
+    start_eel(develop=len(sys.argv) == 1)

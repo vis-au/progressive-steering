@@ -1,4 +1,4 @@
-import { sendUserSelectionBounds, sendUserSelection, sendUserParameters } from "./EelBridge";
+import { sendUserSelectionBounds, sendUserSelection, sendUserParameters, SelectionSize } from "./EelBridge";
 import * as d3 from 'd3';
 import { DEFAULT_TOTAL_DATA_SIZE, DEFAULT_POIS } from "./EelBackendDummy";
 
@@ -15,6 +15,12 @@ class DataAdapter {
   private dimensionFilters: Map<string, [number, number]> = new Map();
   private dimensionExtents: Map<string, [number, number]> = new Map();
   private evaluationMetrics: Map<string, number> = new Map();
+
+  private _selectionSize: SelectionSize = {
+    min: 0,
+    max: 1,
+    name: "distance"
+  };
 
   public addData(data: any[]) {
     if (this._dimensions.length === 0) {
@@ -194,6 +200,15 @@ class DataAdapter {
   }
 
   public get data(): any[] { return this._data; }
+
+  public get minSelectionSize(): SelectionSize {
+    return this._selectionSize;
+  }
+
+  public set minSelectionSize(minSelectionSize: SelectionSize) {
+    console.log("new selection size received:", minSelectionSize)
+    this._selectionSize = minSelectionSize;
+  }
 }
 
 export type EelDataAdapter = DataAdapter;

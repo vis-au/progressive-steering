@@ -28,7 +28,16 @@ export class App extends Component<{}, State> {
     this.dataAdapter.subscribeOnFilterChanged(this.onFilterChanged.bind(this));
     this.dataAdapter.subscribeOnMetricChanged(this.onMetricChanged.bind(this));
 
-    eel.say_hello_py('Javascript World!');
+    // Place des Vosges, VIS deadline
+    const dummyData = {
+      'lat':48.85565,
+      'lon':2.365492,
+      'moneyRange': [30, 70],
+      'day':"2020-04-31",
+      "userMaxDistance":10
+    };
+
+    eel.send_to_backend_userData(dummyData);
 
     this.state = {
       selectedPoints: []

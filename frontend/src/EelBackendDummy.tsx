@@ -5,7 +5,7 @@ import { setXName, sendXDomain, sendYDomain, sendDimensionTotalExtent, sendEvalu
 export const TOTAL_DURATION = 100000;
 export const CHUNK_SIZE = 100;
 export const DATA_EXTENT = 1.0;
-export const DEFAULT_DIMENSIONS = ["a", "b", "c", "d", "e"];
+export const DEFAULT_DIMENSIONS = ["id", "street", "price", "longitude", "latitude"];
 
 export const DEFAULT_TOTAL_DATA_SIZE = 100000;
 export const DEFAULT_EVALUATION_METRICS = ["recall", "precision"];
@@ -38,28 +38,28 @@ function generateRandomData(chunkSize: number): any[] {
 
 export function runDummyBackend() {
   // DEBUGGING: Generate random data after a fixed interval and send it to frontend
-  let x = 0;
-  const interval = window.setInterval(() => {
-    const newData = generateRandomData(CHUNK_SIZE);
-    sendDataChunk(newData);
-    x++;
-  }, TOTAL_DURATION / (DEFAULT_TOTAL_DATA_SIZE / CHUNK_SIZE));
+  // let x = 0;
+  // const interval = window.setInterval(() => {
+  //   const newData = generateRandomData(CHUNK_SIZE);
+  //   sendDataChunk(newData);
+  //   x++;
+  // }, TOTAL_DURATION / (DEFAULT_TOTAL_DATA_SIZE / CHUNK_SIZE));
 
-  window.setTimeout(() => {
-    window.clearInterval(interval);
-    console.log(`Done rendering. Received ${x} of ${(DEFAULT_TOTAL_DATA_SIZE / CHUNK_SIZE)} chunks`);
-  }, TOTAL_DURATION);
+  // window.setTimeout(() => {
+  //   window.clearInterval(interval);
+  //   console.log(`Done rendering. Received ${x} of ${(DEFAULT_TOTAL_DATA_SIZE / CHUNK_SIZE)} chunks`);
+  // }, TOTAL_DURATION);
 
   window.setTimeout(() => {}, 0);
 
-  window.setTimeout(() => {
-    setXName("a");
-    setYName("b");
-  }, 0);
+  // window.setTimeout(() => {
+  //   setXName("longitude");
+  //   setYName("latitude");
+  // }, 0);
 
   window.setTimeout(() => {
-    sendXDomain([0, 1]);
-    sendYDomain([0, 1]);
+    sendXDomain([48.8, 48.9]);
+    sendYDomain([2.3, 2.4]);
   }, 0);
 
   window.setTimeout(() => {
@@ -80,11 +80,11 @@ export function runDummyBackend() {
     });
   }, 5403);
 
-  window.setTimeout(() => {
-    sendCity("Rome");
-  }, 0);
+  // window.setTimeout(() => {
+  //   sendCity("Rome");
+  // }, 0);
 
-  window.setTimeout(() => {
-    setMinSelectionSize(100);
-  }, 0);
+  // window.setTimeout(() => {
+  //   setMinSelectionSize();
+  // }, 0);
 }

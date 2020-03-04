@@ -1,20 +1,49 @@
 import { getEelDataAdapter } from './DataAdapter';
-import { runDummyBackend } from './EelBackendDummy';
+import { runDummyBackend, DEFAULT_DIMENSIONS } from './EelBackendDummy';
 
 // Point Eel web socket to the instance
 export const eel = window.eel
 eel.set_host( 'ws://localhost:8080' );
 
+// type of a selection
+export type SelectionSize = { name: string, min: number, max: number };
+
+export type ChunkType = {
+  aboveM: any,
+  chunk: number,
+  dist2user: number,
+  values: any[]
+}
+
 // datamanger is a singleton instance that we reference from different places in the bridge
 // functions
 const dataAdapter = getEelDataAdapter();
+
+function serializeChunk(chunk: any) {
+  const serializedChunk: any[] = [];
+  const ids = Object.keys(chunk);
+
+  ids.forEach(id => {
+    const datum: any = {};
+
+    DEFAULT_DIMENSIONS.forEach((dimension, i) => {
+      datum[dimension] = chunk[id].values[i];
+    });
+
+    serializedChunk.push(datum);
+  });
+
+  return serializedChunk;
+}
 
 /**
  * Send a chunk of data of variable size to the frontend.
  * @param chunk contains arbitrary data
  */
-export function sendDataChunk(chunk: any[]) {
-  dataAdapter.addData(chunk);
+export function sendDataChunk(chunk: any) {
+  console.log("received new chunk of data:", chunk)
+  const serializedChunk = serializeChunk(chunk);
+  dataAdapter.addData(serializedChunk);
 }
 
 /**
@@ -93,8 +122,8 @@ export function sendCity(city: string) {
  * Send the minimum number of points that must be contained in a selection to the frontend.
  * @param minSelectionSize minimum number of data poits to be contained in a filter selection.
  */
-export function setMinSelectionSize(minSelectionSize: number) {
-  return;
+export function setMinSelectionSize(minSelectionSize: SelectionSize) {
+  dataAdapter.minSelectionSize = minSelectionSize;
 }
 
 export function sendUserSelection(ids: string[]) {
