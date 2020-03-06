@@ -18,6 +18,9 @@ interface State {
   mapVisible: boolean
 }
 
+// src: https://opendata.paris.fr/explore/dataset/arrondissements/information/?location=12,48.85889,2.34692&basemap=jawg.streets&dataChart=eyJxdWVyaWVzIjpbeyJjb25maWciOnsiZGF0YXNldCI6ImFycm9uZGlzc2VtZW50cyIsIm9wdGlvbnMiOnt9fSwiY2hhcnRzIjpbeyJhbGlnbk1vbnRoIjp0cnVlLCJ0eXBlIjoiY29sdW1uIiwiZnVuYyI6IkFWRyIsInlBeGlzIjoibl9zcV9hciIsInNjaWVudGlmaWNEaXNwbGF5Ijp0cnVlLCJjb2xvciI6IiMwMDMzNjYifV0sInhBeGlzIjoibl9zcV9hciIsIm1heHBvaW50cyI6NTAsInNvcnQiOiIifV0sInRpbWVzY2FsZSI6IiIsImRpc3BsYXlMZWdlbmQiOnRydWUsImFsaWduTW9udGgiOnRydWV9
+const parisGeo = require("./arrondissements.geo.json");
+
 export default class MapViewRenderer extends React.Component<Props, State> {
   private mapData: any = null;
   private buttonWidth: number = 75;
@@ -27,7 +30,9 @@ export default class MapViewRenderer extends React.Component<Props, State> {
 
     fetch("https://raw.githubusercontent.com/larsbouwens/nl-geojson/master/nl.geojson")
       .then(res => res.json())
-      .then(data => this.mapData = data)
+      .then(data => {
+        this.mapData = parisGeo;
+      })
       .then(() => this.renderMap());
 
     this.buttonWidth = this.props.buttonWidth || this.buttonWidth;
