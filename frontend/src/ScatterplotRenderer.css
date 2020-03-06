@@ -4,7 +4,7 @@ canvas.scatterplotCanvas {
   position: absolute;
 }
 
-rect.selection {
+svg.densityCanvas rect.selection {
   fill: transparent;
   stroke: #555;
 }
