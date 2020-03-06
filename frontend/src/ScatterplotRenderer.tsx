@@ -83,7 +83,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     }
 
     this.scaleX.domain(this.props.extentX);
-    this.scaleY.domain(this.props.extentY);
+    this.scaleY.domain([this.props.extentY[1], this.props.extentY[0]]);
   }
 
   private getCurrentlyBrushedPoints() {
