@@ -4,6 +4,11 @@ canvas.scatterplotCanvas {
   position: absolute;
 }
 
+rect.selection {
+  fill: transparent;
+  stroke: #555;
+}
+
 rect.brushedRegion {
   stroke: #ccc;
   fill: none;

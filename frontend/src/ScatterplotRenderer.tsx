@@ -211,7 +211,6 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
         height={ height }
         x={ x }
         y={ y }
-        rx={ Math.max(width, height) * 0.01 }
         strokeOpacity={ opacity }
         fillOpacity={ opacity }
       />
