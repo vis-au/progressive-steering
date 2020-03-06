@@ -21,6 +21,10 @@ const DEFAULT_HEIGHT = 20;
 const DEFAULT_MARGIN = 10;
 const DEFAULT_TICK_NUMBER = 6;
 
+function id(label: string) {
+  return label.toLowerCase().split(" ").join("_");
+}
+
 export default class DoubleSlider extends React.Component<Props, State> {
   private scale: d3.ScaleLinear<number, number> = d3.scaleLinear();
   private brush: any;
@@ -74,7 +78,7 @@ export default class DoubleSlider extends React.Component<Props, State> {
     const axis = d3.axisTop(this.scale).ticks(DEFAULT_TICK_NUMBER);
     const height = this.props.height || DEFAULT_HEIGHT;
     const margin = this.props.margin || DEFAULT_MARGIN;
-    const svg = d3.select(`#${this.props.label}`);
+    const svg = d3.select(`#${id(this.props.label)}`);
 
     svg.selectAll(".axis").remove();
 
@@ -91,7 +95,7 @@ export default class DoubleSlider extends React.Component<Props, State> {
       return;
     }
 
-    const svg = d3.select(`#${this.props.label}`);
+    const svg = d3.select(`#${id(this.props.label)}`);
     const histogram = svg.select("g.histogram");
 
     const numberOfBins = this.props.bins.length;
@@ -126,9 +130,9 @@ export default class DoubleSlider extends React.Component<Props, State> {
 
     return (
       <div className="double-slider-container">
-        <label htmlFor={ this.props.label }>{ this.props.label }</label>
+        <label htmlFor={ id(this.props.label) }>{ this.props.label }</label>
         <svg
-          id={ this.props.label }
+          id={ id(this.props.label) }
           className="double-slider"
           width={ this.props.width + 2*(this.props.margin || DEFAULT_MARGIN) }
           height={ this.props.height || DEFAULT_HEIGHT }>

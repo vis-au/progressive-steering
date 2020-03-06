@@ -110,6 +110,8 @@ export class App extends Component<{}, State> {
     const extent = this.dataAdapter.getDomain(dimension).slice();
     const bins = this.dataAdapter.getHistogram(dimension);
 
+    console.log(extent, dimension)
+
     return (
       <DoubleSlider
         key={ dimension }
