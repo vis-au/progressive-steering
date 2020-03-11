@@ -93,6 +93,7 @@ export function sendDimensionTotalExtent(message: {name: string, min: number, ma
  */
 export function setXName(xName: string) {
   dataAdapter.xDimension = xName;
+  console.log("new x domain:", xName);
   return;
 }
 
@@ -102,6 +103,8 @@ export function setXName(xName: string) {
  */
 export function setYName(yName: string) {
   dataAdapter.yDimension = yName;
+  console.log("new y domain:", yName);
+  return;
 }
 
 /**

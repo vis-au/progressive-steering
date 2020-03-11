@@ -17,7 +17,8 @@ interface Props {
   chunkSize?: number,
   filters: Map<string, number[]>,
   onBrushedPoints?: (points: any[]) => any,
-  onBrushedRegion?: (extent: number[][]) => any
+  onBrushedRegion?: (extent: number[][]) => any,
+  onNewPointsInSelection?: (points: any[]) => any
 }
 
 const DEFAULT_POINT_RADIUS = 2;
@@ -93,15 +94,44 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     return currentlyBrushedPoints;
   }
 
-  private getPointsInRegion(region: number[][]) {
-    const pointsInRegion: any[] = [];
-
+  private updateNewPointsInCurrentSelection(newPoints: any[]) {
     if (this.selection === null || this.selection.length === 0) {
       return [];
     }
     if (this.props.dimensionX === null || this.props.dimensionY === null) {
       return [];
     }
+
+    const pointsInSelection: any[] = [];
+    const dimX = this.props.dimensionX;
+    const dimY = this.props.dimensionY;
+    const selection = this.selection;
+
+    newPoints.forEach(datum => {
+      const x = this.scaleX(datum[dimX]);
+      const y = this.scaleY(datum[dimY]);
+
+      if (x > selection[0][0] && x < selection[1][0] && y > selection[0][1] && y < selection[1][1]) {
+        pointsInSelection.push(datum);
+      }
+    });
+
+    if (pointsInSelection.length > 0 && !!this.props.onNewPointsInSelection) {
+      this.props.onNewPointsInSelection(pointsInSelection);
+    }
+
+    return pointsInSelection;
+  }
+
+  private getPointsInRegion(region: number[][]) {
+    if (this.selection === null || this.selection.length === 0) {
+      return [];
+    }
+    if (this.props.dimensionX === null || this.props.dimensionY === null) {
+      return [];
+    }
+
+    const pointsInRegion: any[] = [];
 
     const dimX = this.props.dimensionX;
     const dimY = this.props.dimensionY;
@@ -127,15 +157,6 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
         y1 < region[0][1]
       );
     });
-
-    // this.props.data.forEach(datum => {
-    //   const x = this.scaleX(datum[dimX]);
-    //   const y = this.scaleY(datum[dimY]);
-
-    //   if (x > region[0][0] && x < region[1][0] && y > region[0][1] && y < region[1][1]) {
-    //     pointsInRegion.push(datum);
-    //   }
-    // });
 
     return pointsInRegion;
   }
@@ -296,6 +317,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       context.fill();
       context.closePath();
     });
+
+    this.updateNewPointsInCurrentSelection(chunk);
   }
 
   private renderDensityPlots() {

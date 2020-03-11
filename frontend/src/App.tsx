@@ -71,6 +71,11 @@ export class App extends Component<{}, State> {
     this.dataAdapter.selectRegion(region);
   }
 
+  private onNewPointsInSelection(points: any[]) {
+    console.log(`found ${points.length} new points in current selection. Updating steering ...`);
+    this.dataAdapter.selectItems(points);
+  }
+
   private onDimensionForAxisSelected(axis: string, dimension: string) {
     if (axis === X_AXIS_SELECTOR) {
       this.dataAdapter.xDimension = dimension;
@@ -109,8 +114,6 @@ export class App extends Component<{}, State> {
   private renderDimensionSlider(dimension: string) {
     const extent = this.dataAdapter.getDomain(dimension).slice();
     const bins = this.dataAdapter.getHistogram(dimension);
-
-    console.log(extent, dimension)
 
     return (
       <DoubleSlider
@@ -180,6 +183,7 @@ export class App extends Component<{}, State> {
             filters={ this.dataAdapter.getAllFilters() }
             onBrushedPoints={ this.onBrushedPoints.bind(this) }
             onBrushedRegion={ this.onBrushedRegion.bind(this) }
+            onNewPointsInSelection={ this.onNewPointsInSelection.bind(this) }
           />
           <MapViewerRenderer
             width={ width * 0.3 }
