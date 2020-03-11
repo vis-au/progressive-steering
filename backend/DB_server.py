@@ -172,6 +172,8 @@ def feedTuples(query,chunkSize):
     mycursor.execute(query)
     myresult = mycursor.fetchall()
     print('Entering LOOP2 - Query:',query,'Precision:',getPrecision(DIZ_plotted)/chunks)
+    eel.send_evaluation_metric({"name":"precision","value":getPrecision(DIZ_plotted)/chunks})
+    
     while len(myresult)>0 and chunks <50:
          chunks+=1
          actualChunk={}
@@ -194,8 +196,7 @@ def feedTuples(query,chunkSize):
                  inb+=1     
          
          print('Inside LOOP2 - chunk ',chunks ,' sent. Query: ',query,'Precision:',inb/chunks)
-         pres=inb/chunks
-         eel.send_evaluation_metric({"name":"precision","value":pres})
+         eel.send_evaluation_metric({"name":"precision","value":inb/chunks})
         
          mycursor.execute(query)
          myresult = mycursor.fetchall()

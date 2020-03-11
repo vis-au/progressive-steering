@@ -68,11 +68,11 @@ export function runDummyBackend() {
     });
   }, 0);
 
-  window.setInterval(() => {
-    sendEvaluationMetric({
-      name: "precision", value: Math.floor(33 * Math.random()) / 100
-    });
-  }, 2200);
+ // window.setInterval(() => {
+ //   sendEvaluationMetric({
+ //     name: "precision", value: Math.floor(33 * Math.random()) / 100
+ //   });
+ // }, 2200);
 
   window.setInterval(() => {
     sendEvaluationMetric({
