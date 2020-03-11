@@ -30,11 +30,7 @@ global y
 treeReady=False
 
 chunkSize=50
-
 modifier='True'
-#modifier='price >69' #for testing chunks transiction
-
-queryAtt='id, street, price, latitude, longitude'
 queryAtt='*'
 
 USER_PW = 'password' # configure according to MySQL setup
