@@ -331,9 +331,6 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   }
 
   private renderInsideOutsidePoints() {
-    if (!this.props.highlightLastChunk) {
-      return;
-    }
     if (this.props.dimensionX === null || this.props.dimensionY === null) {
       return;
     }
@@ -345,13 +342,16 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       return;
     }
 
-    const pointsInSelection = this.getNewPointsInCurrentSelection(chunk);
-
     const canvas = d3.select("svg.recentPointsCanvas");
+    canvas.selectAll("circle.recent-point").remove();
+
+    if (!this.props.highlightLastChunk) {
+      return;
+    }
+
+    const pointsInSelection = this.getNewPointsInCurrentSelection(chunk);
     const dimX = this.props.dimensionX;
     const dimY = this.props.dimensionY;
-
-    canvas.selectAll("circle.recent-point").remove();
 
     const points = canvas.selectAll("circle.recent-point").data(chunk)
       .join("circle")

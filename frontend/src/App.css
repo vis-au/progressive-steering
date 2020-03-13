@@ -39,6 +39,12 @@
 .footer {
   border-top: 2px solid #efefef;
 }
+.footer .left {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+}
 
 .footer .metrics {
   display: flex;

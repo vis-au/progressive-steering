@@ -10,7 +10,8 @@ import { DEFAULT_EVALUATION_METRICS } from './EelBackendDummy';
 import './App.css';
 
 interface State {
-  selectedPoints: any[]
+  selectedPoints: any[],
+  highlightLatestPoints: boolean
 }
 
 const X_AXIS_SELECTOR = "x-dimension";
@@ -40,7 +41,8 @@ export class App extends Component<{}, State> {
     eel.send_to_backend_userData(dummyData);
 
     this.state = {
-      selectedPoints: []
+      selectedPoints: [],
+      highlightLatestPoints: true
     };
   }
 
@@ -74,6 +76,10 @@ export class App extends Component<{}, State> {
   private onNewPointsInSelection(points: any[]) {
     console.log(`found ${points.length} new points in current selection. Updating steering ...`);
     this.dataAdapter.selectItems(points);
+  }
+
+  private onHighlightLatestPointChanged() {
+    this.setState({ highlightLatestPoints: !this.state.highlightLatestPoints });
   }
 
   private onDimensionForAxisSelected(axis: string, dimension: string) {
@@ -156,6 +162,20 @@ export class App extends Component<{}, State> {
     );
   }
 
+  private renderHighlightLatestPointsToggle() {
+    return (
+      <div className="highlight-latest-point-toggle">
+        <label htmlFor="highlight-latest-point-toggle">highlight last chunk</label>
+        <input
+          type="checkbox"
+          name="highlight-latest-point-toggle"
+          id="highlight-latest-point-toggle"
+          checked={ this.state.highlightLatestPoints  }
+          onChange={ this.onHighlightLatestPointChanged.bind(this) }/>
+      </div>
+    );
+  }
+
   public render() {
     const dimensionX = this.dataAdapter.xDimension;
     const dimensionY = this.dataAdapter.yDimension;
@@ -181,6 +201,7 @@ export class App extends Component<{}, State> {
             data={ this.dataAdapter.data }
             chunkSize={ this.dataAdapter.chunkSize }
             filters={ this.dataAdapter.getAllFilters() }
+            highlightLastChunk={ this.state.highlightLatestPoints }
             onBrushedPoints={ this.onBrushedPoints.bind(this) }
             onBrushedRegion={ this.onBrushedRegion.bind(this) }
             onNewPointsInSelection={ this.onNewPointsInSelection.bind(this) }
@@ -195,7 +216,10 @@ export class App extends Component<{}, State> {
         </div>
 
         <div className="footer">
+          <div className="left">
           { this.renderEvaluationMetrics() }
+          { this.renderHighlightLatestPointsToggle() }
+          </div>
 
           <ProgressBar
             label="items processed"
