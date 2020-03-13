@@ -1,5 +1,6 @@
 svg.axisCanvas,
 svg.densityCanvas,
+svg.recentPointsCanvas,
 canvas.scatterplotCanvas {
   position: absolute;
 }
@@ -7,6 +8,13 @@ canvas.scatterplotCanvas {
 svg.densityCanvas rect.selection {
   fill: transparent;
   stroke: #555;
+}
+
+svg.recentPointsCanvas circle.recent-point {
+  fill: red;
+}
+svg.recentPointsCanvas circle.recent-point.inside-selection {
+  fill: green;
 }
 
 rect.brushedRegion {

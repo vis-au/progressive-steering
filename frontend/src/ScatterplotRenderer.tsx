@@ -14,8 +14,9 @@ interface Props {
   extentX: [number, number],
   extentY: [number, number],
   data: any[],
-  chunkSize?: number,
   filters: Map<string, number[]>,
+  highlightLastChunk?: boolean,
+  chunkSize?: number,
   onBrushedPoints?: (points: any[]) => any,
   onBrushedRegion?: (extent: number[][]) => any,
   onNewPointsInSelection?: (points: any[]) => any
@@ -94,7 +95,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     return currentlyBrushedPoints;
   }
 
-  private updateNewPointsInCurrentSelection(newPoints: any[]) {
+  private getNewPointsInCurrentSelection(newPoints: any[]) {
     if (this.selection === null || this.selection.length === 0) {
       return [];
     }
@@ -116,11 +117,15 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       }
     });
 
+    return pointsInSelection;
+  }
+
+  private updateNewPointsInCurrentSelection(newPoints: any[]) {
+    const pointsInSelection = this.getNewPointsInCurrentSelection(newPoints);
+
     if (pointsInSelection.length > 0 && !!this.props.onNewPointsInSelection) {
       this.props.onNewPointsInSelection(pointsInSelection);
     }
-
-    return pointsInSelection;
   }
 
   private getPointsInRegion(region: number[][]) {
@@ -281,6 +286,13 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     );
   }
 
+  private getLatestChunk() {
+    const itemCount = this.props.data.length;
+
+    // if chunksize property is not defined, return the full dataset
+    return this.props.data.slice(itemCount - (this.props.chunkSize || itemCount), itemCount);
+  }
+
   private renderPoints() {
     if (this.canvas === null) {
       return;
@@ -297,15 +309,12 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     context.strokeStyle = DEFAULT_POINT_COLOR;
     context.lineWidth = DEFAULT_POINT_STROKE_WIDTH;
 
-    const itemCount = this.props.data.length;
-
-    // if chunksize property is not defined, render the full dataset
-    const chunk = this.props.data.slice(itemCount - (this.props.chunkSize || itemCount), itemCount);
+    const chunk = this.getLatestChunk()
 
     if (chunk[0] !== undefined && chunk[0] === this.lastChunk[0]) {
       return;
     }
-    this.lastChunk = chunk;
+
     this.quadtree.addAll(chunk);
 
     chunk.forEach(datum => {
@@ -319,6 +328,40 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     });
 
     this.updateNewPointsInCurrentSelection(chunk);
+  }
+
+  private renderInsideOutsidePoints() {
+    if (!this.props.highlightLastChunk) {
+      return;
+    }
+    if (this.props.dimensionX === null || this.props.dimensionY === null) {
+      return;
+    }
+
+    const chunk = this.getLatestChunk();
+
+    // no need to update if the chunk has not changed
+    if (chunk[0] !== undefined && chunk[0] === this.lastChunk[0]) {
+      return;
+    }
+
+    const pointsInSelection = this.getNewPointsInCurrentSelection(chunk);
+
+    const canvas = d3.select("svg.recentPointsCanvas");
+    const dimX = this.props.dimensionX;
+    const dimY = this.props.dimensionY;
+
+    canvas.selectAll("circle.recent-point").remove();
+
+    const points = canvas.selectAll("circle.recent-point").data(chunk)
+      .join("circle")
+        .attr("class", "recent-point")
+        .classed("inside-selection", d => pointsInSelection.indexOf(d) > -1)
+        .attr("cx", d => this.scaleX(d[dimX]))
+        .attr("cy", d => this.scaleY(d[dimY]))
+        .attr("r", DEFAULT_POINT_RADIUS);
+
+    points.transition().duration(250).attr("r", DEFAULT_POINT_RADIUS * 2);
   }
 
   private renderDensityPlots() {
@@ -338,11 +381,15 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.updateScales();
     this.renderAxes();
     this.renderPoints();
+    this.renderInsideOutsidePoints();
     this.renderDensityPlots();
+
+    this.lastChunk = this.getLatestChunk();
 
     return (
       <div className="scatterplotRenderer" style={ { width: this.props.width } }>
-        <canvas className="scatterplotCanvas" width={ this.props.width } height={ this.props.height }></canvas>
+        <canvas className="scatterplotCanvas" width={ this.props.width } height={ this.props.height } />
+        <svg className="recentPointsCanvas" width={ this.props.width } height={ this.props.height } />
         <svg className="densityCanvas" width={ this.props.width } height={ this.props.height } />
         <svg className="axisCanvas" width={ this.props.width } height={ this.props.height }>
           <g className="axes"></g>
