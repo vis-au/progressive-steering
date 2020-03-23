@@ -31,7 +31,7 @@ def getSteeringCondition(dataPS):
     
     def find_path(node_numb, path, x):
         path.append(node_numb)
-        print(node_numb,x)
+        #print(node_numb,x)
         if node_numb == x:
             return True
         left = False
@@ -65,7 +65,7 @@ def getSteeringCondition(dataPS):
         listconditions=rule.strip( ).split("&");
         i=0
         for s in listconditions:
-            print(s)
+            #print(s)
             listLabel=s.strip().split("'")
             condition=condition+listLabel[1]+" "+listLabel[2][1:len(listLabel[2])-1]
             if (i!=len(listconditions)-1):
@@ -91,17 +91,18 @@ def getSteeringCondition(dataPS):
     #dataset = pd.read_csv(data_path, header=None, names=col_names)
     
     dataset = pd.DataFrame(data=array_steering)
-    print(dataset)
+    #print(dataset)
     
-    print(dataset)
+    #print(dataset)
     #feature_cols = ['pregnant', 'insulin', 'bmi', 'age','glucose','bp','pedigree']
     #feature_cols = ['host_id', 'zipcode', 'latitude', 'longitude', 'accommodates','bathrooms','bedrooms','beds','price','cleaning_fee','minimum_nights','maximum_nights']
-    feature_cols = ['zipcode', 'latitude', 'longitude']
+    feature_cols = ['zipcode', 'latitude', 'longitude','price']
     X = dataset[feature_cols] # Features
     for e in X:
-        print(e)
+        pass
+        #print(e)
     y = dataset.inside # Target variable
-    print(y)
+    #print(y)
     #X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0, random_state=1) # 70% training and 30% test
     X_train=X
     
@@ -111,9 +112,9 @@ def getSteeringCondition(dataPS):
     
     
     n_nodes = clf.tree_.node_count
-    print(n_nodes)
+    #print(n_nodes)
     children_left = clf.tree_.children_left
-    print(children_left)
+    #print(children_left)
     children_right = clf.tree_.children_right
     feature = clf.tree_.feature
     threshold = clf.tree_.threshold
@@ -122,28 +123,28 @@ def getSteeringCondition(dataPS):
     leave_id = clf.apply(X_train)
     paths ={}
     for leaf in np.unique(leave_id):
-        print(leaf)
+        #print(leaf)
         if (clf.classes_[np.argmax(clf.tree_.value[leaf])]==1):  #filter on the class to look for;better use 0 for NON INCLUSION and 1 for INCLUSION
             path_leaf = []
             find_path(0, path_leaf, leaf)
             paths[leaf] = np.unique(np.sort(path_leaf))
-    print("qui cammini")
-    print(paths)
+    #print("qui cammini")
+    #print(paths)
     rules = {}
     
     final_condition=""
     j=0;
     for key in paths:
         rules[key] = get_rule(paths[key], X.columns)
-        print(get_rule(paths[key], X.columns))
+        #print(get_rule(paths[key], X.columns))
         #begin creation of SQL cadditional condition
-        print(extractCondition(get_rule(paths[key], X.columns)))
+        #print(extractCondition(get_rule(paths[key], X.columns)))
         if (j==0):
             final_condition=extractCondition(get_rule(paths[key], X.columns))
         else:
             final_condition=final_condition+" OR "+extractCondition(get_rule(paths[key], X.columns))
         j=j+1
-    print(final_condition)
+    #print(final_condition)
     return final_condition
 
     
