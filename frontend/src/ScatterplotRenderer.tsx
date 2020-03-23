@@ -407,6 +407,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.svg.append("g")
       .attr("class", "brush") 
       .call(this.brush)
+      // on a 1280 x800 pixel screen, Chrome full screen, only address bar visible
       //.call(this.brush.move, [[375, 160], [1045, 640]]) //15..40, 3..12 8388 tuples
       .call(this.brush.move, [[900, 587], [1039, 840]])   //35..40, 0..4  1443 tuples
       //.call(this.brush.move, [[100, 100], [200, 200]])
