@@ -367,7 +367,7 @@ def distances():
             mind=DIZ_plotted[k]['dist2user']
     return mind,maxd 
 
-def inc(chunks):
+def numberOfPlottedPoints(chunks):
     inb=0
     for k in DIZ_plotted:
         if DIZ_plotted [k]['inside']==1 and DIZ_plotted [k]['chunk']==chunks:
