@@ -1,24 +1,21 @@
 import mysql.connector
 import math
-import time
-import os
 import platform
-import random
 import steering_module as sm
 import evaluationMetrics as mm
 import eel
 from threading import Thread
 
-
 #simple sync with Steering module
 global modifier  #modify initial query with conditions coming from the tree
 global queryAtt  #attributes of the main query
 global treeReady #it is used to interrupt the initial chunking cycle
-global bBox
-global chunkSize
-global totalInb
-totalInB=0
+global chunkSize 
+global totalChunkNumber
+global totalInb  #number of points plotted in the user box till the actual chunk
 
+totalChunkNumber=0
+totalInB=0
 treeReady=False
 chunkSize=100
 modifier='True'
@@ -30,14 +27,13 @@ global userLon
 global userRange
 global userDay
 global userMaxDistance
-userMaxDistance=10 +1 
 
-c={'lat': 48.85565,'lon': 2.365492,'range': [60, 90],'day': '2020-04-31','MaxDistance':10+1}
+c={'lat': 48.85565,'lon': 2.365492,'range': [60, 90],'day': '2020-04-31','MaxDistance':10+1} #user data for test
 
 global mydb
 global DIZ_plotted #all plotted points 
 DIZ_plotted={}
-global IN   #cumulated box points
+global IN   #cumulated airb&b ID of points plotted in the user box till the actual chunk
 IN=[]
 #------------Listener thread: will listen and execute the methods coming from frontend-------
 class FrontEndListener(Thread):
@@ -76,7 +72,7 @@ def dbConnect(h,u,p,d):
      )
     return mydb
 
-def aboveMinimum(bbId,actualPrice,lat,long,more):
+def aboveMinimum(bbId,actualPrice,lat,long,more): # the search is bound to a
     mycursor = mydb.cursor()
     qq=buildQuery(userLat,userLon,userRange,userDay,queryAtt,'True',chunkSize)   
     qq = "SELECT * FROM listings WHERE price>0 and price <="+str(userRange[1])+ " LIMIT 0,100"
@@ -88,7 +84,6 @@ def aboveMinimum(bbId,actualPrice,lat,long,more):
     for x in myresult:
         if 0 < distance(userLat,userLon,x[10],x[11])-distance(userLat,userLon,lat,long)<=more:
             vicini+=1
-            #print(x[16])
             minimo=min(minimo,x[16])
             minimoX=(x[0],distance(userLat,userLon,x[10],x[11])-distance(userLat,userLon,lat,long))
     return {"neighborhood_min":minimo,"saving":actualPrice-minimo,"alternativeId":minimoX[0],"extraSteps":minimoX[1],'vicini':vicini}
@@ -106,16 +101,18 @@ def feedTuples(query,chunkSize):
     global treeReady #it is used to interrupt the main chunking cycle
     global mydb
     global totalInb
+    global totalChunkNumber
     
-    mydb=dbConnect("localhost",'root', USER_PW,'airbnb')
-    
+    mydb=dbConnect("localhost",'root', USER_PW,'airbnb')    
     mycursor = mydb.cursor()
     mycursor.execute('DELETE FROM plotted')
     mydb.commit()
-    plotted=0
+    #plotted=0
     chunks=0
     mycursor.execute(query)
     myresult = mycursor.fetchall()
+    
+        
 ####################### COLLECTING DATA NO TREE °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°  
     print('Entering LOOP1 - Query:',query,modifier)
     print('c',c)
@@ -128,7 +125,7 @@ def feedTuples(query,chunkSize):
              mycursor.execute('INSERT INTO plotted (id) VALUES (' +str(x[0])+')')
              DIZ_plotted[x[0]]={'host_id':x[0], 'zipcode':x[7], 'latitude':x[10],'longitude':x[11],'accommodates':x[12],'bathrooms':x[13],'bedrooms':x[14],'beds':x[15],'price':x[16],'cleaning_fee':x[18],'minimum_nights':x[21],'maximum_nights':x[22],'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5),'chunk':chunks,'inside':0}
              actualChunk[x[0]]={'chunk':chunks,'values':x, 'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5)}
-             plotted+=1
+             #plotted+=1
              mydb.commit()
              eel.sleep(0.001)
          sendChunk(actualChunk)    
@@ -144,7 +141,7 @@ def feedTuples(query,chunkSize):
          mycursor.execute(query)
          myresult = mycursor.fetchall() 
     print('uscito loop 1 treeready=',treeReady,'modifier=',modifier)    
-    
+    totalChunkNumber=chunks
 ########################## USING TREE ∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞    
     query=buildQuery(userLat,userLon,userRange,userDay,queryAtt,modifier,chunkSize)
     mycursor.execute(query)
@@ -156,7 +153,7 @@ def feedTuples(query,chunkSize):
         for x in myresult:
             mycursor.execute('INSERT INTO plotted (id) VALUES (' +str(x[0])+')')
             DIZ_plotted[x[0]]={'host_id':x[0], 'zipcode':x[7], 'latitude':x[10],'longitude':x[11],'accommodates':x[12],'bathrooms':x[13],'bedrooms':x[14],'beds':x[15],'price':x[16],'cleaning_fee':x[18],'minimum_nights':x[21],'maximum_nights':x[22],'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5),'chunk':chunks,'inside':0}
-            plotted+=1
+            #plotted+=1
             actualChunk[x[0]]={'chunk':chunks,'values':x, 'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5)}
             mydb.commit()
             eel.sleep(0.001)
@@ -173,7 +170,7 @@ def feedTuples(query,chunkSize):
         myresult = mycursor.fetchall()
 
     #print('uscito loop 2 treeready=',treeReady,'modifier=',modifier)
-    
+    totalChunkNumber=chunks
 ######################### FLUSHING °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°    
     modifier='True'
     query=buildQuery(userLat,userLon,userRange,userDay,queryAtt,modifier,chunkSize)
@@ -186,7 +183,7 @@ def feedTuples(query,chunkSize):
          for x in myresult:
            mycursor.execute('INSERT INTO plotted (id) VALUES (' +str(x[0])+')')
            DIZ_plotted[x[0]]={'host_id':x[0], 'zipcode':x[7], 'latitude':x[10],'longitude':x[11],'accommodates':x[12],'bathrooms':x[13],'bedrooms':x[14],'beds':x[15],'price':x[16],'cleaning_fee':x[18],'minimum_nights':x[21],'maximum_nights':x[22],'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5),'chunk':chunks,'inside':0}       
-           plotted+=1
+           #plotted+=1
            actualChunk[x[0]]={'chunk':chunks,'values':x, 'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5)}
            mydb.commit()
            eel.sleep(0.001)
@@ -206,6 +203,7 @@ def feedTuples(query,chunkSize):
          myresult = mycursor.fetchall()
 
     print('uscito loop 3 treeready=',treeReady,'modifier=',modifier)
+    totalChunkNumber=chunks
 #######################################################################################
 
 @eel.expose
@@ -262,7 +260,6 @@ def send_user_selection(selected_items):
         return 0
     eel.sleep(0.01)
 
-
     if not treeReady:
         modifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
         if len(modifier)>3:
@@ -276,7 +273,6 @@ def send_user_selection(selected_items):
 
 @eel.expose
 def send_selection_bounds(x_bounds, y_bounds):
-    global bBox
     global totalInb
     global DIZ_plotted
     print("new selected region received bounds",x_bounds, y_bounds)
@@ -286,10 +282,6 @@ def send_selection_bounds(x_bounds, y_bounds):
     totalInb=0
     '''
     return x_bounds, y_bounds
-
-    
-    #for k in DIZ_plotted:
-    #    DIZ_plotted[k]['inside']=0
 
 @eel.expose
 def send_selection_bounds_pixels(x_bounds_pix, y_bounds_pix):
@@ -352,13 +344,12 @@ def obtainTuples(arrayID):
         result.append(DIZ_plotted[elem])
     return result
 
-
 def my_other_thread():
     while True:
         print("I'm a thread")
         #eel.sleep(1.0)
-def dentro():
-    global DIZ_plotted
+        
+def insideUserBox():
     tot=0
     for k in DIZ_plotted:
         if DIZ_plotted[k]['inside']==1:
@@ -385,13 +376,13 @@ def inc(chunks):
 
 def history():
     totalInb=0
-    for chunks in range(1,233):
+    for chunks in range(1, totalChunkNumber):
         inb=0
         for k in DIZ_plotted:
             if DIZ_plotted [k]['inside']==1 and DIZ_plotted [k]['chunk']==chunks:
                 inb+=1 
         totalInb+=inb
-        print('Collecting data-chunk: ',chunks ,'Items in box:',totalInb, 'Precision:',inb/chunkSize, totalInb)
+        print('Chunk: ',chunks ,'Items in box:',totalInb, 'Precision:',inb/chunkSize, totalInb)
     
 
 if __name__ == '__main__':

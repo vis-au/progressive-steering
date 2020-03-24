@@ -2,3 +2,5 @@ node_modules
 .DS_Store
 backend/__pycache__/evaluationMetrics.cpython-37.pyc
 backend/steering_module.py.old
+*.pyc
+*.pyc
