@@ -207,6 +207,15 @@ def feedTuples(query,chunkSize):
 #######################################################################################
 
 @eel.expose
+def start():
+    sql=buildQuery(userLat,userLon,userRange,userDay,queryAtt,modifier,chunkSize)
+    eel.spawn(feedTuples(sql,chunkSize))
+
+@eel.expose
+def get_use_cases():
+    return {'testcase1':{'name':'case1_0_3_7_9','x_bounds' : [0,3], 'y_bounds':[7,9]}}
+
+@eel.expose
 def send_to_backend_userData(x):
   global userLat
   global userLon
@@ -284,16 +293,16 @@ def send_selection_bounds(x_bounds, y_bounds):
     return x_bounds, y_bounds
 
 @eel.expose
-def send_selection_bounds_pixels(x_bounds_pix, y_bounds_pix):
+def send_selection_bounds_values(x_bounds_val, y_bounds_val):
     global totalInb
     global DIZ_plotted
-    print("new selected region received_pixel",x_bounds_pix, y_bounds_pix)
+    print("new selected region received_pixel",x_bounds_val, y_bounds_val)
     '''
     for k in DIZ_plotted:
         DIZ_plotted[k]['inside']=0
     totalInb=0
     '''
-    return x_bounds_pix, y_bounds_pix
+    return x_bounds_val, y_bounds_val
 
 @eel.expose
 def send_user_params(parameters):
