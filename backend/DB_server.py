@@ -107,7 +107,6 @@ def feedTuples(query,chunkSize):
     mycursor = mydb.cursor()
     mycursor.execute('DELETE FROM plotted')
     mydb.commit()
-    #plotted=0
     chunks=0
     mycursor.execute(query)
     myresult = mycursor.fetchall()
@@ -125,19 +124,18 @@ def feedTuples(query,chunkSize):
              mycursor.execute('INSERT INTO plotted (id) VALUES (' +str(x[0])+')')
              DIZ_plotted[x[0]]={'host_id':x[0],'state':'collecting data', 'zipcode':x[7], 'latitude':x[10],'longitude':x[11],'accommodates':x[12],'bathrooms':x[13],'bedrooms':x[14],'beds':x[15],'price':x[16],'cleaning_fee':x[18],'minimum_nights':x[21],'maximum_nights':x[22],'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5),'chunk':chunks,'inside':0}
              actualChunk[x[0]]={'chunk':chunks,'state':'collecting data','values':x, 'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5)}
-             #plotted+=1
              mydb.commit()
              eel.sleep(0.001)
          sendChunk(actualChunk)    
          eel.sleep(0.04)
          inb=0
-         #totalInb=0
          for k in DIZ_plotted:
              if DIZ_plotted [k]['inside']==1 and DIZ_plotted [k]['chunk']==chunks:
                  inb+=1
          totalInb+=inb
          print('Collecting data-chunk:',chunks ,'Items in box:',totalInb, 'Precision:',inb/chunkSize, inb,distances())
          eel.send_evaluation_metric({"name":"precision","value":inb/chunkSize})       
+         eel.send_evaluation_metric({"name":"recall","value":totalInb/1441})
          mycursor.execute(query)
          myresult = mycursor.fetchall() 
     print('uscito loop 1 treeready=',treeReady,'modifier=',modifier)    
@@ -153,7 +151,6 @@ def feedTuples(query,chunkSize):
         for x in myresult:
             mycursor.execute('INSERT INTO plotted (id) VALUES (' +str(x[0])+')')
             DIZ_plotted[x[0]]={'host_id':x[0], 'state':'using tree','zipcode':x[7], 'latitude':x[10],'longitude':x[11],'accommodates':x[12],'bathrooms':x[13],'bedrooms':x[14],'beds':x[15],'price':x[16],'cleaning_fee':x[18],'minimum_nights':x[21],'maximum_nights':x[22],'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5),'chunk':chunks,'inside':0}
-            #plotted+=1
             actualChunk[x[0]]={'chunk':chunks,'state':'using tree','values':x, 'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5)}
             mydb.commit()
             eel.sleep(0.001)
@@ -166,9 +163,9 @@ def feedTuples(query,chunkSize):
         totalInb+=inb
         print('Using tree-chunk:',chunks ,'Items in box:',totalInb, 'Precision:',inb/chunkSize, inb,distances())
         eel.send_evaluation_metric({"name":"precision","value":inb/chunkSize}) 
+        eel.send_evaluation_metric({"name":"recall","value":totalInb/1441})
         mycursor.execute(query)
         myresult = mycursor.fetchall()
-
     #print('uscito loop 2 treeready=',treeReady,'modifier=',modifier)
     totalChunkNumber=chunks
 ######################### FLUSHING °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°    
@@ -183,7 +180,6 @@ def feedTuples(query,chunkSize):
          for x in myresult:
            mycursor.execute('INSERT INTO plotted (id) VALUES (' +str(x[0])+')')
            DIZ_plotted[x[0]]={'host_id':x[0], 'state':'flushing','zipcode':x[7], 'latitude':x[10],'longitude':x[11],'accommodates':x[12],'bathrooms':x[13],'bedrooms':x[14],'beds':x[15],'price':x[16],'cleaning_fee':x[18],'minimum_nights':x[21],'maximum_nights':x[22],'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5),'chunk':chunks,'inside':0}       
-           #plotted+=1
            actualChunk[x[0]]={'chunk':chunks,'state':'flushing','values':x, 'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5)}
            mydb.commit()
            eel.sleep(0.001)
@@ -198,10 +194,9 @@ def feedTuples(query,chunkSize):
                  totalInb+=1
          print('flushing-chunk: ',chunks ,'Items in box:',totalInb, 'Precision:',inb/chunkSize,distances())
          eel.send_evaluation_metric({"name":"precision","value":inb/chunkSize}) 
-
+         eel.send_evaluation_metric({"name":"recall","value":totalInb/1441})
          mycursor.execute(query)
          myresult = mycursor.fetchall()
-
     print('uscito loop 3 treeready=',treeReady,'modifier=',modifier)
     totalChunkNumber=chunks
 #######################################################################################
