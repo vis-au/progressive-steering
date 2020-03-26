@@ -267,8 +267,7 @@ def send_user_selection(selected_items):
     if not treeReady:
         modifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
         if len(modifier)>3:
-            treeReady=True
-            
+            treeReady=True           
             print('New modifier:',modifier)
         else:
             #print('Wrong empty modifier:',modifier)
