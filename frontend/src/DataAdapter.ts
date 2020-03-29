@@ -1,4 +1,4 @@
-import { sendUserSelectionBounds, sendUserSelection, sendUserParameters, SelectionSize } from "./EelBridge";
+import { sendUserSelectionBounds, sendUserSelection, sendUserParameters, SelectionSize, ScenarioPreset } from "./EelBridge";
 import * as d3 from 'd3';
 import { DEFAULT_TOTAL_DATA_SIZE, DEFAULT_POIS } from "./EelBackendDummy";
 
@@ -11,6 +11,7 @@ class DataAdapter {
   private _onDataChangedCallbacks: any[] = [];
   private _onFilterChangedCallbacks: any[] = [];
   private _onMetricChangedCallbacks: any[] = [];
+  private _scenarioPresets: ScenarioPreset[] = [];
 
   private dimensionFilters: Map<string, [number, number]> = new Map();
   private dimensionExtents: Map<string, [number, number]> = new Map();
@@ -208,6 +209,14 @@ class DataAdapter {
   public set minSelectionSize(minSelectionSize: SelectionSize) {
     console.log("new selection size received:", minSelectionSize)
     this._selectionSize = minSelectionSize;
+  }
+
+  public set scenarioPresets(presets: ScenarioPreset[]) {
+    this._scenarioPresets = presets;
+  }
+
+  public get scenarioPresets(): ScenarioPreset[] {
+    return this._scenarioPresets;
   }
 }
 

@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { eel } from './EelBridge';
+import { eel, ScenarioPreset } from './EelBridge';
 import { getEelDataAdapter, EelDataAdapter, getPOIs } from './DataAdapter';
 import ScatterplotRenderer from './ScatterplotRenderer';
 import ProgressBar from './ProgressBar';
@@ -11,7 +11,8 @@ import './App.css';
 
 interface State {
   selectedPoints: any[],
-  highlightLatestPoints: boolean
+  highlightLatestPoints: boolean,
+  selectedScenarioPreset: ScenarioPreset | null
 }
 
 const X_AXIS_SELECTOR = "x-dimension";
@@ -42,7 +43,8 @@ export class App extends Component<{}, State> {
 
     this.state = {
       selectedPoints: [],
-      highlightLatestPoints: true
+      highlightLatestPoints: true,
+      selectedScenarioPreset: null
     };
   }
 
@@ -94,6 +96,15 @@ export class App extends Component<{}, State> {
     this.forceUpdate();
   }
 
+  private onScenarioPresetSelected(event: React.ChangeEvent<HTMLSelectElement>) {
+    const presetName = event.target.value;
+    const preset = this.dataAdapter.scenarioPresets.find(preset => preset.name === presetName);
+
+    this.setState({
+      selectedScenarioPreset: preset || null
+    });
+  }
+
   private renderDimensionSelection(selector: string, label: string, activeValue: string) {
     const allDimensions = this.dataAdapter.dimensions;
 
@@ -139,6 +150,27 @@ export class App extends Component<{}, State> {
       <div className="dimension-sliders">
         { this.dataAdapter.dimensions.map(this.renderDimensionSlider.bind(this)) }
       </div>
+    );
+  }
+
+  private renderScenarioPreset(preset: ScenarioPreset) {
+    return (
+      <option
+        key={ preset.name }
+        value={ preset.name }
+        selected={ preset === this.state.selectedScenarioPreset }>
+
+        { preset.name }
+      </option>
+    );
+  }
+
+  private renderScenarioPresets() {
+    return (
+      <select name="scenario-presets" id="scenario-presets" onChange={ this.onScenarioPresetSelected.bind(this) } defaultValue={ "null" }>
+        <option key="null">Select Scenario ...</option>
+        { this.dataAdapter.scenarioPresets.map(this.renderScenarioPreset.bind(this)) }
+      </select>
     );
   }
 
@@ -188,6 +220,7 @@ export class App extends Component<{}, State> {
         <div className="header">
           { this.renderXYDimensionSelection() }
           { this.renderDimensionSliders() }
+          { this.renderScenarioPresets() }
         </div>
 
         <div className="mainView" style={ {minHeight: height} }>

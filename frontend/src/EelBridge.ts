@@ -15,6 +15,12 @@ export type ChunkType = {
   values: any[]
 }
 
+export type ScenarioPreset = {
+  x_bounds: [number, number],
+  y_bounds: [number, number],
+  name?: string
+};
+
 // datamanger is a singleton instance that we reference from different places in the bridge
 // functions
 const dataAdapter = getEelDataAdapter();
@@ -159,6 +165,12 @@ window.eel.expose(sendEvaluationMetric, 'send_evaluation_metric');
 
 
 runDummyBackend();
+
+window.eel.get_use_cases()()
+  .then((useCaseDict: any) => {
+    const usesCases = Object.values(useCaseDict);
+    dataAdapter.scenarioPresets = usesCases as ScenarioPreset[];
+  });
 
 // LEGACY FUNCTIONS FOR DEBUGGING
 // Expose the `sayHelloJS` function to Python as `say_hello_js`
