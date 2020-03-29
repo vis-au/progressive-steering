@@ -32,6 +32,7 @@ function serializeChunk(chunk: any) {
 
     datum["Saving opportunity"] = chunk[id].aboveM.saving;
     datum["Distance"] = chunk[id].dist2user;
+    datum["status"] = chunk[id].state;
 
     serializedChunk.push(datum);
   });
