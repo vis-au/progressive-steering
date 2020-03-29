@@ -50,23 +50,21 @@ export function runDummyBackend() {
   //   console.log(`Done rendering. Received ${x} of ${(DEFAULT_TOTAL_DATA_SIZE / CHUNK_SIZE)} chunks`);
   // }, TOTAL_DURATION);
 
-  window.setTimeout(() => {}, 0);
-
   // window.setTimeout(() => {
   //   setXName("longitude");
   //   setYName("latitude");
   // }, 0);
 
-  window.setTimeout(() => {
-    sendXDomain([48.8, 48.9]);
-    sendYDomain([2.3, 2.4]);
-  }, 0);
+  // window.setTimeout(() => {
+  //   sendXDomain([48.8, 48.9]);
+  //   sendYDomain([2.3, 2.4]);
+  // }, 0);
 
-  window.setTimeout(() => {
-    sendDimensionTotalExtent({
-      name: "c", min: 0, max: 7.66
-    });
-  }, 0);
+  // window.setTimeout(() => {
+  //   sendDimensionTotalExtent({
+  //     name: "c", min: 0, max: 7.66
+  //   });
+  // }, 0);
 
  // window.setInterval(() => {
  //   sendEvaluationMetric({
@@ -74,11 +72,11 @@ export function runDummyBackend() {
  //   });
  // }, 2200);
 
-  window.setInterval(() => {
-    sendEvaluationMetric({
-      name: "recall", value: Math.floor(76 * Math.random()) / 100
-    });
-  }, 5403);
+  // window.setInterval(() => {
+  //   sendEvaluationMetric({
+  //     name: "recall", value: Math.floor(76 * Math.random()) / 100
+  //   });
+  // }, 5403);
 
   // window.setTimeout(() => {
   //   sendCity("Rome");
