@@ -235,6 +235,7 @@ export class App extends Component<{}, State> {
             chunkSize={ this.dataAdapter.chunkSize }
             filters={ this.dataAdapter.getAllFilters() }
             highlightLastChunk={ this.state.highlightLatestPoints }
+            presetSelection={ this.state.selectedScenarioPreset }
             onBrushedPoints={ this.onBrushedPoints.bind(this) }
             onBrushedRegion={ this.onBrushedRegion.bind(this) }
             onNewPointsInSelection={ this.onNewPointsInSelection.bind(this) }

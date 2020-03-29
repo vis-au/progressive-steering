@@ -1,6 +1,8 @@
 import React from 'react';
 import * as d3 from 'd3';
 
+import { ScenarioPreset } from './EelBridge';
+
 import "./ScatterplotRenderer.css";
 
 interface State {
@@ -15,6 +17,7 @@ interface Props {
   extentY: [number, number],
   data: any[],
   filters: Map<string, number[]>,
+  presetSelection: ScenarioPreset | null,
   highlightLastChunk?: boolean,
   chunkSize?: number,
   onBrushedPoints?: (points: any[]) => any,
@@ -43,6 +46,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   private densityContourGenerator: d3.ContourDensity<[number, number]>;
 
   private lastChunk: any[] = [];
+  private lastDrawnPreset: number[][] = [];
 
   constructor(props: Props) {
     super(props);
@@ -221,6 +225,48 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.updateCurrentlySelectedPoints();
   }
 
+  private wasPresetAlreadyDrawn(preset: number[][]) {
+    if (this.selection === null) {
+      return false;
+    }
+
+    const [[newX0, newX1], [newY0, newY1]] = preset;
+    const [[currentX0, currentX1], [currentY0, currentY1]] = this.lastDrawnPreset;
+
+    const sameX = newX0 === currentX0 && newX1 === currentX1;
+    const sameY = newY0 === currentY0 && newY1 === currentY1;
+
+    return sameX && sameY;
+  }
+
+  private renderPresetSelection() {
+    if (this.svg === null) {
+      return;
+    }
+    if (!this.props.presetSelection) {
+      this.lastDrawnPreset = [[-1, -1], [-1, -1]];
+      return;
+    }
+
+    const presetX0 = this.scaleX(this.props.presetSelection.x_bounds[0]);
+    const presetX1 = this.scaleX(this.props.presetSelection.x_bounds[1]);
+    const presetY0 = this.scaleY(this.props.presetSelection.y_bounds[1]);
+    const presetY1 = this.scaleY(this.props.presetSelection.y_bounds[0]);
+    const preset = [[presetX0, presetY0], [presetX1, presetY1]];
+
+    if (this.wasPresetAlreadyDrawn(preset)) {
+      return;
+    }
+
+    console.log(this.props.presetSelection)
+    console.log(this.scaleY.invert(presetY0), this.scaleY.invert(presetY1))
+
+    this.svg.select("g.brush")
+      .call(this.brush.move, preset);
+
+    this.lastDrawnPreset = preset;
+  }
+
   private renderBrushedRegion(brushedRegion: number[][], index: number) {
     const x = brushedRegion[0][0];
     const y = brushedRegion[0][1];
@@ -383,6 +429,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.renderPoints();
     this.renderInsideOutsidePoints();
     this.renderDensityPlots();
+    this.renderPresetSelection();
 
     this.lastChunk = this.getLatestChunk();
 
@@ -403,15 +450,14 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   public componentDidMount() {
     this.svg = d3.select("svg.axisCanvas");
     this.canvas = d3.select("canvas.scatterplotCanvas");
-    
+
     this.svg.append("g")
-      .attr("class", "brush") 
+      .attr("class", "brush")
       .call(this.brush)
       // on a 1280 x800 pixel screen, Chrome full screen, only address bar visible
-      //.call(this.brush.move, [[375, 160], [1045, 640]]) //15..40, 3..12 8388 tuples
-      .call(this.brush.move, [[900, 588], [1039, 840]])   //35..40, 0..4  1441 tuples
-      //.call(this.brush.move, [[100, 100], [200, 200]])
+      // .call(this.brush.move, [[375, 160], [1045, 640]]) //15..40, 3..12 8388 tuples
+      // .call(this.brush.move, [[900, 588], [1039, 840]])   //35..40, 0..4  1441 tuples
+      // .call(this.brush.move, [[100, 100], [200, 200]])
       .call(g => g.select(".overlay").style("cursor", "default"));
-      
   }
-} 
+}
