@@ -117,7 +117,7 @@ def feedTuples(query,chunkSize):
     print('c',c)
     print(query)
     totalInb=0
-    while len(myresult)>0 and not treeReady or totalInb<20:
+    while len(myresult)>0 and not treeReady or totalInb<200:
          chunks+=1
          actualChunk={}
          for x in myresult:
