@@ -325,40 +325,6 @@ def feedTuples(tuples,case,query,log,logM,useTree,minimumBoxItems,chunkSize,GT=N
 
         print('plotted',plotted,'tuples in',chunks,'chunks')
         
-
-'''        
-#@eel.expose #####################################
-def send_to_backend_userData(x):
-  global userLat
-  global userLon
-  global userRange
-  global userDay
-  global userMaxDistance
-
-  print("received user selection",x)
-
-  userLat=x['lat']
-  userLon=x['lon']
-  userRange=x['moneyRange']
-  userDay=x['day']
-  userMaxDistance=x['userMaxDistance']
-
-  # send parameters to frontend before sending data
-  eel.send_city("Paris")
-  eel.set_x_name("Saving opportunity")
-  eel.set_y_name("Distance")
-  eel.set_min_selection_size({"name": "Distance", "min": 0, "max": 10}) #max value  deserves more thinking
-  eel.send_dimension_total_extent({"name": "Saving opportunity", "min": 0, "max": 30})
-  eel.send_dimension_total_extent({"name": "Distance", "min": 0, "max": 10})
-
-  #eel.set_min_selection_size({"name": "Saving opportunity", "min": 0, "max": x["moneyRange"][1]-["moneyRange"][0]})
-
-  sql=buildQuery(userLat,userLon,userRange,userDay,queryAtt,modifier)
-  eel.spawn(feedTuples(sql,10))
-  #eel.spawn(my_other_thread())
-  #feedTuples(sql,defaultChunkSize)
-global app
-'''
 #@eel.expose #####################################
 def send_user_selection(selected_items):
     global DIZ_plotted
