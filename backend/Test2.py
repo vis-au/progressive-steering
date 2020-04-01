@@ -112,7 +112,7 @@ def testGenerator(userPref=c):
                {'boxMinRange':32, 'boxMaxRange':37,'boxMinDistance':0, 'boxMaxDistance':5,  'chunkSize':100, 'minimumBoxItems':100, 'tuples':1448}
                    ]
     i=0
-    for tc in testCases[:1]:
+    for tc in testCases:
         i+=1
         log={}
         boxMinRange=tc['boxMinRange']
