@@ -140,7 +140,9 @@ def feedTuples(query,chunkSize):
          myresult = mycursor.fetchall() 
     print('uscito loop 1 treeready=',treeReady,'modifier=',modifier)    
     totalChunkNumber=chunks
-########################## USING TREE ∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞    
+########################## USING TREE ∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞ 
+    modifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
+    print(modifier)
     query=buildQuery(userLat,userLon,userRange,userDay,queryAtt,modifier,chunkSize)
     mycursor.execute(query)
     myresult = mycursor.fetchall()
