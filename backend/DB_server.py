@@ -14,10 +14,11 @@ global chunkSize
 global totalChunkNumber
 global totalInb  #number of points plotted in the user box till the actual chunk
 global userSelectionUpdated #new box
+global lastSelectedItems
 
 userSelectionUpdated=False
 totalChunkNumber=0
-totalInB=0
+totalInb=0
 treeReady=False
 chunkSize=100
 modifier='True'
@@ -273,22 +274,27 @@ def send_to_backend_userData(x):
 
 @eel.expose
 def send_user_selection(selected_items):
-
-    print("new items received...")#,selected_items)
+    global lastSelectedItems
     #exmaple of selections by user [22979, 219871, 215638, 111155, 278842]
     global DIZ_plotted
     global modifier
     global treeReady
     global IN
+    
+    if len(selected_items)==0:
+        #print('Ignoring empty selection')
+        lastSelectedItems=[]
+        return 0
+    
+    lastSelectedItems=selected_items.copy()
+    print("new",len(selected_items),"items received...")#,selected_items)
     for k in selected_items:
         #print('k=',k)
         DIZ_plotted[k]['inside']=1
     IN.extend(selected_items)
     #print("new selected items received",selected_items)
     
-    if len(selected_items)==0:
-        print('Ignoring empty selection')
-        return 0
+
     eel.sleep(0.01)
 
     if not treeReady or True:
@@ -306,13 +312,17 @@ def send_selection_bounds(x_bounds, y_bounds):
     global totalInb
     global DIZ_plotted
     global userSelectionUpdated
+    global lastSelectedItems
     
     print("new selected region received bounds",x_bounds, y_bounds)
-    '''
+    
+    totalInb=0
     for k in DIZ_plotted:
         DIZ_plotted[k]['inside']=0
-    totalInb=0
-    '''
+        if k in lastSelectedItems:
+            DIZ_plotted[k]['inside']=1
+            totalInb+=1
+
     userSelectionUpdated=True 
     return x_bounds, y_bounds
 
