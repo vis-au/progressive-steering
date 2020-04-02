@@ -106,8 +106,8 @@ def testGenerator(userPref=c):
     GT={}
     for x in myresult:
         GT[x[0]]=0
-    testCases=[{'boxMinRange':15, 'boxMaxRange':40,'boxMinDistance':3, 'boxMaxDistance':12, 'chunkSize':100, 'minimumBoxItems':20, 'tuples':8389},
-               {'boxMinRange':35, 'boxMaxRange':40,'boxMinDistance':0, 'boxMaxDistance':4,  'chunkSize':100, 'minimumBoxItems':60, 'tuples':1448},
+    testCases=[{'boxMinRange':15, 'boxMaxRange':40,'boxMinDistance':3, 'boxMaxDistance':12, 'chunkSize':100, 'minimumBoxItems':100, 'tuples':8389},
+               {'boxMinRange':35, 'boxMaxRange':40,'boxMinDistance':0, 'boxMaxDistance':4,  'chunkSize':100, 'minimumBoxItems':100, 'tuples':1448},
                {'boxMinRange':29, 'boxMaxRange':37,'boxMinDistance':1, 'boxMaxDistance':2,  'chunkSize':100, 'minimumBoxItems':100, 'tuples':1448},
                {'boxMinRange':32, 'boxMaxRange':37,'boxMinDistance':0, 'boxMaxDistance':5,  'chunkSize':100, 'minimumBoxItems':100, 'tuples':1448}
                    ]

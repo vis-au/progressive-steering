@@ -4,3 +4,5 @@ backend/__pycache__/evaluationMetrics.cpython-37.pyc
 backend/steering_module.py.old
 *.pyc
 *.pyc
+*.txt
+backend/log_1_100_20_L_NOT_usingTree.txt
