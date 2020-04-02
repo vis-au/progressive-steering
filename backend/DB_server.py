@@ -117,7 +117,7 @@ def feedTuples(query,chunkSize):
     print('c',c)
     print(query)
     totalInb=0
-    while len(myresult)>0 and not treeReady or totalInb<200:
+    while len(myresult)>0 and not treeReady or totalInb<100 or len(modifier)<=3:
          chunks+=1
          actualChunk={}
          for x in myresult:
@@ -137,12 +137,12 @@ def feedTuples(query,chunkSize):
          eel.send_evaluation_metric({"name":"precision","value":inb/chunkSize})       
          eel.send_evaluation_metric({"name":"recall","value":totalInb/1441})
          mycursor.execute(query)
-         myresult = mycursor.fetchall() 
+         myresult = mycursor.fetchall()
+         modifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
+         print('----------------------------potential modifier at totalInb:',totalInb,modifier)
     print('uscito loop 1 treeready=',treeReady,'modifier=',modifier)    
     totalChunkNumber=chunks
 ########################## USING TREE ∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞ 
-    modifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
-    print(modifier)
     query=buildQuery(userLat,userLon,userRange,userDay,queryAtt,modifier,chunkSize)
     mycursor.execute(query)
     myresult = mycursor.fetchall()
@@ -266,11 +266,11 @@ def send_user_selection(selected_items):
         return 0
     eel.sleep(0.01)
 
-    if not treeReady:
+    if not treeReady or True:
         modifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
         if len(modifier)>3:
             treeReady=True           
-            print('New modifier:',modifier)
+            #print('New modifier:',modifier)
         else:
             #print('Wrong empty modifier:',modifier)
             modifier='True'
