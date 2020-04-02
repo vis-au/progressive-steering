@@ -457,7 +457,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       //on a 1440 x900 pixel screen, Chrome full screen, only address bar visible
       // .call(this.brush.move, [[]) //15..40, 3..12 8388 tuples
       //.call(this.brush.move, [[]])   //35..40, 0..4  1441 tuples
-      .call(this.brush.move, [[830, 885], [1088, 1030]])   //29..37 0..2 
+      //.call(this.brush.move, [[830, 885], [1088, 1030]])   //29..37 0..2 
       //.call(this.brush.move, [[920, 680], [1088, 1030]])   //32..37 0..5 
       // .call(this.brush.move, [[100, 100], [200, 200]])
       .call(g => g.select(".overlay").style("cursor", "default"));

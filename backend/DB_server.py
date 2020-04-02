@@ -13,7 +13,9 @@ global treeReady #it is used to interrupt the initial chunking cycle
 global chunkSize 
 global totalChunkNumber
 global totalInb  #number of points plotted in the user box till the actual chunk
+global userSelectionUpdated #new box
 
+userSelectionUpdated=False
 totalChunkNumber=0
 totalInB=0
 treeReady=False
@@ -102,6 +104,7 @@ def feedTuples(query,chunkSize):
     global mydb
     global totalInb
     global totalChunkNumber
+    global userSelectionUpdated
     
     mydb=dbConnect("localhost",'root', USER_PW,'airbnb')    
     mycursor = mydb.cursor()
@@ -111,13 +114,16 @@ def feedTuples(query,chunkSize):
     mycursor.execute(query)
     myresult = mycursor.fetchall()
     
+######################## WAIT selection loop
+    while not userSelectionUpdated: #waiting for the first box
+        eel.sleep(1)
         
 ####################### COLLECTING DATA NO TREE °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°  
     print('Entering LOOP1 - Query:',query,modifier)
     print('c',c)
     print(query)
     totalInb=0
-    while len(myresult)>0 and not treeReady or totalInb<100 or len(modifier)<=3:
+    while len(myresult)>0 and not treeReady or totalInb<50 or len(modifier)<=3:
          chunks+=1
          actualChunk={}
          for x in myresult:
@@ -138,15 +144,16 @@ def feedTuples(query,chunkSize):
          eel.send_evaluation_metric({"name":"recall","value":totalInb/1441})
          mycursor.execute(query)
          myresult = mycursor.fetchall()
-         modifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
-         print('----------------------------potential modifier at totalInb:',totalInb,modifier)
+         pmodifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
+         print('----------------------------potential modifier at chunk:',chunks,pmodifier)
     print('uscito loop 1 treeready=',treeReady,'modifier=',modifier)    
     totalChunkNumber=chunks
-########################## USING TREE ∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞ 
+########################## USING TREE ∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞
+    pmodifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
     query=buildQuery(userLat,userLon,userRange,userDay,queryAtt,modifier,chunkSize)
     mycursor.execute(query)
     myresult = mycursor.fetchall()
-    #print('Entering LOOP2 - Query:',query)   
+    print('Entering LOOP2 - Query:',query,len(myresult))   
     while len(myresult)>0:
         chunks+=1
         actualChunk={}
@@ -168,6 +175,8 @@ def feedTuples(query,chunkSize):
         eel.send_evaluation_metric({"name":"recall","value":totalInb/1441})
         mycursor.execute(query)
         myresult = mycursor.fetchall()
+        pmodifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
+        print('----------------------------potential modifier at chunk:',chunks,pmodifier)
     #print('uscito loop 2 treeready=',treeReady,'modifier=',modifier)
     totalChunkNumber=chunks
 ######################### FLUSHING °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°    
@@ -199,6 +208,8 @@ def feedTuples(query,chunkSize):
          eel.send_evaluation_metric({"name":"recall","value":totalInb/1441})
          mycursor.execute(query)
          myresult = mycursor.fetchall()
+         pmodifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
+         print('----------------------------potential modifier at chunk:',chunks,pmodifier)
     print('uscito loop 3 treeready=',treeReady,'modifier=',modifier)
     totalChunkNumber=chunks
 #######################################################################################
@@ -207,10 +218,22 @@ def feedTuples(query,chunkSize):
 def start():
     sql=buildQuery(userLat,userLon,userRange,userDay,queryAtt,modifier,chunkSize)
     eel.spawn(feedTuples(sql,chunkSize))
+    
+    
+testCases=[{'boxMinRange':15, 'boxMaxRange':40,'boxMinDistance':3, 'boxMaxDistance':12, 'chunkSize':100, 'minimumBoxItems':100, 'tuples':8389},
+           {'boxMinRange':35, 'boxMaxRange':40,'boxMinDistance':0, 'boxMaxDistance':4,  'chunkSize':100, 'minimumBoxItems':100, 'tuples':1448},
+           {'boxMinRange':29, 'boxMaxRange':37,'boxMinDistance':1, 'boxMaxDistance':2,  'chunkSize':100, 'minimumBoxItems':100, 'tuples':1448},
+           {'boxMinRange':32, 'boxMaxRange':37,'boxMinDistance':0, 'boxMaxDistance':5,  'chunkSize':100, 'minimumBoxItems':100, 'tuples':1448}]
+
+    
 
 @eel.expose
 def get_use_cases():
-    return {'testcase1':{'name':'case1_0_3_7_9','x_bounds' : [0,3], 'y_bounds':[7,9]}}
+    return {'testcase1':{'name':'case1_15_40_3_12','x_bounds' : [15,40], 'y_bounds':[3,12]},
+            'testcase2':{'name':'case2_35_40_0_4','x_bounds' : [35,40],  'y_bounds':[0,4]},
+            'testcase3':{'name':'case3_29_37_1_2','x_bounds' : [29,37],  'y_bounds':[1,2]},
+            'testcase4':{'name':'case4_32_37_0_5','x_bounds' : [32-0.1,37+0.1],  'y_bounds':[0,5]}           
+            }
 
 @eel.expose
 def send_to_backend_userData(x):
@@ -250,6 +273,8 @@ def send_to_backend_userData(x):
 
 @eel.expose
 def send_user_selection(selected_items):
+
+    print("new items received...")#,selected_items)
     #exmaple of selections by user [22979, 219871, 215638, 111155, 278842]
     global DIZ_plotted
     global modifier
@@ -280,12 +305,15 @@ def send_user_selection(selected_items):
 def send_selection_bounds(x_bounds, y_bounds):
     global totalInb
     global DIZ_plotted
+    global userSelectionUpdated
+    
     print("new selected region received bounds",x_bounds, y_bounds)
     '''
     for k in DIZ_plotted:
         DIZ_plotted[k]['inside']=0
     totalInb=0
     '''
+    userSelectionUpdated=True 
     return x_bounds, y_bounds
 
 @eel.expose
@@ -293,11 +321,6 @@ def send_selection_bounds_values(x_bounds_val, y_bounds_val):
     global totalInb
     global DIZ_plotted
     print("new selected region received_pixel",x_bounds_val, y_bounds_val)
-    '''
-    for k in DIZ_plotted:
-        DIZ_plotted[k]['inside']=0
-    totalInb=0
-    '''
     return x_bounds_val, y_bounds_val
 
 @eel.expose
