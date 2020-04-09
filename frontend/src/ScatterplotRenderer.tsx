@@ -218,11 +218,27 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   private onBrush() {
     // udpate the reference to the selected rectangle
     this.selection = d3.event.selection;
+    const x0 = this.selection[0][0];
+    const x1 = this.selection[1][0];
+    const y0 = this.selection[0][1];
+    const y1 = this.selection[1][1];
+
+    const xMin = Math.floor(this.scaleX.invert(x0) * 100) / 100;
+    const xMax = Math.floor(this.scaleX.invert(x1) * 100) / 100;
+    const yMin = Math.floor(this.scaleY.invert(y0) * 100) / 100;
+    const yMax = Math.floor(this.scaleY.invert(y1) * 100) / 100;
+
+    d3.select("g.brush text")
+      .attr("opacity", 1)
+      .attr("transform", `translate(${x0},${y0 - 5})`)
+      .text(`x: [${xMin}, ${xMax}], y: [${yMax}, ${yMin}]`);
   }
 
   private onBrushEnd() {
     this.addCurrentSelectionToBrushedRegions();
     this.updateCurrentlySelectedPoints();
+
+    d3.select("g.brush text").transition().attr("opacity", 0);
   }
 
   private wasPresetAlreadyDrawn(preset: number[][]) {
@@ -457,9 +473,14 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       //on a 1440 x900 pixel screen, Chrome full screen, only address bar visible
       // .call(this.brush.move, [[]) //15..40, 3..12 8388 tuples
       //.call(this.brush.move, [[]])   //35..40, 0..4  1441 tuples
-      //.call(this.brush.move, [[830, 885], [1088, 1030]])   //29..37 0..2 
-      //.call(this.brush.move, [[920, 680], [1088, 1030]])   //32..37 0..5 
+      //.call(this.brush.move, [[830, 885], [1088, 1030]])   //29..37 0..2
+      //.call(this.brush.move, [[920, 680], [1088, 1030]])   //32..37 0..5
       // .call(this.brush.move, [[100, 100], [200, 200]])
       .call(g => g.select(".overlay").style("cursor", "default"));
+
+    this.svg.select("g.brush").append("text")
+      .attr("fill", "black")
+      .attr("transform", "translate(0, 10)")
+      .text("xdimension: 123, ydimension: 456");
   }
-}  
+}
