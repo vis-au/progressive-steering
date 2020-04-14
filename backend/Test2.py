@@ -112,7 +112,7 @@ def testGenerator(userPref=c):
                {'boxMinRange':32, 'boxMaxRange':37,'boxMinDistance':0, 'boxMaxDistance':5,  'chunkSize':100, 'minimumBoxItems':100, 'tuples':1448}
                    ]
     i=0
-    for tc in testCases:
+    for tc in testCases[:1]:
         i+=1
         log={}
         boxMinRange=tc['boxMinRange']
@@ -142,7 +142,7 @@ def testGenerator(userPref=c):
         print('x range : ',boxMinRange,boxMaxRange,'y range :', boxMinDistance,boxMaxDistance,'GT:', len(GT),'INbox:',len(IN), 'Out:', len(OUT))
         log[i]={'GT':GT,'boxMinRange':boxMinRange,'boxMaxRange':boxMaxRange,'boxMinDistance':boxMinDistance,'boxMaxDistance':boxMaxDistance,'price':userPref['range'],'tuples':tuples,'chunks':[]}
         
-        
+
         logFileName='log_'+str(i)+'_'+str(chunkSize)+'_'+str(minimumBoxItems)
         print(logFileName)
         logM={}
@@ -156,16 +156,24 @@ def testGenerator(userPref=c):
         print(str(log),file=f)
         f.close()
         
-        
+        f=open(logFileName+'_DIZ_Plotted_usingTree.txt','w',encoding="UTF8")       
+        print(str(DIZ_plotted),file=f)             
+        f.close()                               
 
+        '''
+        logM={'totalQueryElements':len(GT),'totalIN':len(IN),'totalOUT':len(OUT),'chunks':{}}
         doRun(GT,IN,OUT,userPref,log[i]['chunks'],logM['chunks'],minimumBoxItems,chunkSize,False) #not using tree
-        
         f=open(logFileName+'_M_NOT_usingTree.txt','w',encoding="UTF8")       
         print(str(logM),file=f)             
         f.close()                               
         f=open(logFileName+'_L_NOT_usingTree.txt','w',encoding="UTF8")       
         print(str(log),file=f)
         f.close()
+        f=open(logFileName+'_DIZ_Plotted_NOT_usingTree.txt','w',encoding="UTF8")       
+        print(str(DIZ_plotted),file=f)             
+        f.close
+        '''        
+
     return log,logM,GT,IN,OUT
 
 
@@ -264,6 +272,7 @@ def feedTuples(tuples,case,query,log,logM,useTree,minimumBoxItems,chunkSize,GT=N
     INplotted={}
     OUTplotted={}
     chunksDIZ={}
+    DIZ_plotted={}
     state='collectingData' #'usingTree' 'flushing' 'empty'
     if len(myresult)>0:
         while state != 'empty': #len(myresult)>0:#not treeReady or True:
@@ -296,7 +305,7 @@ def feedTuples(tuples,case,query,log,logM,useTree,minimumBoxItems,chunkSize,GT=N
              totalDiz.update(IN)
              if len(IN)>0:
                  marcoMetrics=mm.evaluateCumulatedResults(actualHistDiz,totalDiz)
-                 logM[chunks]={'state':state,'metrics':marcoMetrics}
+                 logM[chunks]={'state':state,'truePositive':actualIn,'falsePositive':chunkSize-actualIn,'metrics':marcoMetrics}
                  print('Chunk:',chunks,state, 'PRECISION:', round(actualIn/chunkSize,4),'RECALL:', round(len(INplotted)/tuples,4), 'modifier:',modifier[0:70]+' ...','mm.true_positive:', marcoMetrics['true_positive'])
              if useTree and len(INplotted.keys())>minimumBoxItems and not treeReady:
                  modifier=send_user_selection(list(INplotted.keys()))
@@ -436,6 +445,19 @@ def distances():
     return mind,maxd    
 
 
-
+'''
 fft=eval(open('log_1_100_20_L_usingTree.txt','r',encoding="UTF8").read())
+dp=eval(open('log_1_100_100_DIZ_Plotted_usingTree.txt','r',encoding="UTF8").read())
+'''
 
+##### dir locale
+dp=eval(open('/Users/beppes/GitHub/progressive-steering/backend/log_1_100_100_DIZ_Plotted_usingTree.txt','r',encoding="UTF8").read())
+dpk=list(dp.keys())
+
+dL=eval(open('/Users/beppes/GitHub/progressive-steering/backend/log_1_100_100_L_usingTree.txt','r',encoding="UTF8").read())
+dLk=list(dL[1].keys())
+
+dM=eval(open('/Users/beppes/GitHub/progressive-steering/backend/log_1_100_100_M_usingTree.txt','r',encoding="UTF8").read())
+dMk=list(dM['chunks'].keys())
+
+print( dM['chunks'][1])
