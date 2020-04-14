@@ -107,24 +107,18 @@ def feedTuples(query,chunkSize):
     global totalChunkNumber
     global userSelectionUpdated
     
-    mydb=dbConnect("localhost",'root', USER_PW,'airbnb')    
-    mycursor = mydb.cursor()
-    mycursor.execute('DELETE FROM plotted')
-    mydb.commit()
-    chunks=0
-    mycursor.execute(query)
-    myresult = mycursor.fetchall()
     
 ######################## WAIT selection loop
-    while not userSelectionUpdated: #waiting for the first box
-        eel.sleep(1)
+
         
-####################### COLLECTING DATA NO TREE °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°  
-    print('Entering LOOP1 - Query:',query,modifier)
-    print('c',c)
-    print(query)
-    totalInb=0
-    while len(myresult)>0 and not treeReady or totalInb<50 or len(modifier)<=3:
+    def processResult(chunks,myresult,mycursor,state):
+         global modifier
+         global DIZ_plotted
+         global treeReady #it is used to interrupt the main chunking cycle
+         global mydb
+         global totalInb
+         global totalChunkNumber
+         global userSelectionUpdated
          chunks+=1
          actualChunk={}
          for x in myresult:
@@ -140,80 +134,61 @@ def feedTuples(query,chunkSize):
              if DIZ_plotted [k]['inside']==1 and DIZ_plotted [k]['chunk']==chunks:
                  inb+=1
          totalInb+=inb
-         print('Collecting data-chunk:',chunks ,'Items in box:',totalInb, 'Precision:',inb/chunkSize, inb,distances())
+         print('chunk:', chunks ,state,'Items in box:',totalInb, 'Precision:',inb/chunkSize, inb,distances())
          eel.send_evaluation_metric({"name":"precision","value":inb/chunkSize})       
-         eel.send_evaluation_metric({"name":"recall","value":totalInb/1441})
+         eel.send_evaluation_metric({"name":"recall","value":totalInb})
          mycursor.execute(query)
          myresult = mycursor.fetchall()
          pmodifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
          print('----------------------------potential modifier at chunk:',chunks,pmodifier)
+         return chunks,myresult,mycursor      
+
+    while not userSelectionUpdated: #waiting for the first box
+        eel.sleep(1)
+    userSelectionUpdated=False
+# init database        
+    mydb=dbConnect("localhost",'root', USER_PW,'airbnb')    
+    mycursor = mydb.cursor()
+    mycursor.execute('DELETE FROM plotted')
+    mydb.commit()
+    chunks=0
+    mycursor.execute(query)
+    myresult = mycursor.fetchall()        
+ 
+####################### COLLECTING DATA NO TREE °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°  
+    print('Entering LOOP1 - Query:',query,modifier)
+    print('c',c)
+    print(query)
+    totalInb=0
+    state='collectingData' #'usingTree' 'flushing' 'empty'
+    while len(myresult)>0 and not treeReady or totalInb<50 or len(modifier)<=3:
+         chunks,myresult,mycursor=processResult(chunks,myresult,mycursor,state)
     print('uscito loop 1 treeready=',treeReady,'modifier=',modifier)    
     totalChunkNumber=chunks
 ########################## USING TREE ∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞
-    pmodifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
+    state='usingTree'
     query=buildQuery(userLat,userLon,userRange,userDay,queryAtt,modifier,chunkSize)
     mycursor.execute(query)
     myresult = mycursor.fetchall()
     print('Entering LOOP2 - Query:',query,len(myresult))   
     while len(myresult)>0:
-        chunks+=1
-        actualChunk={}
-        for x in myresult:
-            mycursor.execute('INSERT INTO plotted (id) VALUES (' +str(x[0])+')')
-            DIZ_plotted[x[0]]={'host_id':x[0], 'state':'using tree','zipcode':x[7], 'latitude':x[10],'longitude':x[11],'accommodates':x[12],'bathrooms':x[13],'bedrooms':x[14],'beds':x[15],'price':x[16],'cleaning_fee':x[18],'minimum_nights':x[21],'maximum_nights':x[22],'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5),'chunk':chunks,'inside':0}
-            actualChunk[x[0]]={'chunk':chunks,'state':'using tree','values':x, 'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5)}
-            mydb.commit()
-            eel.sleep(0.001)
-        sendChunk(actualChunk)
-        eel.sleep(0.04)
-        inb=0
-        for k in DIZ_plotted:
-             if DIZ_plotted [k]['inside']==1 and DIZ_plotted [k]['chunk']==chunks:
-                 inb+=1
-        totalInb+=inb
-        print('Using tree-chunk:',chunks ,'Items in box:',totalInb, 'Precision:',inb/chunkSize, inb,distances())
-        eel.send_evaluation_metric({"name":"precision","value":inb/chunkSize}) 
-        eel.send_evaluation_metric({"name":"recall","value":totalInb/1441})
-        mycursor.execute(query)
-        myresult = mycursor.fetchall()
-        pmodifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
-        print('----------------------------potential modifier at chunk:',chunks,pmodifier)
-    #print('uscito loop 2 treeready=',treeReady,'modifier=',modifier)
+        chunks,myresult,mycursor=processResult(chunks,myresult,mycursor,state)
+    print('uscito loop 2 treeready=',treeReady,'modifier=',modifier)
     totalChunkNumber=chunks
-######################### FLUSHING °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°    
+######################### FLUSHING °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°  
+    state='flushing'
     modifier='True'
     query=buildQuery(userLat,userLon,userRange,userDay,queryAtt,modifier,chunkSize)
     mycursor.execute(query)
     myresult = mycursor.fetchall()
     #print('Entering LOOP3 - Query:',query,'Precision:',getPrecision(DIZ_plotted)/chunks)   
     while len(myresult)>0:
-         chunks+=1
-         actualChunk={}
-         for x in myresult:
-           mycursor.execute('INSERT INTO plotted (id) VALUES (' +str(x[0])+')')
-           DIZ_plotted[x[0]]={'host_id':x[0], 'state':'flushing','zipcode':x[7], 'latitude':x[10],'longitude':x[11],'accommodates':x[12],'bathrooms':x[13],'bedrooms':x[14],'beds':x[15],'price':x[16],'cleaning_fee':x[18],'minimum_nights':x[21],'maximum_nights':x[22],'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5),'chunk':chunks,'inside':0}       
-           actualChunk[x[0]]={'chunk':chunks,'state':'flushing','values':x, 'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5)}
-           mydb.commit()
-           eel.sleep(0.001)
-         sendChunk(actualChunk)
-         eel.sleep(0.04)
-         inb=0
-         totalInb=0
-         for k in DIZ_plotted:
-             if DIZ_plotted [k]['inside']==1 and DIZ_plotted [k]['chunk']==chunks:
-                 inb+=1
-             if DIZ_plotted [k]['inside']==1:
-                 totalInb+=1
-         print('flushing-chunk: ',chunks ,'Items in box:',totalInb, 'Precision:',inb/chunkSize,distances())
-         eel.send_evaluation_metric({"name":"precision","value":inb/chunkSize}) 
-         eel.send_evaluation_metric({"name":"recall","value":totalInb/1441})
-         mycursor.execute(query)
-         myresult = mycursor.fetchall()
-         pmodifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
-         print('----------------------------potential modifier at chunk:',chunks,pmodifier)
+         chunks,myresult,mycursor=processResult(chunks,myresult,mycursor,state)
     print('uscito loop 3 treeready=',treeReady,'modifier=',modifier)
     totalChunkNumber=chunks
 #######################################################################################
+    
+
 
 @eel.expose
 def start():
