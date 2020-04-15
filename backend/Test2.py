@@ -453,11 +453,10 @@ dp=eval(open('log_1_100_100_DIZ_Plotted_usingTree.txt','r',encoding="UTF8").read
 ##### dir locale
 dp=eval(open('/Users/beppes/GitHub/progressive-steering/backend/log_1_100_100_DIZ_Plotted_usingTree.txt','r',encoding="UTF8").read())
 dpk=list(dp.keys())
-
-dL=eval(open('/Users/beppes/GitHub/progressive-steering/backend/log_1_100_100_L_usingTree.txt','r',encoding="UTF8").read())
-dLk=list(dL[1].keys())
+print(dp[dpk[0]])
+#{'host_id': 3109, 'zipcode': 75014, 'latitude': 48.83349, 'longitude': 2.31852, 'accommodates': 2, 'bathrooms': 1, 'bedrooms': 0, 'beds': 1, 'price': 60, 'cleaning_fee': '60', 'minimum_nights': 2, 'maximum_nights': 30, 'dist2user': 4.229, 'aboveM': {'neighborhood_min': 48, 'saving': 12, 'alternativeId': 128796, 'extraSteps': 0.212, 'vicini': 3}, 'chunk': 1, 'inside': 0}
 
 dM=eval(open('/Users/beppes/GitHub/progressive-steering/backend/log_1_100_100_M_usingTree.txt','r',encoding="UTF8").read())
 dMk=list(dM['chunks'].keys())
-
 print( dM['chunks'][1])
+#{'state': 'collectingData', 'truePositive': 30, 'falsePositive': 70, 'metrics': {'true_positive': 30, 'false_positive': 0, 'true_negative': 13828, 'false_negative': 8359, 'cumulated_precision': 1.0, 'cumulated_recall': 0.0035761115746811302, 'cumulated_TPR': 0.0035761115746811302, 'cumulated_TNR': 1.0, 'cumulated_accuracy': 0.6237565827969573, 'cumulated_balanced_accuracy': 0.5017880557873405}}
