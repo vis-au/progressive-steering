@@ -304,7 +304,8 @@ def feedTuples(tuples,case,query,log,logM,useTree,minimumBoxItems,chunkSize,GT=N
              totalDiz=OUT.copy()
              totalDiz.update(IN)
              if len(IN)>0:
-                 marcoMetrics=mm.evaluateCumulatedResults(actualHistDiz,totalDiz)
+                 #marcoMetrics=mm.evaluateCumulatedResults(actualHistDiz,totalDiz)
+                 marcoMetrics=mm.evaluateCumulatedResults(DIZ_plotted,totalDiz)                 
                  logM[chunks]={'state':state,'truePositive':actualIn,'falsePositive':chunkSize-actualIn,'metrics':marcoMetrics}
                  print('Chunk:',chunks,state, 'PRECISION:', round(actualIn/chunkSize,4),'RECALL:', round(len(INplotted)/tuples,4), 'modifier:',modifier[0:70]+' ...','mm.true_positive:', marcoMetrics['true_positive'])
              if useTree and len(INplotted.keys())>minimumBoxItems and not treeReady:
