@@ -1,9 +1,11 @@
-import { sendUserSelectionBounds, sendUserSelection, sendUserParameters, SelectionSize, ScenarioPreset } from "./EelBridge";
+import { sendUserSelectionBounds, sendUserSelection, sendUserParameters, SelectionSize, ScenarioPreset, ProgressionState, sendProgressionState } from "./EelBridge";
 import * as d3 from 'd3';
 import { DEFAULT_TOTAL_DATA_SIZE, DEFAULT_POIS } from "./EelBackendDummy";
 
 class DataAdapter {
   private _chunkSize: number = 0;
+  private _progressionBuffer: any[] = [];
+  private _progressionState: ProgressionState = 'running';
   private _data: any[] = [];
   private _dimensions: string[] = [];
   private _xDimension: string | null = null;
@@ -17,6 +19,8 @@ class DataAdapter {
   private dimensionExtents: Map<string, [number, number]> = new Map();
   private evaluationMetrics: Map<string, number> = new Map();
 
+  private unloadBuffer: boolean = false;
+
   private _selectionSize: SelectionSize = {
     min: 0,
     max: 1,
@@ -28,9 +32,18 @@ class DataAdapter {
       this._dimensions = Object.keys(data[0]).filter(d => d !== "id");
     }
 
-    this._chunkSize = data.length;
-    this._data.push(...data);
-    this.notifyDataObservers();
+    if (this.progressionState === 'running') {
+      if (this.unloadBuffer) {
+        this._chunkSize += data.length;
+      } else {
+        this._chunkSize = data.length;
+      }
+      this._data.push(...data);
+      this.notifyDataObservers();
+    } else if (this.progressionState === 'paused') {
+      this._chunkSize += data.length;
+      this._data.push(...data);
+    }
   }
 
   public subscribeOnDataChanged(callback: any) {
@@ -198,6 +211,16 @@ class DataAdapter {
 
   public get chunkSize(): number {
     return this._chunkSize;
+  }
+
+  public set progressionState(newState: ProgressionState) {
+    console.log("changed progression state:", newState);
+    this._progressionState = newState;
+    sendProgressionState(newState);
+  }
+
+  public get progressionState(): ProgressionState {
+    return this._progressionState;
   }
 
   public get data(): any[] { return this._data; }

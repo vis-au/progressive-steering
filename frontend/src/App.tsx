@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { eel, ScenarioPreset } from './EelBridge';
+import { eel, ScenarioPreset, ProgressionState } from './EelBridge';
 import { getEelDataAdapter, EelDataAdapter, getPOIs } from './DataAdapter';
 import ScatterplotRenderer from './ScatterplotRenderer';
 import ProgressBar from './ProgressBar';
@@ -82,6 +82,10 @@ export class App extends Component<{}, State> {
 
   private onHighlightLatestPointChanged() {
     this.setState({ highlightLatestPoints: !this.state.highlightLatestPoints });
+  }
+
+  private onProgressionStateChanged(newState: ProgressionState) {
+    this.dataAdapter.progressionState = newState;
   }
 
   private onDimensionForAxisSelected(axis: string, dimension: string) {
@@ -174,6 +178,17 @@ export class App extends Component<{}, State> {
     );
   }
 
+  private renderProgressionControls() {
+    const text = this.dataAdapter.progressionState === 'paused' ? 'RESTART' : 'PAUSE';
+    const onClickState: ProgressionState = this.dataAdapter.progressionState === 'paused' ? 'running' : 'paused';
+
+    return (
+      <div className="progression-controls">
+          <button className="control" onClick={ () => this.onProgressionStateChanged(onClickState) }>{ text }</button>
+      </div>
+    );
+  }
+
   private renderEvaluationMetrics() {
     return (
       <div className="metrics">
@@ -255,12 +270,16 @@ export class App extends Component<{}, State> {
           { this.renderHighlightLatestPointsToggle() }
           </div>
 
-          <ProgressBar
-            label="items processed"
-            width={ 300 }
-            max={ this.dataAdapter.getTotalDataSize() }
-            current={ this.dataAdapter.data.length }
-          />
+          <div className="right">
+            <ProgressBar
+              label="items processed"
+              width={ 300 }
+              max={ this.dataAdapter.getTotalDataSize() }
+              current={ this.dataAdapter.data.length }
+            />
+            { this.renderProgressionControls() }
+          </div>
+
         </div>
 
       </div>
