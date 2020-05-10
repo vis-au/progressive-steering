@@ -8,14 +8,10 @@ Created on Mon Mar 16 17:41:31 2020
 
 import mysql.connector
 import math
-import time
-import os
 import platform
-import random
 import sys
 import steering_module as sm
 import eel
-from threading import Thread
 import evaluationMetrics as mm
 
 
@@ -112,6 +108,18 @@ def testGenerator(userPref=c):
                {'boxMinRange':32, 'boxMaxRange':37,'boxMinDistance':0, 'boxMaxDistance':5,  'chunkSize':100, 'minimumBoxItems':100, 'tuples':1448}
                    ]
     i=0
+    f=open("AA_File_Name_Doc.txt",'w',encoding="UTF8")
+    print("Filename=n_x1_x2_x3_x4_x5_x6_x7",file=f)
+    print("n : testcase",file=f)
+    print("x1: chunkSize",file=f)
+    print("x2: minimumBoxItems",file=f)
+    print("x3: boxMinRange",file=f)
+    print("x4: boxMaxRange",file=f)
+    print("x5: boxMinDistance",file=f)
+    print("x6: boxMaxDistance",file=f)
+    print("x7: number of tuples",file=f)
+    f.close()
+                            
     for tc in testCases[:1]:
         i+=1
         log={}
@@ -122,57 +130,60 @@ def testGenerator(userPref=c):
         chunkSize=tc['chunkSize']
         minimumBoxItems=tc['minimumBoxItems']
         tuples=tc['tuples']
-         
-        for k in GT:
-            GT[k]=0
-        query="Select * from listings WHERE "    
-        query+="price >="+str(userPref['range'][0])+" AND price <="+str(userPref['range'][1])+ " AND distance >="+str(boxMinDistance)+" AND distance <="+str(boxMaxDistance)+" AND abovem >="+str(boxMinRange)+" AND abovem <="+str(boxMaxRange) 
-        mycursor.execute(query)
-        myresult = mycursor.fetchall()
-        for x in myresult:
-            GT[x[0]]=1  
-        IN={}
-        OUT={}
-        for k in GT:
-            if GT[k]==1:
-                IN[k]=1
-            else:
-                OUT[k]=0
-        tuples=len(IN)          
-        print('x range : ',boxMinRange,boxMaxRange,'y range :', boxMinDistance,boxMaxDistance,'GT:', len(GT),'INbox:',len(IN), 'Out:', len(OUT))
-        log[i]={'GT':GT,'boxMinRange':boxMinRange,'boxMaxRange':boxMaxRange,'boxMinDistance':boxMinDistance,'boxMaxDistance':boxMaxDistance,'price':userPref['range'],'tuples':tuples,'chunks':[]}
         
-
-        logFileName='log_'+str(i)+'_'+str(chunkSize)+'_'+str(minimumBoxItems)
-        print(logFileName)
-        logM={}
-        logM={'totalQueryElements':len(GT),'totalIN':len(IN),'totalOUT':len(OUT),'chunks':{}}
-        doRun(GT,IN,OUT,userPref,log[i]['chunks'],logM['chunks'],minimumBoxItems,chunkSize,True) #using tree
+        for minimumBoxItems in [20,40,60,80]:
+            for chunkSize in [50]:        
+                for k in GT:
+                    GT[k]=0
+                query="Select * from listings WHERE "    
+                query+="price >="+str(userPref['range'][0])+" AND price <="+str(userPref['range'][1])+ " AND distance >="+str(boxMinDistance)+" AND distance <="+str(boxMaxDistance)+" AND abovem >="+str(boxMinRange)+" AND abovem <="+str(boxMaxRange) 
+                mycursor.execute(query)
+                myresult = mycursor.fetchall()
+                for x in myresult:
+                    GT[x[0]]=1  
+                IN={}
+                OUT={}
+                for k in GT:
+                    if GT[k]==1:
+                        IN[k]=1
+                    else:
+                        OUT[k]=0
+                tuples=len(IN)          
+                print('x range : ',boxMinRange,boxMaxRange,'y range :', boxMinDistance,boxMaxDistance,'GT:', len(GT),'INbox:',len(IN), 'Out:', len(OUT))
+                log[i]={'GT':GT,'boxMinRange':boxMinRange,'boxMaxRange':boxMaxRange,'boxMinDistance':boxMinDistance,'boxMaxDistance':boxMaxDistance,'price':userPref['range'],'tuples':tuples,'chunks':[]}
+                
         
-        f=open(logFileName+'_M_usingTree.txt','w',encoding="UTF8")       
-        print(str(logM),file=f)             
-        f.close()                               
-        f=open(logFileName+'_L_usingTree.txt','w',encoding="UTF8")       
-        print(str(log),file=f)
-        f.close()
+                logFileName='log_'+str(i)+'_'+str(chunkSize)+'_'+str(minimumBoxItems)
+                logFileName='log_'+str(i)+'_'+str(chunkSize)+'_'+str(minimumBoxItems)+'_'+str(boxMinRange)+'_'+str(boxMaxRange)+'_'+str(boxMinDistance)+'_'+str(boxMaxDistance)+'_'+str(tuples)
+                print(logFileName)
+                logM={}
+                logM={'totalQueryElements':len(GT),'totalIN':len(IN),'totalOUT':len(OUT),'chunks':{}}
+                doRun(GT,IN,OUT,userPref,log[i]['chunks'],logM['chunks'],minimumBoxItems,chunkSize,True) #using tree
+                
+                f=open(logFileName+'_M_usingTree.txt','w',encoding="UTF8")       
+                print(str(logM),file=f)             
+                f.close()                               
+                f=open(logFileName+'_L_usingTree.txt','w',encoding="UTF8")       
+                print(str(log),file=f)
+                f.close()
+                
+                f=open(logFileName+'_DIZ_Plotted_usingTree.txt','w',encoding="UTF8")       
+                print(str(DIZ_plotted),file=f)             
+                f.close()                               
         
-        f=open(logFileName+'_DIZ_Plotted_usingTree.txt','w',encoding="UTF8")       
-        print(str(DIZ_plotted),file=f)             
-        f.close()                               
-
-        '''
-        logM={'totalQueryElements':len(GT),'totalIN':len(IN),'totalOUT':len(OUT),'chunks':{}}
-        doRun(GT,IN,OUT,userPref,log[i]['chunks'],logM['chunks'],minimumBoxItems,chunkSize,False) #not using tree
-        f=open(logFileName+'_M_NOT_usingTree.txt','w',encoding="UTF8")       
-        print(str(logM),file=f)             
-        f.close()                               
-        f=open(logFileName+'_L_NOT_usingTree.txt','w',encoding="UTF8")       
-        print(str(log),file=f)
-        f.close()
-        f=open(logFileName+'_DIZ_Plotted_NOT_usingTree.txt','w',encoding="UTF8")       
-        print(str(DIZ_plotted),file=f)             
-        f.close
-        '''        
+              
+                logM={'totalQueryElements':len(GT),'totalIN':len(IN),'totalOUT':len(OUT),'chunks':{}}
+                doRun(GT,IN,OUT,userPref,log[i]['chunks'],logM['chunks'],minimumBoxItems,chunkSize,False) #not using tree
+                f=open(logFileName+'_M_NOT_usingTree.txt','w',encoding="UTF8")       
+                print(str(logM),file=f)             
+                f.close()                               
+                f=open(logFileName+'_L_NOT_usingTree.txt','w',encoding="UTF8")       
+                print(str(log),file=f)
+                f.close()
+                f=open(logFileName+'_DIZ_Plotted_NOT_usingTree.txt','w',encoding="UTF8")       
+                print(str(DIZ_plotted),file=f)             
+                f.close
+           
 
     return log,logM,GT,IN,OUT
 
@@ -379,11 +390,11 @@ def start_eel(develop):
 
     if develop:
         directory = '../frontend/src'
-        app = None
+        #app = None
         page = {'port': 3000}
     else:
         directory = 'build'
-        app = 'chrome-app'
+        #app = 'chrome-app'
         page = 'index.html'
 
     
@@ -452,12 +463,16 @@ dp=eval(open('log_1_100_100_DIZ_Plotted_usingTree.txt','r',encoding="UTF8").read
 '''
 
 ##### dir locale
-dp=eval(open('/Users/beppes/GitHub/progressive-steering/backend/log_1_100_100_DIZ_Plotted_usingTree.txt','r',encoding="UTF8").read())
-dpk=list(dp.keys())
-print(dp[dpk[0]])
-#{'host_id': 3109, 'zipcode': 75014, 'latitude': 48.83349, 'longitude': 2.31852, 'accommodates': 2, 'bathrooms': 1, 'bedrooms': 0, 'beds': 1, 'price': 60, 'cleaning_fee': '60', 'minimum_nights': 2, 'maximum_nights': 30, 'dist2user': 4.229, 'aboveM': {'neighborhood_min': 48, 'saving': 12, 'alternativeId': 128796, 'extraSteps': 0.212, 'vicini': 3}, 'chunk': 1, 'inside': 0}
 
-dM=eval(open('/Users/beppes/GitHub/progressive-steering/backend/log_1_100_100_M_usingTree.txt','r',encoding="UTF8").read())
-dMk=list(dM['chunks'].keys())
-print( dM['chunks'][1])
-#{'state': 'collectingData', 'truePositive': 30, 'falsePositive': 70, 'metrics': {'true_positive': 30, 'false_positive': 0, 'true_negative': 13828, 'false_negative': 8359, 'cumulated_precision': 1.0, 'cumulated_recall': 0.0035761115746811302, 'cumulated_TPR': 0.0035761115746811302, 'cumulated_TNR': 1.0, 'cumulated_accuracy': 0.6237565827969573, 'cumulated_balanced_accuracy': 0.5017880557873405}}
+#dp=eval(open('/Users/beppes/GitHub/progressive-steering/backend/log_1_100_100_DIZ_Plotted_usingTree.txt','r',encoding="UTF8").read())
+#dpk=list(dp.keys())
+#print(dp[dpk[0]])
+# =============================================================================
+# {'host_id': 3109, 'zipcode': 75014, 'latitude': 48.83349, 'longitude': 2.31852, 'accommodates': 2, 'bathrooms': 1, 'bedrooms': 0, 'beds': 1, 'price': 60, 'cleaning_fee': '60', 'minimum_nights': 2, 'maximum_nights': 30, 'dist2user': 4.229, 'aboveM': {'neighborhood_min': 48, 'saving': 12, 'alternativeId': 128796, 'extraSteps': 0.212, 'vicini': 3}, 'chunk': 1, 'inside': 0}
+# 
+# dM=eval(open('/Users/beppes/GitHub/progressive-steering/backend/log_1_100_100_M_usingTree.txt','r',encoding="UTF8").read())
+# dMk=list(dM['chunks'].keys())
+# print( dM['chunks'][1])
+# {'state': 'collectingData', 'truePositive': 30, 'falsePositive': 70, 'metrics': {'true_positive': 30, 'false_positive': 0, 'true_negative': 13828, 'false_negative': 8359, 'cumulated_precision': 1.0, 'cumulated_recall': 0.0035761115746811302, 'cumulated_TPR': 0.0035761115746811302, 'cumulated_TNR': 1.0, 'cumulated_accuracy': 0.6237565827969573, 'cumulated_balanced_accuracy': 0.5017880557873405}}
+# 
+# =============================================================================
