@@ -21,6 +21,8 @@ export type ScenarioPreset = {
   name?: string
 };
 
+export type ProgressionState = 'ready' | 'running' | 'paused' | 'done';
+
 // datamanger is a singleton instance that we reference from different places in the bridge
 // functions
 const dataAdapter = getEelDataAdapter();
@@ -149,6 +151,10 @@ export function sendUserSelectionBounds(xMin: number, xMax: number, yMin: number
 
 export function sendUserParameters(parameters: {name: string, type: string, interval: [number, number] | string}[]) {
   window.eel.send_user_params(parameters);
+}
+
+export function sendProgressionState(newState: ProgressionState) {
+  window.eel.send_progression_state(newState);
 }
 
 

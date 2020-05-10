@@ -36,10 +36,27 @@
   justify-content: stretch;
 }
 
+.progression-controls {
+  display: flex;
+  flex-direction: row;
+  margin: 0 0.5rem;
+}
+.progression-controls .control {
+  margin: 0 0.25rem;
+  padding: 0 0.25rem;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+}
+.progression-controls .control:hover {
+  background: #efefef;
+}
+
 .footer {
   border-top: 2px solid #efefef;
 }
-.footer .left {
+.footer .left,
+.footer .right {
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
