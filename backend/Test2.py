@@ -54,8 +54,43 @@ global mydb
 DIZ_plotted={}
 
 global x  #debug
+
+def aboveMinimum(bbId,actualPrice,lat,long,more): #,chunkSize)
+    mycursor = mydb.cursor()  
+    #qq = "SELECT * FROM listings WHERE price>0 and price <="+str(userRange[1])+" LIMIT 0,100" #not related with chunkSize
+    qq = "SELECT id,latitude,longitude,price FROM listings WHERE price>=0 and price <="+str(userRange[1])+" LIMIT 0,100" #not related with chunkSize
+    mycursor.execute(qq)
+    myresult = mycursor.fetchall()
+    minimo=actualPrice
+    minimoX=(bbId,0)
+    vicini=0
+    for x in myresult:
+        if 0 < distance(userLat,userLon,x[1],x[2])-distance(userLat,userLon,lat,long)<=more:
+            vicini+=1
+            #print(x[3])
+            minimo=min(minimo,x[3])
+            minimoX=(x[0],distance(userLat,userLon,x[1],x[2])-distance(userLat,userLon,lat,long))
+    return {"neighborhood_min":minimo,"saving":actualPrice-minimo,"alternativeId":minimoX[0],"extraSteps":minimoX[1],'vicini':vicini}
+'''
+def aboveMinimumNEW(bbId,actualPrice,lat,long,more): #,chunkSize)
+    mycursor = mydb.cursor()  
+    qq = "SELECT id,latitude,longitude,price FROM listings WHERE price>="+str(userRange[0])+" and price <="+str(actualPrice)+" LIMIT 0,5000" #not related with chunkSize
+    mycursor.execute(qq)
+    myresult = mycursor.fetchall()
+    minimo=actualPrice
+    minimoX=(bbId,0)
+    vicini=0
+    for x in myresult:
+        if 0 < distance(userLat,userLon,x[1],x[2])-distance(userLat,userLon,lat,long)<=more:
+            vicini+=1
+            #print(x[3])
+            minimo=min(minimo,x[3])
+            minimoX=(x[0],distance(userLat,userLon,x[1],x[2])-distance(userLat,userLon,lat,long))
+    return {"neighborhood_min":minimo,"saving":actualPrice-minimo,"alternativeId":minimoX[0],"extraSteps":minimoX[1],'vicini':vicini}
+'''
 def enrich_DB(lat=userLat,lon=userLon):
     global x  #debug
+    global userRange
     mydb=dbConnect("localhost",'root', USER_PW,'airbnb')
     mycursor = mydb.cursor()
     query="Delete from listings where price=0" #LIMIT 0,50"
@@ -65,7 +100,7 @@ def enrich_DB(lat=userLat,lon=userLon):
     dbCopy={}
     
     
-    query="Select * from listings" #LIMIT 0,50"
+    query="Select * from listings WHERE price>="+str(userRange[0])+" and price <=" +str(userRange[1]) #LIMIT 0,50"
     mycursor.execute(query)
     myresult = mycursor.fetchall()
     i=0
@@ -78,15 +113,21 @@ def enrich_DB(lat=userLat,lon=userLon):
         #print(xx, '|',x[0],x[16],lat,lon)
         if i%1000==0:
             print(i,len(myresult))
+    '''        
     query="ALTER TABLE listings  DROP COLUMN abovem, DROP COLUMN distance"    
     mycursor.execute(query)
     query="ALTER TABLE listings ADD distance float, ADD abovem int"   
     mycursor.execute(query)
-    mydb.commit() 
+    mydb.commit()
+    '''
+    i=0
     for id in dbCopy:    
         query="Update listings set distance="+str(dbCopy[id][-2])+", abovem="+str(dbCopy[id][-1])+" WHERE id="+str(id)
         print(query)
         mycursor.execute(query)
+        i+=1
+        if i%1000==0:
+            print('*',i,len(myresult))
     mydb.commit()
     mydb.close()
 
@@ -94,6 +135,7 @@ c={'lat': 48.85565,'lon': 2.365492,'range': [60, 90],'day': '2020-04-31','MaxDis
 
 
 def testGenerator(userPref=c):
+    global treeReady
     mydb=dbConnect("localhost",'root', USER_PW,'airbnb')
     mycursor = mydb.cursor()
     query="Select * from listings WHERE "+str(c['range'][0])+"<=price AND "+str(c['range'][1])+">=price "# WHERE distance<25 and distance>4 AND price>=30 AND price<=80 AND abovem>=0"
@@ -102,11 +144,16 @@ def testGenerator(userPref=c):
     GT={}
     for x in myresult:
         GT[x[0]]=0
-    testCases=[{'boxMinRange':15, 'boxMaxRange':40,'boxMinDistance':3, 'boxMaxDistance':12, 'chunkSize':100, 'minimumBoxItems':100, 'tuples':8389},
-               {'boxMinRange':35, 'boxMaxRange':40,'boxMinDistance':0, 'boxMaxDistance':4,  'chunkSize':100, 'minimumBoxItems':100, 'tuples':1448},
-               {'boxMinRange':29, 'boxMaxRange':37,'boxMinDistance':1, 'boxMaxDistance':2,  'chunkSize':100, 'minimumBoxItems':100, 'tuples':1448},
-               {'boxMinRange':32, 'boxMaxRange':37,'boxMinDistance':0, 'boxMaxDistance':5,  'chunkSize':100, 'minimumBoxItems':100, 'tuples':1448}
-                   ]
+    testCases=[{'boxMinRange':15, 'boxMaxRange':40,'boxMinDistance':3, 'boxMaxDistance':12, 'tuples':8389},
+               {'boxMinRange':35, 'boxMaxRange':40,'boxMinDistance':0, 'boxMaxDistance':4,  'tuples':1448},
+               {'boxMinRange':29, 'boxMaxRange':37,'boxMinDistance':1, 'boxMaxDistance':2,  'tuples':1349},
+               {'boxMinRange':32, 'boxMaxRange':37,'boxMinDistance':0, 'boxMaxDistance':5,  'tuples':4293}
+                   ]   
+    
+    testCases=[{'boxMinRange':1.2,   'boxMaxRange':50.15,'boxMinDistance':3.16, 'boxMaxDistance':3.9,  'tuples':3430},
+               {'boxMinRange':37.69, 'boxMaxRange':38.38,'boxMinDistance':1.78, 'boxMaxDistance':2.71, 'tuples':27},
+               {'boxMinRange':11.37, 'boxMaxRange':22.57,'boxMinDistance':5.71, 'boxMaxDistance':6.19, 'tuples':312}]
+    
     i=0
     f=open("AA_File_Name_Doc.txt",'w',encoding="UTF8")
     print("Filename=n_x1_x2_x3_x4_x5_x6_x7",file=f)
@@ -120,19 +167,18 @@ def testGenerator(userPref=c):
     print("x7: number of tuples",file=f)
     f.close()
                             
-    for tc in testCases[:1]:
+    for tc in testCases:
         i+=1
         log={}
         boxMinRange=tc['boxMinRange']
         boxMaxRange=tc['boxMaxRange']
         boxMinDistance=tc['boxMinDistance']
         boxMaxDistance=tc['boxMaxDistance']
-        chunkSize=tc['chunkSize']
-        minimumBoxItems=tc['minimumBoxItems']
         tuples=tc['tuples']
         
         for minimumBoxItems in [20,40,60,80]:
-            for chunkSize in [50]:        
+            for chunkSize in [50,100]: 
+                treeReady=False
                 for k in GT:
                     GT[k]=0
                 query="Select * from listings WHERE "    
@@ -148,21 +194,26 @@ def testGenerator(userPref=c):
                         IN[k]=1
                     else:
                         OUT[k]=0
-                tuples=len(IN)          
+                tuples=len(IN)
+                print(query,"tuples",tuples)
+            
                 print('x range : ',boxMinRange,boxMaxRange,'y range :', boxMinDistance,boxMaxDistance,'GT:', len(GT),'INbox:',len(IN), 'Out:', len(OUT))
                 log[i]={'GT':GT,'boxMinRange':boxMinRange,'boxMaxRange':boxMaxRange,'boxMinDistance':boxMinDistance,'boxMaxDistance':boxMaxDistance,'price':userPref['range'],'tuples':tuples,'chunks':[]}
                 
-        
+                
                 logFileName='log_'+str(i)+'_'+str(chunkSize)+'_'+str(minimumBoxItems)
                 logFileName='log_'+str(i)+'_'+str(chunkSize)+'_'+str(minimumBoxItems)+'_'+str(boxMinRange)+'_'+str(boxMaxRange)+'_'+str(boxMinDistance)+'_'+str(boxMaxDistance)+'_'+str(tuples)
                 print(logFileName)
+     
                 logM={}
                 logM={'totalQueryElements':len(GT),'totalIN':len(IN),'totalOUT':len(OUT),'chunks':{}}
                 doRun(GT,IN,OUT,userPref,log[i]['chunks'],logM['chunks'],minimumBoxItems,chunkSize,True) #using tree
                 
                 f=open(logFileName+'_M_usingTree.txt','w',encoding="UTF8")       
                 print(str(logM),file=f)             
-                f.close()                               
+                f.close()
+                
+                '''                             
                 f=open(logFileName+'_L_usingTree.txt','w',encoding="UTF8")       
                 print(str(log),file=f)
                 f.close()
@@ -170,21 +221,23 @@ def testGenerator(userPref=c):
                 f=open(logFileName+'_DIZ_Plotted_usingTree.txt','w',encoding="UTF8")       
                 print(str(DIZ_plotted),file=f)             
                 f.close()                               
-        
+                '''
               
                 logM={'totalQueryElements':len(GT),'totalIN':len(IN),'totalOUT':len(OUT),'chunks':{}}
                 doRun(GT,IN,OUT,userPref,log[i]['chunks'],logM['chunks'],minimumBoxItems,chunkSize,False) #not using tree
+                
                 f=open(logFileName+'_M_NOT_usingTree.txt','w',encoding="UTF8")       
                 print(str(logM),file=f)             
-                f.close()                               
+                f.close() 
+                '''                              
                 f=open(logFileName+'_L_NOT_usingTree.txt','w',encoding="UTF8")       
                 print(str(log),file=f)
                 f.close()
                 f=open(logFileName+'_DIZ_Plotted_NOT_usingTree.txt','w',encoding="UTF8")       
                 print(str(DIZ_plotted),file=f)             
                 f.close
-           
-
+                '''
+            
     return log,logM,GT,IN,OUT
 
 
@@ -221,21 +274,6 @@ def dbConnect(h,u,p,d):
      )
     return mydb
 
-def aboveMinimum(bbId,actualPrice,lat,long,more):
-    mycursor = mydb.cursor()  
-    qq = "SELECT * FROM listings WHERE price>0 and price <="+str(userRange[1])+ " LIMIT 0,100"
-    mycursor.execute(qq)
-    myresult = mycursor.fetchall()
-    minimo=actualPrice
-    minimoX=(bbId,0)
-    vicini=0
-    for x in myresult:
-        if 0 < distance(userLat,userLon,x[10],x[11])-distance(userLat,userLon,lat,long)<=more:
-            vicini+=1
-            #print(x[16])
-            minimo=min(minimo,x[16])
-            minimoX=(x[0],distance(userLat,userLon,x[10],x[11])-distance(userLat,userLon,lat,long))
-    return {"neighborhood_min":minimo,"saving":actualPrice-minimo,"alternativeId":minimoX[0],"extraSteps":minimoX[1],'vicini':vicini}
 
 
 def buildQuery(userLat,userLon,userRange,userDay,att,modifier,chunkSize,useLimit=True):
@@ -285,15 +323,22 @@ def feedTuples(tuples,case,query,log,logM,useTree,minimumBoxItems,chunkSize,GT=N
     chunksDIZ={}
     DIZ_plotted={}
     state='collectingData' #'usingTree' 'flushing' 'empty'
+    prefisso="Random"
+    if useTree:
+        prefisso="Optimized"
     if len(myresult)>0:
         while state != 'empty': #len(myresult)>0:#not treeReady or True:
              chunks+=1
+             if chunks>100:
+                 break
              actualChunk={}
              for x in myresult:
                mycursor.execute('INSERT INTO plotted (id) VALUES (' +str(x[0])+')')
                #print('LOOP1-',chunks,x,'distance=',distance(userLat,userLon,x[10],x[11]),'aboveM=',aboveMinimum(x[0],x[16],userLat,userLon,1.5))
-               DIZ_plotted[x[0]]={'host_id':x[0], 'zipcode':x[7], 'latitude':x[10],'longitude':x[11],'accommodates':x[12],'bathrooms':x[13],'bedrooms':x[14],'beds':x[15],'price':x[16],'cleaning_fee':x[18],'minimum_nights':x[21],'maximum_nights':x[22],'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5),'chunk':chunks,'inside':0}
-               actualChunk[x[0]]={'chunk':chunks,'state':state,'values':x, 'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5)}        
+               #SLOW DIZ_plotted[x[0]]={'host_id':x[0], 'zipcode':x[7], 'latitude':x[10],'longitude':x[11],'accommodates':x[12],'bathrooms':x[13],'bedrooms':x[14],'beds':x[15],'price':x[16],'cleaning_fee':x[18],'minimum_nights':x[21],'maximum_nights':x[22],'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5),'chunk':chunks,'inside':0}
+               DIZ_plotted[x[0]]={'host_id':x[0], 'zipcode':x[7], 'latitude':x[10],'longitude':x[11],'accommodates':x[12],'bathrooms':x[13],'bedrooms':x[14],'beds':x[15],'price':x[16],'cleaning_fee':x[18],'minimum_nights':x[21],'maximum_nights':x[22],'dist2user':distance(userLat,userLon,x[10],x[11]), 'chunk':chunks,'inside':0}
+               #SLOW actualChunk[x[0]]={'chunk':chunks,'state':state,'values':x, 'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5)}        
+               actualChunk[x[0]]={'chunk':chunks,'state':state,'values':x, 'dist2user':distance(userLat,userLon,x[10],x[11])}        
                plotted+=1
                #eel.sleep(0.001)
              #sendChunk(actualChunk),more
@@ -318,13 +363,13 @@ def feedTuples(tuples,case,query,log,logM,useTree,minimumBoxItems,chunkSize,GT=N
                  #marcoMetrics=mm.evaluateCumulatedResults(actualHistDiz,totalDiz)
                  marcoMetrics=mm.evaluateCumulatedResults(DIZ_plotted,totalDiz)                 
                  logM[chunks]={'state':state,'truePositive':actualIn,'falsePositive':chunkSize-actualIn,'metrics':marcoMetrics}
-                 print('Chunk:',chunks,state, 'PRECISION:', round(actualIn/chunkSize,4),'RECALL:', round(len(INplotted)/tuples,4), 'modifier:',modifier[0:70]+' ...','mm.true_positive:', marcoMetrics['true_positive'])
+                 print(prefisso,chunkSize,minimumBoxItems,len(INplotted),'Chunk:',chunks,state, 'PRECISION:', round(actualIn/chunkSize,4),'RECALL:', round(len(INplotted)/tuples,4), 'modifier:',modifier[0:70]+' ...','mm.true_positive:', marcoMetrics['true_positive'])
              if useTree and len(INplotted.keys())>minimumBoxItems and not treeReady:
                  modifier=send_user_selection(list(INplotted.keys()))
                  if len(modifier)==0:
                      modifier='True'
                      treeReady='False'
-                 print("!!!!!! TREEE READY !!!!!!")
+                 print("!!!!!! TREEE READY !!!!!!")               
                  state='usingTree'
                  query=buildQuery(case['lat'],case['lon'],case['range'],case['day'],queryAtt,modifier,chunkSize)
              else:
@@ -431,7 +476,6 @@ def obtainTuples(arrayID):
 
 #############################################################################
 #enrich_DB()
-
 log,logM,GT,IN_TEST,OUT_TEST=testGenerator()
 
 ################################################
