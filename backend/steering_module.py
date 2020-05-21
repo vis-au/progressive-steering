@@ -106,7 +106,7 @@ def getSteeringCondition(dataPS):
     #X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0, random_state=1) # 70% training and 30% test
     X_train=X
     
-    clf = DecisionTreeClassifier(criterion="entropy", max_depth=3)
+    clf = DecisionTreeClassifier(criterion="entropy", max_depth=None)
     
     clf=clf.fit(X,y)
     
