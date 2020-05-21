@@ -55,12 +55,14 @@ DIZ_plotted={}
 
 global x  #debug
 
-def aboveMinimum(bbId,actualPrice,lat,long,more): #,chunkSize)
+def aboveMinimum(bbId,actualPrice,lat,long,more,myresult): #,chunkSize)
+    '''
     mycursor = mydb.cursor()  
     #qq = "SELECT * FROM listings WHERE price>0 and price <="+str(userRange[1])+" LIMIT 0,100" #not related with chunkSize
-    qq = "SELECT id,latitude,longitude,price FROM listings WHERE price>=0 and price <="+str(userRange[1])+" LIMIT 0,100" #not related with chunkSize
+    qq = "SELECT id,latitude,longitude,price FROM listings WHERE price>=0 and price <="+str(userRange[1])#+" LIMIT 0,100" #not related with chunkSize
     mycursor.execute(qq)
     myresult = mycursor.fetchall()
+    '''
     minimo=actualPrice
     minimoX=(bbId,0)
     vicini=0
@@ -93,6 +95,11 @@ def enrich_DB(lat=userLat,lon=userLon):
     global userRange
     mydb=dbConnect("localhost",'root', USER_PW,'airbnb')
     mycursor = mydb.cursor()
+    
+    qq = "SELECT id,latitude,longitude,price FROM listings WHERE price>=0 and price <="+str(userRange[1])+" LIMIT 0,100" #not related with chunkSize
+    mycursor.execute(qq)
+    myresult1 = mycursor.fetchall() #candidates for computing aboveminimum
+    
     query="Delete from listings where price=0" #LIMIT 0,50"
     mycursor.execute(query)
     
@@ -106,7 +113,7 @@ def enrich_DB(lat=userLat,lon=userLon):
     i=0
     xx=[0,0]
     for x in myresult:      
-        xx[-1]=aboveMinimum(x[0],x[16],lat,lon,0.5)['saving']
+        xx[-1]=aboveMinimum(x[0],x[16],lat,lon,0.5,myresult1)['saving']
         xx[-2]=distance(lat,lon,x[10],x[11],0)
         dbCopy[x[0]]=xx.copy()
         i+=1
@@ -123,7 +130,7 @@ def enrich_DB(lat=userLat,lon=userLon):
     i=0
     for id in dbCopy:    
         query="Update listings set distance="+str(dbCopy[id][-2])+", abovem="+str(dbCopy[id][-1])+" WHERE id="+str(id)
-        print(query)
+        #print(query)
         mycursor.execute(query)
         i+=1
         if i%1000==0:
@@ -196,6 +203,7 @@ def testGenerator(userPref=c):
                         OUT[k]=0
                 tuples=len(IN)
                 print(query,"tuples",tuples)
+                #continue
             
                 print('x range : ',boxMinRange,boxMaxRange,'y range :', boxMinDistance,boxMaxDistance,'GT:', len(GT),'INbox:',len(IN), 'Out:', len(OUT))
                 log[i]={'GT':GT,'boxMinRange':boxMinRange,'boxMaxRange':boxMaxRange,'boxMinDistance':boxMinDistance,'boxMaxDistance':boxMaxDistance,'price':userPref['range'],'tuples':tuples,'chunks':[]}
@@ -329,8 +337,8 @@ def feedTuples(tuples,case,query,log,logM,useTree,minimumBoxItems,chunkSize,GT=N
     if len(myresult)>0:
         while state != 'empty': #len(myresult)>0:#not treeReady or True:
              chunks+=1
-             if chunks>100:
-                 break
+             #if chunks>100:
+             #    break
              actualChunk={}
              for x in myresult:
                mycursor.execute('INSERT INTO plotted (id) VALUES (' +str(x[0])+')')
@@ -407,12 +415,13 @@ def send_user_selection(selected_items):
 
     if not treeReady:
         modifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
-        if len(modifier)>0:
+        if len(modifier)>3:
             treeReady=True
             print('New modifier:',modifier)
         else:
             print('Wrong empty modifier:',modifier)
             modifier='True AND True'
+            treeReady=False
     return modifier
 
 #@eel.expose #####################################
