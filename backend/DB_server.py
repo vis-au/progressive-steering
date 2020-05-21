@@ -10,7 +10,7 @@ from threading import Thread
 global modifier  #modify initial query with conditions coming from the tree
 global queryAtt  #attributes of the main query
 global treeReady #it is used to interrupt the initial chunking cycle
-global chunkSize 
+global chunkSize
 global totalChunkNumber
 global totalInb  #number of points plotted in the user box till the actual chunk
 global userSelectionUpdated #new box
@@ -25,6 +25,17 @@ modifier='True'
 queryAtt='*'
 USER_PW = 'password' # configure according to MySQL setup
 
+# enum of states for progression
+PROGRESSTION_STATES = {
+    "ready": 0,
+    "running": 1,
+    "paused": 2,
+    "done": 3
+}
+
+# progression state can be paused/restarted interactively by the user
+progression_state = PROGRESSTION_STATES["ready"]
+
 global userLat
 global userLon
 global userRange
@@ -34,7 +45,7 @@ global userMaxDistance
 c={'lat': 48.85565,'lon': 2.365492,'range': [60, 90],'day': '2020-04-31','MaxDistance':10+1} #user data for test
 
 global mydb
-global DIZ_plotted #all plotted points 
+global DIZ_plotted #all plotted points
 DIZ_plotted={}
 global IN   #cumulated airb&b ID of points plotted in the user box till the actual chunk
 IN=[]
@@ -77,7 +88,7 @@ def dbConnect(h,u,p,d):
 
 def aboveMinimum(bbId,actualPrice,lat,long,more): # the search is bound to a
     mycursor = mydb.cursor()
-    qq=buildQuery(userLat,userLon,userRange,userDay,queryAtt,'True',chunkSize)   
+    qq=buildQuery(userLat,userLon,userRange,userDay,queryAtt,'True',chunkSize)
     qq = "SELECT * FROM listings WHERE price>0 and price <="+str(userRange[1])+ " LIMIT 0,100"
     mycursor.execute(qq)
     myresult = mycursor.fetchall()
@@ -106,11 +117,13 @@ def feedTuples(query,chunkSize):
     global totalInb
     global totalChunkNumber
     global userSelectionUpdated
-    
-    
+    global progression_state
+    global PROGRESSTION_STATES
+
+
 ######################## WAIT selection loop
 
-        
+
     def processResult(chunks,myresult,mycursor,state):
          global modifier
          global DIZ_plotted
@@ -127,7 +140,7 @@ def feedTuples(query,chunkSize):
              actualChunk[x[0]]={'chunk':chunks,'state':'collecting data','values':x, 'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5)}
              mydb.commit()
              eel.sleep(0.001)
-         sendChunk(actualChunk)    
+         sendChunk(actualChunk)
          eel.sleep(0.04)
          inb=0
          for k in DIZ_plotted:
@@ -135,80 +148,92 @@ def feedTuples(query,chunkSize):
                  inb+=1
          totalInb+=inb
          print('chunk:', chunks ,state,'Items in box:',totalInb, 'Precision:',inb/chunkSize, inb,distances())
-         eel.send_evaluation_metric({"name":"precision","value":inb/chunkSize})       
+         eel.send_evaluation_metric({"name":"precision","value":inb/chunkSize})
          eel.send_evaluation_metric({"name":"recall","value":totalInb})
          mycursor.execute(query)
          myresult = mycursor.fetchall()
          pmodifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
          print('----------------------------potential modifier at chunk:',chunks,pmodifier)
-         return chunks,myresult,mycursor      
+         return chunks,myresult,mycursor
 
     while not userSelectionUpdated: #waiting for the first box
         eel.sleep(1)
     userSelectionUpdated=False
-# init database        
-    mydb=dbConnect("localhost",'root', USER_PW,'airbnb')    
+# init database
+    mydb=dbConnect("localhost",'root', USER_PW,'airbnb')
     mycursor = mydb.cursor()
     mycursor.execute('DELETE FROM plotted')
     mydb.commit()
     chunks=0
     mycursor.execute(query)
-    myresult = mycursor.fetchall()        
- 
-####################### COLLECTING DATA NO TREE °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°  
+    myresult = mycursor.fetchall()
+
+####################### COLLECTING DATA NO TREE °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
     print('Entering LOOP1 - Query:',query,modifier)
     print('c',c)
     print(query)
     totalInb=0
     state='collectingData' #'usingTree' 'flushing' 'empty'
     while len(myresult)>0 and not treeReady or totalInb<50 or len(modifier)<=3:
-         chunks,myresult,mycursor=processResult(chunks,myresult,mycursor,state)
-    print('uscito loop 1 treeready=',treeReady,'modifier=',modifier)    
+        if progression_state == PROGRESSTION_STATES["paused"]:
+            print("paused ...")
+            eel.sleep(1)
+        else:
+            chunks,myresult,mycursor=processResult(chunks,myresult,mycursor,state)
+    print('uscito loop 1 treeready=',treeReady,'modifier=',modifier)
     totalChunkNumber=chunks
 ########################## USING TREE ∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞
     state='usingTree'
     query=buildQuery(userLat,userLon,userRange,userDay,queryAtt,modifier,chunkSize)
     mycursor.execute(query)
     myresult = mycursor.fetchall()
-    print('Entering LOOP2 - Query:',query,len(myresult))   
+    print('Entering LOOP2 - Query:',query,len(myresult))
     while len(myresult)>0:
-        chunks,myresult,mycursor=processResult(chunks,myresult,mycursor,state)
+        if progression_state == PROGRESSTION_STATES["paused"]:
+            print("paused ...")
+            eel.sleep(1)
+        else:
+            chunks,myresult,mycursor=processResult(chunks,myresult,mycursor,state)
     print('uscito loop 2 treeready=',treeReady,'modifier=',modifier)
     totalChunkNumber=chunks
-######################### FLUSHING °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°  
+######################### FLUSHING °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
     state='flushing'
     modifier='True'
     query=buildQuery(userLat,userLon,userRange,userDay,queryAtt,modifier,chunkSize)
     mycursor.execute(query)
     myresult = mycursor.fetchall()
-    #print('Entering LOOP3 - Query:',query,'Precision:',getPrecision(DIZ_plotted)/chunks)   
+    #print('Entering LOOP3 - Query:',query,'Precision:',getPrecision(DIZ_plotted)/chunks)
     while len(myresult)>0:
-         chunks,myresult,mycursor=processResult(chunks,myresult,mycursor,state)
+        if progression_state == PROGRESSTION_STATES["paused"]:
+            print("paused ...")
+            eel.sleep(1)
+        else:
+            chunks,myresult,mycursor=processResult(chunks,myresult,mycursor,state)
     print('uscito loop 3 treeready=',treeReady,'modifier=',modifier)
     totalChunkNumber=chunks
 #######################################################################################
-    
+
 
 
 @eel.expose
 def start():
     sql=buildQuery(userLat,userLon,userRange,userDay,queryAtt,modifier,chunkSize)
     eel.spawn(feedTuples(sql,chunkSize))
-    
-    
+
+
 testCases=[{'boxMinRange':15, 'boxMaxRange':40,'boxMinDistance':3, 'boxMaxDistance':12, 'chunkSize':100, 'minimumBoxItems':100, 'tuples':8389},
            {'boxMinRange':35, 'boxMaxRange':40,'boxMinDistance':0, 'boxMaxDistance':4,  'chunkSize':100, 'minimumBoxItems':100, 'tuples':1448},
            {'boxMinRange':29, 'boxMaxRange':37,'boxMinDistance':1, 'boxMaxDistance':2,  'chunkSize':100, 'minimumBoxItems':100, 'tuples':1448},
            {'boxMinRange':32, 'boxMaxRange':37,'boxMinDistance':0, 'boxMaxDistance':5,  'chunkSize':100, 'minimumBoxItems':100, 'tuples':1448}]
 
-    
+
 
 @eel.expose
 def get_use_cases():
     return {'testcase1':{'name':'case1_15_40_3_12','x_bounds' : [15,40], 'y_bounds':[3,12]},
             'testcase2':{'name':'case2_35_40_0_4','x_bounds' : [35,40],  'y_bounds':[0,4]},
             'testcase3':{'name':'case3_29_37_1_2','x_bounds' : [29,37],  'y_bounds':[1,2]},
-            'testcase4':{'name':'case4_32_37_0_5','x_bounds' : [32-0.1,37+0.1],  'y_bounds':[0,5]}           
+            'testcase4':{'name':'case4_32_37_0_5','x_bounds' : [32-0.1,37+0.1],  'y_bounds':[0,5]}
             }
 
 @eel.expose
@@ -226,7 +251,7 @@ def send_to_backend_userData(x):
   userRange=x['moneyRange']
   userDay=x['day']
   userMaxDistance=x['userMaxDistance']
-  
+
   userLat=c['lat']
   userLon=c['lon']
   userRange=c['range']
@@ -255,12 +280,12 @@ def send_user_selection(selected_items):
     global modifier
     global treeReady
     global IN
-    
+
     if len(selected_items)==0:
         #print('Ignoring empty selection')
         lastSelectedItems=[]
         return 0
-    
+
     lastSelectedItems=selected_items.copy()
     print("new",len(selected_items),"items received...")#,selected_items)
     for k in selected_items:
@@ -268,14 +293,14 @@ def send_user_selection(selected_items):
         DIZ_plotted[k]['inside']=1
     IN.extend(selected_items)
     #print("new selected items received",selected_items)
-    
+
 
     eel.sleep(0.01)
 
     if not treeReady or True:
         modifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
         if len(modifier)>3:
-            treeReady=True           
+            treeReady=True
             #print('New modifier:',modifier)
         else:
             #print('Wrong empty modifier:',modifier)
@@ -288,9 +313,9 @@ def send_selection_bounds(x_bounds, y_bounds):
     global DIZ_plotted
     global userSelectionUpdated
     global lastSelectedItems
-    
+
     print("new selected region received bounds",x_bounds, y_bounds)
-    
+
     totalInb=0
     for k in DIZ_plotted:
         DIZ_plotted[k]['inside']=0
@@ -298,7 +323,7 @@ def send_selection_bounds(x_bounds, y_bounds):
             DIZ_plotted[k]['inside']=1
             totalInb+=1
 
-    userSelectionUpdated=True 
+    userSelectionUpdated=True
     return x_bounds, y_bounds
 
 @eel.expose
@@ -312,9 +337,24 @@ def send_selection_bounds_values(x_bounds_val, y_bounds_val):
 def send_user_params(parameters):
     print("new user parameters received")
 
+@eel.expose
+def send_progression_state(state):
+    global progression_state, PROGRESSTION_STATES
+
+    if state == "ready":
+        progression_state = PROGRESSTION_STATES["ready"]
+    elif state == "running":
+        progression_state = PROGRESSTION_STATES["running"]
+    elif state == "paused":
+        progression_state = PROGRESSTION_STATES["paused"]
+    elif state == "done":
+        progression_state = PROGRESSTION_STATES["done"]
+
+    print("new progression state", progression_state)
+
 def start_eel(develop):
     """Start Eel with either production or development configuration."""
-    
+
     print(develop)
 
     if develop:
@@ -326,7 +366,7 @@ def start_eel(develop):
         app = 'chrome-app'
         page = 'index.html'
 
-    
+
     eel.init(directory, ['.tsx', '.ts', '.jsx', '.js', '.html'])
 
     print('Backend launched successfully. Waiting for requests ...')
@@ -347,10 +387,10 @@ def start_eel(develop):
             eel.start(page, mode='edge', **eel_kwargs)
         else:
             raise
-    
+
     #while True:
     #    print("I'm a main loop")
-    #    eel.sleep(1.0) 
+    #    eel.sleep(1.0)
 def obtainTuples(arrayID):
     result=[]
     for elem in arrayID:
@@ -361,7 +401,7 @@ def my_other_thread():
     while True:
         print("I'm a thread")
         #eel.sleep(1.0)
-        
+
 def insideUserBox():
     tot=0
     for k in DIZ_plotted:
@@ -378,13 +418,13 @@ def distances():
             maxd=DIZ_plotted[k]['dist2user']
         if DIZ_plotted[k]['dist2user']<mind and DIZ_plotted[k]['inside']==1:
             mind=DIZ_plotted[k]['dist2user']
-    return mind,maxd 
+    return mind,maxd
 
 def numberOfPlottedPoints(chunks):
     inb=0
     for k in DIZ_plotted:
         if DIZ_plotted [k]['inside']==1 and DIZ_plotted [k]['chunk']==chunks:
-            inb+=1 
+            inb+=1
     return inb
 
 def history():
@@ -393,17 +433,17 @@ def history():
         inb=0
         for k in DIZ_plotted:
             if DIZ_plotted [k]['inside']==1 and DIZ_plotted [k]['chunk']==chunks:
-                inb+=1 
+                inb+=1
         totalInb+=inb
         print('Chunk: ',chunks ,'Items in box:',totalInb, 'Precision:',inb/chunkSize, totalInb)
-    
+
 
 if __name__ == '__main__':
     import sys
-    
+
     #feThread=FrontEndListener("fethread")
     #feThread.start()
     # Uses the production version in the "build" directory if passed a second argument
     start_eel(develop=len(sys.argv) == 1)
-     
-  
+
+
