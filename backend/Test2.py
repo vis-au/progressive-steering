@@ -97,7 +97,7 @@ def enrich_DB(lat=userLat,lon=userLon):
     mydb=dbConnect("localhost",'root', USER_PW,'airbnb')
     mycursor = mydb.cursor()
     
-    qq = "SELECT id,latitude,longitude,price FROM listings WHERE price>=0 and price <="+str(userRange[1])+" LIMIT 0,100" #not related with chunkSize
+    qq = "SELECT id,latitude,longitude,price FROM listings WHERE price>=0 and price <="+str(userRange[1]) #+" LIMIT 0,100" #not related with chunkSize
     mycursor.execute(qq)
     myresult1 = mycursor.fetchall() #candidates for computing aboveminimum
     
@@ -158,9 +158,9 @@ def testGenerator(userPref=c):
                {'boxMinRange':32, 'boxMaxRange':37,'boxMinDistance':0, 'boxMaxDistance':5,  'tuples':4293}
                    ]   
     
-    testCases=[{'boxMinRange':1.2,   'boxMaxRange':50.15,'boxMinDistance':3.16, 'boxMaxDistance':3.9,  'tuples':3430},
-               {'boxMinRange':37.69, 'boxMaxRange':38.38,'boxMinDistance':1.78, 'boxMaxDistance':2.71, 'tuples':27},
-               {'boxMinRange':11.37, 'boxMaxRange':22.57,'boxMinDistance':5.71, 'boxMaxDistance':6.19, 'tuples':312}]
+    testCases=[{'boxMinRange':1.2,   'boxMaxRange':50.15,'boxMinDistance':3.16, 'boxMaxDistance':3.9,  'tuples':1672},
+               {'boxMinRange':37.69, 'boxMaxRange':38.38,'boxMinDistance':1.78, 'boxMaxDistance':2.71, 'tuples':584},
+               {'boxMinRange':11.37, 'boxMaxRange':22.57,'boxMinDistance':5.71, 'boxMaxDistance':6.19, 'tuples':0}]
     
     i=0
     f=open("AA_File_Name_Doc.txt",'w',encoding="UTF8")
@@ -204,7 +204,7 @@ def testGenerator(userPref=c):
                         OUT[k]=0
                 tuples=len(IN)
                 print(query,"tuples",tuples)
-                #continue
+                continue
             
                 print('x range : ',boxMinRange,boxMaxRange,'y range :', boxMinDistance,boxMaxDistance,'GT:', len(GT),'INbox:',len(IN), 'Out:', len(OUT))
                 log[i]={'GT':GT,'boxMinRange':boxMinRange,'boxMaxRange':boxMaxRange,'boxMinDistance':boxMinDistance,'boxMaxDistance':boxMaxDistance,'price':userPref['range'],'tuples':tuples,'chunks':[]}
