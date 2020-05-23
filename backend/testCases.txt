@@ -1,0 +1,9 @@
+[
+           {'boxMinRange':15, 'boxMaxRange':30,'boxMinDistance':3, 'boxMaxDistance':12, 'tuples':5972, 'tuplesF':4742},                       
+           {'boxMinRange':25, 'boxMaxRange':30,'boxMinDistance':0, 'boxMaxDistance':4,  'tuples':3320, 'tuplesF':1850},
+           {'boxMinRange':29, 'boxMaxRange':30,'boxMinDistance':1, 'boxMaxDistance':2,  'tuples':696, 'tuplesF':258},
+           {'boxMinRange':10, 'boxMaxRange':20,'boxMinDistance':0, 'boxMaxDistance':3,  'tuples':4580, 'tuplesF':3180},
+           {'boxMinRange':1.2,   'boxMaxRange':50.15,'boxMinDistance':3.16, 'boxMaxDistance':3.9,  'tuples':2910, 'tuplesF':2920},
+           {'boxMinRange':37.69, 'boxMaxRange':38.38,'boxMinDistance':1.78, 'boxMaxDistance':2.71, 'tuples':0, 'tuplesF':0},
+           {'boxMinRange':11.37, 'boxMaxRange':22.57,'boxMinDistance':5.71, 'boxMaxDistance':6.19, 'tuples':251, 'tuplesF':253}
+]
