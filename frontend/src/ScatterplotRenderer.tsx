@@ -116,7 +116,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       const x = this.scaleX(datum[dimX]);
       const y = this.scaleY(datum[dimY]);
 
-      if (x > selection[0][0] && x < selection[1][0] && y > selection[0][1] && y < selection[1][1]) {
+      if (x >= selection[0][0] && x <= selection[1][0] && y >= selection[0][1] && y <= selection[1][1]) {
         pointsInSelection.push(datum);
       }
     });
