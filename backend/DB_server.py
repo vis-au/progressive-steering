@@ -86,7 +86,9 @@ def dbConnect(h,u,p,d):
      )
     return mydb
 
-def aboveMinimum(bbId,actualPrice,lat,long,more): # the search is bound to a
+def aboveMinimum(bbId,actualPrice,lat,long,more,x45,x46): # the search is bound to a
+    return {"neighborhood_min":5,"saving":x45,"alternativeId":100,"extraSteps":0.1,'vicini':100} #from Ground True saving
+    #return {"neighborhood_min":5,"saving":x46,"alternativeId":100,"extraSteps":0.1,'vicini':100} #from Ground True savingF
     mycursor = mydb.cursor()
     qq=buildQuery(userLat,userLon,userRange,userDay,queryAtt,'True',chunkSize)
     qq = "SELECT * FROM listings WHERE price>0 and price <="+str(userRange[1])+ " LIMIT 0,100"
@@ -135,9 +137,10 @@ def feedTuples(query,chunkSize):
          chunks+=1
          actualChunk={}
          for x in myresult:
+             #print('X40s****',x[40:],aboveMinimum(x[0],x[16],userLat,userLon,0.5),x[45])
              mycursor.execute('INSERT INTO plotted (id) VALUES (' +str(x[0])+')')
-             DIZ_plotted[x[0]]={'host_id':x[0],'state':'collecting data', 'zipcode':x[7], 'latitude':x[10],'longitude':x[11],'accommodates':x[12],'bathrooms':x[13],'bedrooms':x[14],'beds':x[15],'price':x[16],'cleaning_fee':x[18],'minimum_nights':x[21],'maximum_nights':x[22],'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5),'chunk':chunks,'inside':0}
-             actualChunk[x[0]]={'chunk':chunks,'state':'collecting data','values':x, 'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5)}
+             DIZ_plotted[x[0]]={'host_id':x[0],'state':'collecting data', 'zipcode':x[7], 'latitude':x[10],'longitude':x[11],'accommodates':x[12],'bathrooms':x[13],'bedrooms':x[14],'beds':x[15],'price':x[16],'cleaning_fee':x[18],'minimum_nights':x[21],'maximum_nights':x[22],'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.3,x[45],x[46]),'chunk':chunks,'inside':0}
+             actualChunk[x[0]]={'chunk':chunks,'state':'collecting data','values':x, 'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.3,x[45],x[46])}
              mydb.commit()
              eel.sleep(0.001)
          sendChunk(actualChunk)
@@ -212,8 +215,14 @@ def feedTuples(query,chunkSize):
     print('uscito loop 3 treeready=',treeReady,'modifier=',modifier)
     totalChunkNumber=chunks
 #######################################################################################
-
-
+global testCases
+testCases=[{'boxMinRange':15, 'boxMaxRange':30,'boxMinDistance':3, 'boxMaxDistance':12, 'tuples':5972},           #Integer savings   
+           {'boxMinRange':25, 'boxMaxRange':30,'boxMinDistance':0, 'boxMaxDistance':4,  'tuples':3320},
+           {'boxMinRange':29, 'boxMaxRange':30,'boxMinDistance':1, 'boxMaxDistance':2,  'tuples':696},
+           {'boxMinRange':10, 'boxMaxRange':20,'boxMinDistance':0, 'boxMaxDistance':3,  'tuples':4580},
+           {'boxMinRange':1.2,   'boxMaxRange':50.15,'boxMinDistance':3.16, 'boxMaxDistance':3.9,  'tuples':2934},
+           {'boxMinRange':37.69, 'boxMaxRange':38.38,'boxMinDistance':1.78, 'boxMaxDistance':2.71, 'tuples':0},
+           {'boxMinRange':11.37, 'boxMaxRange':22.57,'boxMinDistance':5.71, 'boxMaxDistance':6.19, 'tuples':262}]
 
 @eel.expose
 def start():
@@ -221,15 +230,20 @@ def start():
     eel.spawn(feedTuples(sql,chunkSize))
 
 
-testCases=[{'boxMinRange':15, 'boxMaxRange':40,'boxMinDistance':3, 'boxMaxDistance':12, 'chunkSize':100, 'minimumBoxItems':100, 'tuples':8389},
-           {'boxMinRange':35, 'boxMaxRange':40,'boxMinDistance':0, 'boxMaxDistance':4,  'chunkSize':100, 'minimumBoxItems':100, 'tuples':1448},
-           {'boxMinRange':29, 'boxMaxRange':37,'boxMinDistance':1, 'boxMaxDistance':2,  'chunkSize':100, 'minimumBoxItems':100, 'tuples':1448},
-           {'boxMinRange':32, 'boxMaxRange':37,'boxMinDistance':0, 'boxMaxDistance':5,  'chunkSize':100, 'minimumBoxItems':100, 'tuples':1448}]
+    
+
+def encodeTestCases(testCases):
+    r={}
+    for i in range(len(testCases)):
+        r['testcase'+str(i+1)]={'name':'case'+str(i+1)+'_'+str(testCases[i]['boxMinRange'])+'_'+str(testCases[i]['boxMaxRange'])+'_'+str(testCases[i]['boxMinDistance'])+'_'+str(testCases[i]['boxMaxDistance']),
+          'x_bounds':[testCases[i]['boxMinRange']-0.5,testCases[i]['boxMaxRange']+0.5],'y_bounds':[testCases[i]['boxMinDistance']-0.001,testCases[i]['boxMaxDistance']+0.001]}
+    return r
 
 
 
 @eel.expose
 def get_use_cases():
+    return encodeTestCases(testCases)
     return {'testcase1':{'name':'case1_15_40_3_12','x_bounds' : [15,40], 'y_bounds':[3,12]},
             'testcase2':{'name':'case2_35_40_0_4','x_bounds' : [35,40],  'y_bounds':[0,4]},
             'testcase3':{'name':'case3_29_37_1_2','x_bounds' : [29,37],  'y_bounds':[1,2]},
@@ -262,8 +276,8 @@ def send_to_backend_userData(x):
   eel.send_city("Paris")
   eel.set_x_name("Saving opportunity")
   eel.set_y_name("Distance")
-  eel.send_dimension_total_extent({"name": "Saving opportunity", "min": 0, "max": x['moneyRange'][1]-8})
-  eel.send_dimension_total_extent({"name": "Distance", "min": 0, "max": 15})
+  eel.send_dimension_total_extent({"name": "Saving opportunity", "min": -1, "max": 2+userRange[1]-userRange[0]})
+  eel.send_dimension_total_extent({"name": "Distance", "min": 0, "max": 13})
 
   #eel.set_min_selection_size({"name": "Saving opportunity", "min": 0, "max": x["moneyRange"][1]-["moneyRange"][0]})
 
