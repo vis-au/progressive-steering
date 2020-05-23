@@ -554,5 +554,6 @@ loadConfig()
 
 #enrich_DB()
 log,logM,GT,IN_TEST,OUT_TEST=testGenerator(True,c)
+log,logM,GT,IN_TEST,OUT_TEST=testGenerator(False,c)
 
 ################################################

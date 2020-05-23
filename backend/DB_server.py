@@ -91,6 +91,7 @@ def dbConnect(h,u,p,d):
 def aboveMinimum(bbId,actualPrice,lat,long,more,x45,x46): # the search is bound to a
     global floatSaving
     if floatSaving:
+        return {"neighborhood_min":5,"saving":x46,"alternativeId":100,"extraSteps":0.1,'vicini':100} #from Ground True abovemF
     else:
         return {"neighborhood_min":5,"saving":x45,"alternativeId":100,"extraSteps":0.1,'vicini':100} #from Ground True abovem
 
