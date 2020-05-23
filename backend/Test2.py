@@ -68,69 +68,66 @@ def aboveMinimum(bbId,actualPrice,lat,long,more,myresult): #,chunkSize)
     minimoX=(bbId,0)
     vicini=0
     for x in myresult:
-        if 0 < distance(userLat,userLon,x[1],x[2])-distance(userLat,userLon,lat,long)<=more:
+        #if 0 < distance(userLat,userLon,x[1],x[2])-distance(userLat,userLon,lat,long)<=more:
+        #print(lat,long,x[1],x[2])
+        if distance(lat,long,x[1],x[2])<=more and bbId!=x[0]:
             vicini+=1
             #print(x[3])
-            minimo=min(minimo,x[3])
-            minimoX=(x[0],distance(userLat,userLon,x[1],x[2])-distance(userLat,userLon,lat,long))
-    return {"neighborhood_min":minimo,"saving":actualPrice-minimo,"alternativeId":minimoX[0],"extraSteps":minimoX[1],'vicini':vicini}
-'''
-def aboveMinimumNEW(bbId,actualPrice,lat,long,more): #,chunkSize)
-    mycursor = mydb.cursor()  
-    qq = "SELECT id,latitude,longitude,price FROM listings WHERE price>="+str(userRange[0])+" and price <="+str(actualPrice)+" LIMIT 0,5000" #not related with chunkSize
-    mycursor.execute(qq)
-    myresult = mycursor.fetchall()
-    minimo=actualPrice
-    minimoX=(bbId,0)
-    vicini=0
-    for x in myresult:
-        if 0 < distance(userLat,userLon,x[1],x[2])-distance(userLat,userLon,lat,long)<=more:
-            vicini+=1
-            #print(x[3])
-            minimo=min(minimo,x[3])
-            minimoX=(x[0],distance(userLat,userLon,x[1],x[2])-distance(userLat,userLon,lat,long))
-    return {"neighborhood_min":minimo,"saving":actualPrice-minimo,"alternativeId":minimoX[0],"extraSteps":minimoX[1],'vicini':vicini}
-'''
+            if x[3]<minimo:
+                minimo=x[3]
+                minimoX=(x[0],distance(lat,long,x[1],x[2]))
+    delta=2*minimoX[1]/more            
+    return {"neighborhood_min":minimo,"saving":(actualPrice-minimo),"savingf":max((actualPrice-minimo)+delta-1,0),"alternativeId":minimoX[0],"extraSteps":minimoX[1],'vicini':vicini}
+
 def enrich_DB(lat=userLat,lon=userLon):
     global x  #debug
     global userRange
     mydb=dbConnect("localhost",'root', USER_PW,'airbnb')
     mycursor = mydb.cursor()
-    
-    qq = "SELECT id,latitude,longitude,price FROM listings WHERE price>=0 and price <="+str(userRange[1]) #+" LIMIT 0,100" #not related with chunkSize
-    mycursor.execute(qq)
-    myresult1 = mycursor.fetchall() #candidates for computing aboveminimum
-    
-    query="Delete from listings where price=0" #LIMIT 0,50"
+
+    query="Delete from listings where price=0"
     mycursor.execute(query)
+    
+    try:
+        query="ALTER TABLE listings ADD distance float"   
+        mycursor.execute(query)
+    except:
+        pass
+    
+    try:
+        query="ALTER TABLE listings ADD abovem int"   
+        mycursor.execute(query)
+    except:
+        pass
+    
+    try:
+        query="ALTER TABLE listings ADD abovemF float"   
+        mycursor.execute(query)
+    except:
+        pass
     
     mydb.commit()
     dbCopy={}
     
     
-    query="Select * from listings WHERE price>="+str(userRange[0])+" and price <=" +str(userRange[1]) #LIMIT 0,50"
+    query="Select id,latitude,longitude,price from listings WHERE price>="+str(userRange[0])+" and price <=" +str(userRange[1]) #LIMIT 0,50"
     mycursor.execute(query)
     myresult = mycursor.fetchall()
     i=0
-    xx=[0,0]
+    xx=[0,0,0]
     for x in myresult:      
-        xx[-1]=aboveMinimum(x[0],x[16],lat,lon,0.5,myresult1)['saving']
-        xx[-2]=distance(lat,lon,x[10],x[11],0)
+        xx[0]=distance(lat,lon,x[1],x[2],0)
+        xx[1]=aboveMinimum(x[0],x[3],x[1],x[2],0.3,myresult)['saving']
+        xx[2]=aboveMinimum(x[0],x[3],x[1],x[2],0.3,myresult)['savingf']
         dbCopy[x[0]]=xx.copy()
         i+=1
         #print(xx, '|',x[0],x[16],lat,lon)
         if i%1000==0:
-            print(i,len(myresult))
-    '''        
-    query="ALTER TABLE listings  DROP COLUMN abovem, DROP COLUMN distance"    
-    mycursor.execute(query)
-    query="ALTER TABLE listings ADD distance float, ADD abovem int"   
-    mycursor.execute(query)
-    mydb.commit()
-    '''
+            print(i,len(myresult),x[0],x[3],x[1],x[2],xx,aboveMinimum(x[0],x[3],x[1],x[2],0.3,myresult))
+
     i=0
     for id in dbCopy:    
-        query="Update listings set distance="+str(dbCopy[id][-2])+", abovem="+str(dbCopy[id][-1])+" WHERE id="+str(id)
+        query="Update listings set distance="+str(dbCopy[id][0])+", abovem="+str(dbCopy[id][1])+", abovemF="+str(dbCopy[id][2])+" WHERE id="+str(id)
         #print(query)
         mycursor.execute(query)
         i+=1
@@ -142,7 +139,7 @@ def enrich_DB(lat=userLat,lon=userLon):
 c={'lat': 48.85565,'lon': 2.365492,'range': [60, 90],'day': '2020-04-31','MaxDistance':10+1}
 
 
-def testGenerator(userPref=c):
+def testGenerator(tuplesOnly=False,userPref=c):
     global treeReady
     mydb=dbConnect("localhost",'root', USER_PW,'airbnb')
     mycursor = mydb.cursor()
@@ -152,15 +149,16 @@ def testGenerator(userPref=c):
     GT={}
     for x in myresult:
         GT[x[0]]=0
-    testCases=[{'boxMinRange':15, 'boxMaxRange':40,'boxMinDistance':3, 'boxMaxDistance':12, 'tuples':8389},
-               {'boxMinRange':35, 'boxMaxRange':40,'boxMinDistance':0, 'boxMaxDistance':4,  'tuples':1448},
-               {'boxMinRange':29, 'boxMaxRange':37,'boxMinDistance':1, 'boxMaxDistance':2,  'tuples':1349},
-               {'boxMinRange':32, 'boxMaxRange':37,'boxMinDistance':0, 'boxMaxDistance':5,  'tuples':4293}
-                   ]   
-    
-    testCases=[{'boxMinRange':1.2,   'boxMaxRange':50.15,'boxMinDistance':3.16, 'boxMaxDistance':3.9,  'tuples':1672},
-               {'boxMinRange':37.69, 'boxMaxRange':38.38,'boxMinDistance':1.78, 'boxMaxDistance':2.71, 'tuples':584},
-               {'boxMinRange':11.37, 'boxMaxRange':22.57,'boxMinDistance':5.71, 'boxMaxDistance':6.19, 'tuples':0}]
+
+                  
+    testCases=[{'boxMinRange':15, 'boxMaxRange':30,'boxMinDistance':3, 'boxMaxDistance':12, 'tuples':5972},           #Integer savings   
+           {'boxMinRange':25, 'boxMaxRange':30,'boxMinDistance':0, 'boxMaxDistance':4,  'tuples':3320},
+           {'boxMinRange':29, 'boxMaxRange':30,'boxMinDistance':1, 'boxMaxDistance':2,  'tuples':696},
+           {'boxMinRange':10, 'boxMaxRange':20,'boxMinDistance':0, 'boxMaxDistance':3,  'tuples':4580},
+           {'boxMinRange':1.2,   'boxMaxRange':50.15,'boxMinDistance':3.16, 'boxMaxDistance':3.9,  'tuples':2934},
+           {'boxMinRange':37.69, 'boxMaxRange':38.38,'boxMinDistance':1.78, 'boxMaxDistance':2.71, 'tuples':0},
+           {'boxMinRange':11.37, 'boxMaxRange':22.57,'boxMinDistance':5.71, 'boxMaxDistance':6.19, 'tuples':262}]
+
     
     i=0
     f=open("AA_File_Name_Doc.txt",'w',encoding="UTF8")
@@ -178,10 +176,10 @@ def testGenerator(userPref=c):
     for tc in testCases:
         i+=1
         log={}
-        boxMinRange=tc['boxMinRange']
-        boxMaxRange=tc['boxMaxRange']
-        boxMinDistance=tc['boxMinDistance']
-        boxMaxDistance=tc['boxMaxDistance']
+        boxMinRange=tc['boxMinRange']-0.5
+        boxMaxRange=tc['boxMaxRange']+0.5
+        boxMinDistance=tc['boxMinDistance']-0.0001
+        boxMaxDistance=tc['boxMaxDistance']+0.0001
         tuples=tc['tuples']
         
         for minimumBoxItems in [20,40,60,80]:
@@ -204,7 +202,8 @@ def testGenerator(userPref=c):
                         OUT[k]=0
                 tuples=len(IN)
                 print(query,"tuples",tuples)
-                continue
+                if tuplesOnly:
+                    continue
             
                 print('x range : ',boxMinRange,boxMaxRange,'y range :', boxMinDistance,boxMaxDistance,'GT:', len(GT),'INbox:',len(IN), 'Out:', len(OUT))
                 log[i]={'GT':GT,'boxMinRange':boxMinRange,'boxMaxRange':boxMaxRange,'boxMinDistance':boxMinDistance,'boxMaxDistance':boxMaxDistance,'price':userPref['range'],'tuples':tuples,'chunks':[]}
@@ -246,8 +245,10 @@ def testGenerator(userPref=c):
                 print(str(DIZ_plotted),file=f)             
                 f.close
                 '''
-            
-    return log,logM,GT,IN,OUT
+    if tuplesOnly:
+        return {},{},{},{},{}
+    else:        
+        return log,logM,GT,IN,OUT
 
 
 def doRun(GT,IN,OUT,case,log,logM,minimumBoxItems,chunkSize,useTree):
@@ -259,16 +260,19 @@ def sendChunk(chunk):
     #eel.send_data_chunk(chunk) ##################################################
     #print('----------------------',len(chunk),chunk)
     pass
-
+global cos
 def distance(lat1, long1, lat2, long2, sleep=0.001):
+    if lat1==lat2 and long1==long2:
+        return 0
+    global cos
     #print(lat1,long1,lat2,long2)
     degrees_to_radians = math.pi/180.0
     phi1 = (90.0 - lat1)*degrees_to_radians
     phi2 = (90.0 - lat2)*degrees_to_radians
     theta1 = long1*degrees_to_radians
     theta2 = long2*degrees_to_radians
-    cos = (math.sin(phi1)*math.sin(phi2)*math.cos(theta1 - theta2) +
-    math.cos(phi1)*math.cos(phi2))
+
+    cos = (math.sin(phi1)*math.sin(phi2)*math.cos(theta1 - theta2) + math.cos(phi1)*math.cos(phi2))
     arc = math.acos( cos )
     #time.sleep(sleep)
     return int(arc * 6371*1000)/1000
@@ -486,7 +490,7 @@ def obtainTuples(arrayID):
 
 #############################################################################
 #enrich_DB()
-log,logM,GT,IN_TEST,OUT_TEST=testGenerator()
+log,logM,GT,IN_TEST,OUT_TEST=testGenerator(True,c)
 
 ################################################
 #for log analysis
@@ -514,6 +518,24 @@ def distances():
 '''
 fft=eval(open('log_1_100_20_L_usingTree.txt','r',encoding="UTF8").read())
 dp=eval(open('log_1_100_100_DIZ_Plotted_usingTree.txt','r',encoding="UTF8").read())
+'''
+
+'''
+def aboveMinimumNEW(bbId,actualPrice,lat,long,more): #,chunkSize)
+    mycursor = mydb.cursor()  
+    qq = "SELECT id,latitude,longitude,price FROM listings WHERE price>="+str(userRange[0])+" and price <="+str(actualPrice)+" LIMIT 0,5000" #not related with chunkSize
+    mycursor.execute(qq)
+    myresult = mycursor.fetchall()
+    minimo=actualPrice
+    minimoX=(bbId,0)
+    vicini=0
+    for x in myresult:
+        if 0 < distance(userLat,userLon,x[1],x[2])-distance(userLat,userLon,lat,long)<=more:
+            vicini+=1
+            #print(x[3])
+            minimo=min(minimo,x[3])
+            minimoX=(x[0],distance(userLat,userLon,x[1],x[2])-distance(userLat,userLon,lat,long))
+    return {"neighborhood_min":minimo,"saving":actualPrice-minimo,"alternativeId":minimoX[0],"extraSteps":minimoX[1],'vicini':vicini}
 '''
 
 ##### dir locale
