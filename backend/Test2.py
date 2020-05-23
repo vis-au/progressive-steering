@@ -25,7 +25,7 @@ global X
 global y
 treeReady=False
 
-
+global floatSaving
 
 modifier='True'
 queryAtt='*'
@@ -150,15 +150,18 @@ def testGenerator(tuplesOnly=False,userPref=c):
     for x in myresult:
         GT[x[0]]=0
 
-                  
-    testCases=[{'boxMinRange':15, 'boxMaxRange':30,'boxMinDistance':3, 'boxMaxDistance':12, 'tuples':5972},           #Integer savings   
+    testCases=eval(open("testCases.txt",encoding="UTF8").read())   
+    
+    
+    '''          
+    testCases=[{'boxMinRange':15, 'boxMaxRange':30,'boxMinDistance':3, 'boxMaxDistance':12, 'tuples':5972},           #4742 abovemF float savings   
            {'boxMinRange':25, 'boxMaxRange':30,'boxMinDistance':0, 'boxMaxDistance':4,  'tuples':3320},
            {'boxMinRange':29, 'boxMaxRange':30,'boxMinDistance':1, 'boxMaxDistance':2,  'tuples':696},
            {'boxMinRange':10, 'boxMaxRange':20,'boxMinDistance':0, 'boxMaxDistance':3,  'tuples':4580},
            {'boxMinRange':1.2,   'boxMaxRange':50.15,'boxMinDistance':3.16, 'boxMaxDistance':3.9,  'tuples':2934},
            {'boxMinRange':37.69, 'boxMaxRange':38.38,'boxMinDistance':1.78, 'boxMaxDistance':2.71, 'tuples':0},
            {'boxMinRange':11.37, 'boxMaxRange':22.57,'boxMinDistance':5.71, 'boxMaxDistance':6.19, 'tuples':262}]
-
+    '''
     
     i=0
     f=open("AA_File_Name_Doc.txt",'w',encoding="UTF8")
@@ -176,10 +179,10 @@ def testGenerator(tuplesOnly=False,userPref=c):
     for tc in testCases:
         i+=1
         log={}
-        boxMinRange=tc['boxMinRange']-0.5
-        boxMaxRange=tc['boxMaxRange']+0.5
-        boxMinDistance=tc['boxMinDistance']-0.0001
-        boxMaxDistance=tc['boxMaxDistance']+0.0001
+        boxMinRange=tc['boxMinRange']
+        boxMaxRange=tc['boxMaxRange']
+        boxMinDistance=tc['boxMinDistance']
+        boxMaxDistance=tc['boxMaxDistance']
         tuples=tc['tuples']
         
         for minimumBoxItems in [20,40,60,80]:
@@ -187,8 +190,11 @@ def testGenerator(tuplesOnly=False,userPref=c):
                 treeReady=False
                 for k in GT:
                     GT[k]=0
-                query="Select * from listings WHERE "    
-                query+="price >="+str(userPref['range'][0])+" AND price <="+str(userPref['range'][1])+ " AND distance >="+str(boxMinDistance)+" AND distance <="+str(boxMaxDistance)+" AND abovem >="+str(boxMinRange)+" AND abovem <="+str(boxMaxRange) 
+                query="Select * from listings WHERE " 
+                if floatSaving:
+                    query+="price >="+str(userPref['range'][0])+" AND price <="+str(userPref['range'][1])+ " AND distance >="+str(boxMinDistance)+" AND distance <="+str(boxMaxDistance)+" AND abovemF >="+str(boxMinRange)+" AND abovemF <="+str(boxMaxRange) 
+                else:
+                    query+="price >="+str(userPref['range'][0])+" AND price <="+str(userPref['range'][1])+ " AND distance >="+str(boxMinDistance)+" AND distance <="+str(boxMaxDistance)+" AND abovem >="+str(boxMinRange)+" AND abovem <="+str(boxMaxRange) 
                 mycursor.execute(query)
                 myresult = mycursor.fetchall()
                 for x in myresult:
@@ -211,6 +217,9 @@ def testGenerator(tuplesOnly=False,userPref=c):
                 
                 logFileName='log_'+str(i)+'_'+str(chunkSize)+'_'+str(minimumBoxItems)
                 logFileName='log_'+str(i)+'_'+str(chunkSize)+'_'+str(minimumBoxItems)+'_'+str(boxMinRange)+'_'+str(boxMaxRange)+'_'+str(boxMinDistance)+'_'+str(boxMaxDistance)+'_'+str(tuples)
+                if floatSaving:
+                    logFileName+='_FLOAT'
+                
                 print(logFileName)
      
                 logM={}
@@ -347,10 +356,7 @@ def feedTuples(tuples,case,query,log,logM,useTree,minimumBoxItems,chunkSize,GT=N
              actualChunk={}
              for x in myresult:
                mycursor.execute('INSERT INTO plotted (id) VALUES (' +str(x[0])+')')
-               #print('LOOP1-',chunks,x,'distance=',distance(userLat,userLon,x[10],x[11]),'aboveM=',aboveMinimum(x[0],x[16],userLat,userLon,1.5))
-               #SLOW DIZ_plotted[x[0]]={'host_id':x[0], 'zipcode':x[7], 'latitude':x[10],'longitude':x[11],'accommodates':x[12],'bathrooms':x[13],'bedrooms':x[14],'beds':x[15],'price':x[16],'cleaning_fee':x[18],'minimum_nights':x[21],'maximum_nights':x[22],'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5),'chunk':chunks,'inside':0}
                DIZ_plotted[x[0]]={'host_id':x[0], 'zipcode':x[7], 'latitude':x[10],'longitude':x[11],'accommodates':x[12],'bathrooms':x[13],'bedrooms':x[14],'beds':x[15],'price':x[16],'cleaning_fee':x[18],'minimum_nights':x[21],'maximum_nights':x[22],'dist2user':distance(userLat,userLon,x[10],x[11]), 'chunk':chunks,'inside':0}
-               #SLOW actualChunk[x[0]]={'chunk':chunks,'state':state,'values':x, 'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.5)}        
                actualChunk[x[0]]={'chunk':chunks,'state':state,'values':x, 'dist2user':distance(userLat,userLon,x[10],x[11])}        
                plotted+=1
                #eel.sleep(0.001)
@@ -487,14 +493,7 @@ def obtainTuples(arrayID):
         result.append(DIZ_plotted[elem])
     return result
 
-
-#############################################################################
-#enrich_DB()
-log,logM,GT,IN_TEST,OUT_TEST=testGenerator(True,c)
-
-################################################
 #for log analysis
-
 def dentro():
     global DIZ_plotted
     tot=0
@@ -514,29 +513,22 @@ def distances():
             mind=DIZ_plotted[k]['dist2user']
     return mind,maxd    
 
+def loadConfig():
+    global floatSaving
+    global testCases
+    s=eval(open("DB_server_config.txt",encoding="UTF8").read())
+    floatSaving=s['floatSaving']
+    testCases=eval(open("testCases.txt",encoding="UTF8").read()) 
+    print("Configuration loaded")
+    print('floatSaving:',floatSaving)
+    print("testCases loaded")
+    for i in range(len(testCases)):
+        print(i+1,testCases[i]) 
+    
 
 '''
 fft=eval(open('log_1_100_20_L_usingTree.txt','r',encoding="UTF8").read())
 dp=eval(open('log_1_100_100_DIZ_Plotted_usingTree.txt','r',encoding="UTF8").read())
-'''
-
-'''
-def aboveMinimumNEW(bbId,actualPrice,lat,long,more): #,chunkSize)
-    mycursor = mydb.cursor()  
-    qq = "SELECT id,latitude,longitude,price FROM listings WHERE price>="+str(userRange[0])+" and price <="+str(actualPrice)+" LIMIT 0,5000" #not related with chunkSize
-    mycursor.execute(qq)
-    myresult = mycursor.fetchall()
-    minimo=actualPrice
-    minimoX=(bbId,0)
-    vicini=0
-    for x in myresult:
-        if 0 < distance(userLat,userLon,x[1],x[2])-distance(userLat,userLon,lat,long)<=more:
-            vicini+=1
-            #print(x[3])
-            minimo=min(minimo,x[3])
-            minimoX=(x[0],distance(userLat,userLon,x[1],x[2])-distance(userLat,userLon,lat,long))
-    return {"neighborhood_min":minimo,"saving":actualPrice-minimo,"alternativeId":minimoX[0],"extraSteps":minimoX[1],'vicini':vicini}
-'''
 
 ##### dir locale
 
@@ -552,3 +544,15 @@ def aboveMinimumNEW(bbId,actualPrice,lat,long,more): #,chunkSize)
 # {'state': 'collectingData', 'truePositive': 30, 'falsePositive': 70, 'metrics': {'true_positive': 30, 'false_positive': 0, 'true_negative': 13828, 'false_negative': 8359, 'cumulated_precision': 1.0, 'cumulated_recall': 0.0035761115746811302, 'cumulated_TPR': 0.0035761115746811302, 'cumulated_TNR': 1.0, 'cumulated_accuracy': 0.6237565827969573, 'cumulated_balanced_accuracy': 0.5017880557873405}}
 # 
 # =============================================================================
+'''
+
+
+
+
+#############################################################################
+loadConfig()
+
+#enrich_DB()
+log,logM,GT,IN_TEST,OUT_TEST=testGenerator(True,c)
+
+################################################

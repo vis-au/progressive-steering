@@ -16,6 +16,8 @@ global totalInb  #number of points plotted in the user box till the actual chunk
 global userSelectionUpdated #new box
 global lastSelectedItems
 
+global floatSaving
+
 userSelectionUpdated=False
 totalChunkNumber=0
 totalInb=0
@@ -87,8 +89,11 @@ def dbConnect(h,u,p,d):
     return mydb
 
 def aboveMinimum(bbId,actualPrice,lat,long,more,x45,x46): # the search is bound to a
-    return {"neighborhood_min":5,"saving":x45,"alternativeId":100,"extraSteps":0.1,'vicini':100} #from Ground True saving
-    #return {"neighborhood_min":5,"saving":x46,"alternativeId":100,"extraSteps":0.1,'vicini':100} #from Ground True savingF
+    global floatSaving
+    if floatSaving:
+    else:
+        return {"neighborhood_min":5,"saving":x45,"alternativeId":100,"extraSteps":0.1,'vicini':100} #from Ground True abovem
+
     mycursor = mydb.cursor()
     qq=buildQuery(userLat,userLon,userRange,userDay,queryAtt,'True',chunkSize)
     qq = "SELECT * FROM listings WHERE price>0 and price <="+str(userRange[1])+ " LIMIT 0,100"
@@ -216,13 +221,17 @@ def feedTuples(query,chunkSize):
     totalChunkNumber=chunks
 #######################################################################################
 global testCases
-testCases=[{'boxMinRange':15, 'boxMaxRange':30,'boxMinDistance':3, 'boxMaxDistance':12, 'tuples':5972},           #Integer savings   
+'''
+testCases=[{'boxMinRange':15, 'boxMaxRange':30,'boxMinDistance':3, 'boxMaxDistance':12, 'tuples':5972},              #4742 per float            
            {'boxMinRange':25, 'boxMaxRange':30,'boxMinDistance':0, 'boxMaxDistance':4,  'tuples':3320},
            {'boxMinRange':29, 'boxMaxRange':30,'boxMinDistance':1, 'boxMaxDistance':2,  'tuples':696},
            {'boxMinRange':10, 'boxMaxRange':20,'boxMinDistance':0, 'boxMaxDistance':3,  'tuples':4580},
            {'boxMinRange':1.2,   'boxMaxRange':50.15,'boxMinDistance':3.16, 'boxMaxDistance':3.9,  'tuples':2934},
            {'boxMinRange':37.69, 'boxMaxRange':38.38,'boxMinDistance':1.78, 'boxMaxDistance':2.71, 'tuples':0},
            {'boxMinRange':11.37, 'boxMaxRange':22.57,'boxMinDistance':5.71, 'boxMaxDistance':6.19, 'tuples':262}]
+
+testCases=eval(open("testCases.txt",encoding="UTF8").read()) 
+'''
 
 @eel.expose
 def start():
@@ -236,7 +245,7 @@ def encodeTestCases(testCases):
     r={}
     for i in range(len(testCases)):
         r['testcase'+str(i+1)]={'name':'case'+str(i+1)+'_'+str(testCases[i]['boxMinRange'])+'_'+str(testCases[i]['boxMaxRange'])+'_'+str(testCases[i]['boxMinDistance'])+'_'+str(testCases[i]['boxMaxDistance']),
-          'x_bounds':[testCases[i]['boxMinRange']-0.5,testCases[i]['boxMaxRange']+0.5],'y_bounds':[testCases[i]['boxMinDistance']-0.001,testCases[i]['boxMaxDistance']+0.001]}
+          'x_bounds':[testCases[i]['boxMinRange'],testCases[i]['boxMaxRange']],'y_bounds':[testCases[i]['boxMinDistance'],testCases[i]['boxMaxDistance']]}
     return r
 
 
@@ -244,7 +253,7 @@ def encodeTestCases(testCases):
 @eel.expose
 def get_use_cases():
     return encodeTestCases(testCases)
-    return {'testcase1':{'name':'case1_15_40_3_12','x_bounds' : [15,40], 'y_bounds':[3,12]},
+    return {'testcase1':{'name':'case1_15_40_3_12','x_bounds' : [15,16], 'y_bounds':[3,12]},  #15, 40
             'testcase2':{'name':'case2_35_40_0_4','x_bounds' : [35,40],  'y_bounds':[0,4]},
             'testcase3':{'name':'case3_29_37_1_2','x_bounds' : [29,37],  'y_bounds':[1,2]},
             'testcase4':{'name':'case4_32_37_0_5','x_bounds' : [32-0.1,37+0.1],  'y_bounds':[0,5]}
@@ -366,6 +375,21 @@ def send_progression_state(state):
 
     print("new progression state", progression_state)
 
+
+def loadConfig():
+    global floatSaving
+    global testCases
+    s=eval(open("DB_server_config.txt",encoding="UTF8").read())
+    floatSaving=s['floatSaving']
+    testCases=eval(open("testCases.txt",encoding="UTF8").read()) 
+    print("Configuration loaded")
+    print('floatSaving:',floatSaving)
+    print("testCases loaded")
+    for i in range(len(testCases)):
+        print(i+1,testCases[i])
+    
+
+
 def start_eel(develop):
     """Start Eel with either production or development configuration."""
 
@@ -454,6 +478,7 @@ def history():
 
 if __name__ == '__main__':
     import sys
+    loadConfig()
 
     #feThread=FrontEndListener("fethread")
     #feThread.start()
