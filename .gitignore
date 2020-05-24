@@ -16,3 +16,4 @@ backend/__pycache__/steering_module.cpython-37.pyc
 backend/__pycache__/steering_module.cpython-37.pyc
 backend/log_1_100_20_M_usingTree.txt
 backend/log_1_100_20_M_usingTree.txt
+*.pyc
