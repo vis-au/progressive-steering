@@ -4,5 +4,15 @@ backend/__pycache__/evaluationMetrics.cpython-37.pyc
 backend/steering_module.py.old
 *.pyc
 *.pyc
-*.txt
+log_*
 backend/log_1_100_20_L_NOT_usingTree.txt
+backend/__pycache__/steering_module.cpython-37.pyc
+backend/__pycache__/steering_module.cpython-37.pyc
+backend/log_1_100_20_L_NOT_usingTree.txt
+backend/log_1_100_20_L_usingTree.txt
+backend/log_1_100_20_M_NOT_usingTree.txt
+backend/log_1_100_20_M_usingTree.txt
+backend/__pycache__/steering_module.cpython-37.pyc
+backend/__pycache__/steering_module.cpython-37.pyc
+backend/log_1_100_20_M_usingTree.txt
+backend/log_1_100_20_M_usingTree.txt
