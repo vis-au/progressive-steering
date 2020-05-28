@@ -36,6 +36,10 @@
   justify-content: stretch;
 }
 
+.hidden {
+  display: none;
+}
+
 .progression-controls {
   display: flex;
   flex-direction: row;

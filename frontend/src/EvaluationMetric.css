@@ -3,7 +3,24 @@
   border: 1px solid #ccc;
   padding: 0.05rem 0.75rem 0.2rem;
   border-radius: 2rem;
+  cursor: pointer;
+}
+.evaluationMetric.active {
+  border-color: steelblue;
+  background: rgb(198, 219, 247);
 }
 .evaluationMetric .label {
   margin-right: 0.5rem;
+}
+.evaluationMetric svg.canvas  {
+  position: absolute;
+  bottom: 100px;
+  left: 25px;
+  background: white;
+  border: 1px solid #ccc;
+}
+.evaluationMetric svg.canvas path {
+  stroke: #888;
+  fill: none;
+  stroke-width: 1px;
 }
