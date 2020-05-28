@@ -26,7 +26,7 @@ export default class EvaluationMetric extends React.Component<Props, State> {
 
     this.lineGenerator
       .x((d, i) => this.scaleX(i))
-      .y(d => this.scaleY(d[1]) + DEFAULT_PADDING/2);
+      .y(d => this.scaleY(d[1]));
 
     this.state = {
       canvasVisible: false
@@ -44,13 +44,21 @@ export default class EvaluationMetric extends React.Component<Props, State> {
   private updateTimeSeries() {
     const svg = d3.select(`#${this.getCanvasSelector()}`);
 
+    this.pastValues.push([-1, 0.5])
     this.scaleX.domain([0, this.pastValues.length]);
 
     svg.selectAll("*").remove();
+    const content = svg.append("g").attr("transform", `translate(0,${DEFAULT_PADDING/2})`);
 
-    svg.append("path")
+    content.append("path")
       .attr("class", "time")
-      .attr("d", () => this.lineGenerator(this.pastValues))
+      .attr("d", () => this.lineGenerator(this.pastValues));
+
+    content.append("circle")
+      .attr("class", "endpoint")
+      .attr("r", 3)
+      .attr("cx", this.scaleX(this.pastValues.length - 1))
+      .attr("cy", this.scaleY(this.pastValues[this.pastValues.length - 1][1]));
   }
 
   public render() {

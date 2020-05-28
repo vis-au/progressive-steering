@@ -19,8 +19,11 @@
   background: white;
   border: 1px solid #ccc;
 }
-.evaluationMetric svg.canvas path {
-  stroke: #888;
+.evaluationMetric svg.canvas path.time {
+  stroke: steelblue;
   fill: none;
   stroke-width: 1px;
+}
+.evaluationMetric svg.canvas circle.endpoint {
+  fill: steelblue;
 }
