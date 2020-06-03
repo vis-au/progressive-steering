@@ -32,3 +32,10 @@ svg.densityCanvas path.density-region {
   fill-opacity: 0.05;
   fill: black;
 }
+
+rect.padded-brush {
+  fill: transparent;
+  stroke: #555;
+  stroke-dasharray: 5px 5px;
+  shape-rendering: crispEdges;
+}

@@ -29,8 +29,10 @@ const DEFAULT_POINT_RADIUS = 2;
 const DEFAULT_POINT_COLOR = "rgba(70, 130, 180, 0.3)";
 const DEFAULT_POINT_STROKE_WIDTH = 0;
 const DEFAULT_POINT_HIGHLIGHTED_STROKE_WIDTH = 5;
-const DEFAULT_KERNEL_STD = 10;
-const DEFAULT_DENSITY_LEVELS = 5;
+const DEFAULT_KERNEL_STD = 25;
+const DEFAULT_DENSITY_LEVELS = 10;
+const MIN_SELECTION_THRESHOLD = 0;
+const SELECTION_INCREMENT = 0.05;
 
 export default class ScatterplotRenderer extends React.Component<Props, State> {
   private brush: any;
@@ -47,6 +49,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
   private lastChunk: any[] = [];
   private lastDrawnPreset: number[][] = [];
+  private brushScaleFactor = 1;
 
   constructor(props: Props) {
     super(props);
@@ -92,6 +95,21 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.scaleY.domain([this.props.extentY[1], this.props.extentY[0]]);
   }
 
+  private updateBrushSize() {
+    if (this.svg === null) {
+      return;
+    }
+
+    const currentlySelectedPoints = this.getNewPointsInCurrentSelection(this.getLatestChunk());
+    console.log("SELECTED", currentlySelectedPoints.length);
+
+    if (currentlySelectedPoints.length <= MIN_SELECTION_THRESHOLD) {
+      this.brushScaleFactor = this.brushScaleFactor + SELECTION_INCREMENT;
+    } else {
+      this.brushScaleFactor = 1;
+    }
+  }
+
   private getCurrentlyBrushedPoints() {
     const extent = this.selection;
     const currentlyBrushedPoints: any[] = this.getPointsInRegion(extent);
@@ -110,13 +128,21 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     const pointsInSelection: any[] = [];
     const dimX = this.props.dimensionX;
     const dimY = this.props.dimensionY;
-    const selection = this.selection;
+
+    const bounds = this.getPaddedBrushBounds();
+    if (bounds === null) {
+      return [];
+    }
+
+    console.log(bounds, this.selection);
+
+    const [[minX, minY], [maxX, maxY]] = bounds;
 
     newPoints.forEach(datum => {
       const x = this.scaleX(datum[dimX]);
       const y = this.scaleY(datum[dimY]);
 
-      if (x >= selection[0][0] && x <= selection[1][0] && y >= selection[0][1] && y <= selection[1][1]) {
+      if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
         pointsInSelection.push(datum);
       }
     });
@@ -274,9 +300,6 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       return;
     }
 
-    console.log(this.props.presetSelection)
-    console.log(this.scaleY.invert(presetY0), this.scaleY.invert(presetY1))
-
     this.svg.select("g.brush")
       .call(this.brush.move, preset);
 
@@ -310,6 +333,54 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       <g className="brushed-regions">
         { this.state.brushedRegions.map(this.renderBrushedRegion.bind(this)) }
       </g>
+    );
+  }
+
+  private getPaddedBrushBounds() {
+    if (this.selection === null) {
+      return null;
+    }
+
+    const selection = this.selection;
+
+    const brushWidth = Math.abs(selection[0][0] - selection[1][0]);
+    const brushHeight = Math.abs(selection[0][1] - selection[1][1]);
+    const brushHorizontalPadding = brushWidth * (1 - this.brushScaleFactor);
+    const brushVerticalPadding = brushHeight * (1 - this.brushScaleFactor);
+
+    console.log(this.brushScaleFactor, brushVerticalPadding, brushHorizontalPadding)
+
+    const x0 = selection[0][0] + brushHorizontalPadding;
+    const x1 = selection[1][0] - brushHorizontalPadding;
+    const y0 = selection[0][1] + brushVerticalPadding;
+    const y1 = selection[1][1] - brushVerticalPadding;
+
+    return [[x0, y0], [x1, y1]];
+  }
+
+  private renderPaddedBrush() {
+    if (this.brushScaleFactor === 1) {
+      return null;
+    }
+
+    const bounds = this.getPaddedBrushBounds();
+
+    if (bounds === null) {
+      return null;
+    }
+
+    const [[x0, y0], [x1, y1]] = bounds;
+    const paddedBrushWidth = Math.abs(x0 - x1);
+    const paddedBrushHeight = Math.abs(y0 - y1);
+
+    return (
+      <rect
+        className="padded-brush"
+        x={ x0 }
+        y={ y0 }
+        width={ paddedBrushWidth }
+        height={ paddedBrushHeight }
+      />
     );
   }
 
@@ -446,6 +517,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.renderInsideOutsidePoints();
     this.renderDensityPlots();
     this.renderPresetSelection();
+    this.updateBrushSize();
 
     this.lastChunk = this.getLatestChunk();
 
@@ -457,6 +529,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
         <svg className="axisCanvas" width={ this.props.width } height={ this.props.height }>
           <g className="axes"></g>
           { this.renderBrushedRegions() }
+          { this.renderPaddedBrush() }
           { this.renderUnsetDimensionsWarning() }
         </svg>
       </div>
