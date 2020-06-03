@@ -17,7 +17,7 @@ class DataAdapter {
 
   private dimensionFilters: Map<string, [number, number]> = new Map();
   private dimensionExtents: Map<string, [number, number]> = new Map();
-  private evaluationMetrics: Map<string, number> = new Map();
+  private evaluationMetrics: Map<string, number[]> = new Map();
 
   private unloadBuffer: boolean = false;
 
@@ -151,11 +151,13 @@ class DataAdapter {
   }
 
   public getEvaluationMetric(label: string) {
-    return this.evaluationMetrics.get(label) || -1;
+    return this.evaluationMetrics.get(label) || [];
   }
 
   public setEvaluationMetric(label: string, value: number) {
-    this.evaluationMetrics.set(label, value);
+    let currentValues = this.evaluationMetrics.get(label) || [];
+    currentValues.push(value);
+    this.evaluationMetrics.set(label, currentValues);
     this.notifyMetricObservers();
   }
 

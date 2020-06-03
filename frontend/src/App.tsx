@@ -192,15 +192,15 @@ export class App extends Component<{}, State> {
   private renderEvaluationMetrics() {
     return (
       <div className="metrics">
-        <EvaluationMetric label={ "Points selected" } value={ this.state.selectedPoints.length } />
-        <EvaluationMetric label={ "Points received" } value={ this.dataAdapter.data.length } />
+        <EvaluationMetric label={ "Points selected" } values={ [this.state.selectedPoints.length] } />
+        <EvaluationMetric label={ "Points received" } values={ [this.dataAdapter.data.length] } />
         {
           DEFAULT_EVALUATION_METRICS.map(metric => {
             return (
               <EvaluationMetric
                 key={ metric }
                 label={metric}
-                value={ this.dataAdapter.getEvaluationMetric(metric) }
+                values={ this.dataAdapter.getEvaluationMetric(metric) }
               />
             );
           })

@@ -12,6 +12,10 @@
 .evaluationMetric .label {
   margin-right: 0.5rem;
 }
+.evaluationMetric svg {
+  shape-rendering: auto;
+  text-rendering: optimizeLegibility;
+}
 .evaluationMetric svg.canvas  {
   position: absolute;
   bottom: 100px;
