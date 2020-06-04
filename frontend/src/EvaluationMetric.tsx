@@ -41,13 +41,12 @@ export default class EvaluationMetric extends React.Component<Props, State> {
   }
 
   private updateAxes() {
-    const svg = d3.select(`#${this.getCanvasSelector()}`);
-    svg.selectAll("g.axis").remove();
+    const container = d3.select(`#${this.getCanvasSelector()}`).select("g.content");
+    container.selectAll("g.axis").remove();
 
     const yAxis = d3.axisRight(this.scaleY);
-    svg.append("g")
+    container.append("g")
       .attr("class", "axis y")
-      .attr("transform", `translate(0, ${DEFAULT_PADDING / 2})`)
       .call(yAxis);
   }
 
@@ -55,7 +54,9 @@ export default class EvaluationMetric extends React.Component<Props, State> {
     const svg = d3.select(`#${this.getCanvasSelector()}`);
 
     svg.selectAll("*").remove();
-    const content = svg.append("g").attr("transform", `translate(0,${DEFAULT_PADDING/2})`);
+    const content = svg.append("g")
+      .attr("class", "content")
+      .attr("transform", `translate(${DEFAULT_PADDING/2},${DEFAULT_PADDING/2})`);
 
     content.append("path")
       .attr("class", "time")
@@ -83,7 +84,7 @@ export default class EvaluationMetric extends React.Component<Props, State> {
       <div className={`evaluationMetric ${activeLabel}`} onClick={ this.toggleVisibility.bind(this) }>
         <span className="label">{ this.props.label }:</span>
         <span className="value">{ this.props.values[this.props.values.length - 1] }</span>
-        <svg id={ this.getCanvasSelector() } className={ `canvas ${canvasLabel}` } width={ DEFAULT_WIDTH } height={ DEFAULT_HEIGHT + DEFAULT_PADDING }></svg>
+        <svg id={ this.getCanvasSelector() } className={ `canvas ${canvasLabel}` } width={ DEFAULT_WIDTH + DEFAULT_PADDING } height={ DEFAULT_HEIGHT + DEFAULT_PADDING }></svg>
       </div>
     );
   }
