@@ -1,7 +1,7 @@
 import React from 'react';
 import * as d3 from 'd3';
 
-import { ScenarioPreset } from './EelBridge';
+import { ScenarioPreset, TrainingState } from './EelBridge';
 
 import "./ScatterplotRenderer.css";
 
@@ -16,6 +16,7 @@ interface Props {
   extentX: [number, number],
   extentY: [number, number],
   data: any[],
+  trainingState: TrainingState,
   filters: Map<string, number[]>,
   presetSelection: ScenarioPreset | null,
   highlightLastChunk?: boolean,
@@ -123,7 +124,10 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
         this.brushScaleFactor = this.brushScaleFactor + SELECTION_INCREMENT;
       }
     } else {
-      this.brushScaleFactor = 1;
+      if (this.props.trainingState !== "collecting data") {
+        this.brushScaleFactor = 1;
+      }
+
       this.stepsWithoutHit = 0;
     }
 
@@ -151,9 +155,15 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     const dimX = this.props.dimensionX;
     const dimY = this.props.dimensionY;
 
-    const bounds = this.getPaddedBrushBounds();
+    let bounds = this.getPaddedBrushBounds();
     if (bounds === null) {
       return [];
+    }
+    if (this.props.trainingState === "using tree") {
+      bounds = this.selection;
+      if (bounds === null) {
+        bounds = [[0, 0], [0, 0]];
+      }
     }
 
     const [[minX, minY], [maxX, maxY]] = bounds;

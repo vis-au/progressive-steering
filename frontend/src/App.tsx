@@ -280,6 +280,7 @@ export class App extends Component<{}, State> {
             dimensionY={ dimensionY }
             data={ this.dataAdapter.data }
             chunkSize={ this.dataAdapter.chunkSize }
+            trainingState={ this.dataAdapter.trainingState }
             filters={ this.dataAdapter.getAllFilters() }
             highlightLastChunk={ this.state.highlightLatestPoints }
             presetSelection={ this.state.selectedScenarioPreset }
