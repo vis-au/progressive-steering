@@ -199,7 +199,7 @@ export class App extends Component<{}, State> {
     return (
       <div className="metrics">
         <EvaluationMetric label={ "Points selected" } values={ [this.state.selectedPoints.length] } />
-        <EvaluationMetric label={ "Points received" } values={ [this.dataAdapter.data.length] } />
+        <EvaluationMetric label={ "Points received" } values={ this.dataAdapter.cumulativeDataSize } />
         {
           DEFAULT_EVALUATION_METRICS.map(metric => {
             const label = metric === "recall" ? "collected" : metric;
@@ -235,6 +235,22 @@ export class App extends Component<{}, State> {
       <div className="selection-padding-input">
         <label htmlFor="selection-padding-steps">Steps before padding: </label>
         <input id="selection-padding-steps" name="selection-padding-steps" type="number" defaultValue="-1" value={ this.state.stepsBeforePaddingGrows } onChange={ this.onPaddingStepsChanged.bind(this) }/>
+      </div>
+    );
+  }
+
+  private renderTrainingState() {
+    let trainingStateClass = "collecting";
+    if (this.dataAdapter.trainingState === "using tree") {
+      trainingStateClass = "tree";
+    } else if (this.dataAdapter.trainingState === "flushing") {
+      trainingStateClass = "flushing";
+    }
+
+    return (
+      <div className="training-state-indicator">
+        <div className={ `indicator ${trainingStateClass}` }></div>
+        <div>{ this.dataAdapter.trainingState }</div>
       </div>
     );
   }
@@ -283,6 +299,7 @@ export class App extends Component<{}, State> {
 
         <div className="footer">
           <div className="left">
+          { this.renderTrainingState() }
           { this.renderEvaluationMetrics() }
           { this.renderHighlightLatestPointsToggle() }
           { this.renderPaddingStepsInput() }

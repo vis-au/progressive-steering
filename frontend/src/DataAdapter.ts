@@ -8,6 +8,7 @@ class DataAdapter {
   private _progressionState: ProgressionState = 'running';
   private _trainingState: TrainingState = "collecting data";
   private _data: any[] = [];
+  private _cumulativeDataSize: number[] = [0];
   private _dimensions: string[] = [];
   private _xDimension: string | null = null;
   private _yDimension: string | null = null;
@@ -45,6 +46,9 @@ class DataAdapter {
       this._chunkSize += data.length;
       this._data.push(...data);
     }
+
+    const lastLength = this._cumulativeDataSize[this._cumulativeDataSize.length - 1];
+    this._cumulativeDataSize.push(data.length + lastLength);
   }
 
   public subscribeOnDataChanged(callback: any) {
@@ -235,6 +239,8 @@ class DataAdapter {
   }
 
   public get data(): any[] { return this._data; }
+
+  public get cumulativeDataSize(): number[] { return this._cumulativeDataSize; }
 
   public get minSelectionSize(): SelectionSize {
     return this._selectionSize;
