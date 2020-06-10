@@ -202,10 +202,11 @@ export class App extends Component<{}, State> {
         <EvaluationMetric label={ "Points received" } values={ [this.dataAdapter.data.length] } />
         {
           DEFAULT_EVALUATION_METRICS.map(metric => {
+            const label = metric === "recall" ? "collected" : metric;
             return (
               <EvaluationMetric
                 key={ metric }
-                label={metric}
+                label={ label }
                 values={ this.dataAdapter.getEvaluationMetric(metric) }
               />
             );
