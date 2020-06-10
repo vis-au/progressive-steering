@@ -20,6 +20,7 @@ interface Props {
   presetSelection: ScenarioPreset | null,
   highlightLastChunk?: boolean,
   chunkSize?: number,
+  stepsBeforePaddingGrows: number,
   onBrushedPoints?: (points: any[]) => any,
   onBrushedRegion?: (extent: number[][]) => any,
   onNewPointsInSelection?: (points: any[]) => any
@@ -50,6 +51,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   private lastChunk: any[] = [];
   private lastDrawnPreset: number[][] = [];
   private brushScaleFactor = 1;
+  private stepsWithoutHit: number = 0;
 
   constructor(props: Props) {
     super(props);
@@ -86,6 +88,16 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     };
   }
 
+  private receivedNewData() {
+    const chunk = this.getLatestChunk()
+
+    if (chunk[0] !== undefined && chunk[0] === this.lastChunk[0]) {
+      return false;
+    }
+
+    return true;
+  }
+
   private updateScales() {
     if (this.svg === null) {
       return;
@@ -98,15 +110,20 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   private updateBrushSize() {
     if (this.svg === null) {
       return;
+    } else if (!this.receivedNewData()) {
+      return;
     }
 
     const currentlySelectedPoints = this.getNewPointsInCurrentSelection(this.getLatestChunk());
-    console.log("SELECTED", currentlySelectedPoints.length);
 
     if (currentlySelectedPoints.length <= MIN_SELECTION_THRESHOLD) {
-      this.brushScaleFactor = this.brushScaleFactor + SELECTION_INCREMENT;
+      if (this.stepsWithoutHit > this.props.stepsBeforePaddingGrows) {
+        this.brushScaleFactor = this.brushScaleFactor + SELECTION_INCREMENT;
+      }
+      this.stepsWithoutHit = this.stepsWithoutHit + 1;
     } else {
       this.brushScaleFactor = 1;
+      this.stepsWithoutHit = 0;
     }
   }
 
@@ -133,8 +150,6 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     if (bounds === null) {
       return [];
     }
-
-    console.log(bounds, this.selection);
 
     const [[minX, minY], [maxX, maxY]] = bounds;
 
@@ -348,8 +363,6 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     const brushHorizontalPadding = brushWidth * (1 - this.brushScaleFactor);
     const brushVerticalPadding = brushHeight * (1 - this.brushScaleFactor);
 
-    console.log(this.brushScaleFactor, brushVerticalPadding, brushHorizontalPadding)
-
     const x0 = selection[0][0] + brushHorizontalPadding;
     const x1 = selection[1][0] - brushHorizontalPadding;
     const y0 = selection[0][1] + brushVerticalPadding;
@@ -433,6 +446,9 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     if (this.props.dimensionX === null || this.props.dimensionY === null) {
       return;
     }
+    if (!this.receivedNewData()) {
+      return;
+    }
 
     const dimX = this.props.dimensionX;
     const dimY = this.props.dimensionY;
@@ -443,11 +459,6 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     context.lineWidth = DEFAULT_POINT_STROKE_WIDTH;
 
     const chunk = this.getLatestChunk()
-
-    if (chunk[0] !== undefined && chunk[0] === this.lastChunk[0]) {
-      return;
-    }
-
     this.quadtree.addAll(chunk);
 
     chunk.forEach(datum => {
@@ -468,10 +479,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       return;
     }
 
-    const chunk = this.getLatestChunk();
-
     // no need to update if the chunk has not changed
-    if (chunk[0] !== undefined && chunk[0] === this.lastChunk[0]) {
+    if (!this.receivedNewData()) {
       return;
     }
 
@@ -482,6 +491,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       return;
     }
 
+    const chunk = this.getLatestChunk();
     const pointsInSelection = this.getNewPointsInCurrentSelection(chunk);
     const dimX = this.props.dimensionX;
     const dimY = this.props.dimensionY;

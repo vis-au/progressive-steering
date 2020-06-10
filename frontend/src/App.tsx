@@ -12,7 +12,8 @@ import './App.css';
 interface State {
   selectedPoints: any[],
   highlightLatestPoints: boolean,
-  selectedScenarioPreset: ScenarioPreset | null
+  selectedScenarioPreset: ScenarioPreset | null,
+  stepsBeforePaddingGrows: number
 }
 
 const X_AXIS_SELECTOR = "x-dimension";
@@ -44,7 +45,8 @@ export class App extends Component<{}, State> {
     this.state = {
       selectedPoints: [],
       highlightLatestPoints: true,
-      selectedScenarioPreset: null
+      selectedScenarioPreset: null,
+      stepsBeforePaddingGrows: 1
     };
   }
 
@@ -82,6 +84,10 @@ export class App extends Component<{}, State> {
 
   private onHighlightLatestPointChanged() {
     this.setState({ highlightLatestPoints: !this.state.highlightLatestPoints });
+  }
+
+  private onPaddingStepsChanged(event: React.ChangeEvent<HTMLInputElement>) {
+    this.setState({ stepsBeforePaddingGrows: +event.target.value });
   }
 
   private onProgressionStateChanged(newState: ProgressionState) {
@@ -223,6 +229,14 @@ export class App extends Component<{}, State> {
     );
   }
 
+  private renderPaddingStepsInput() {
+    return (
+      <div className="selection-padding-input">
+        <input type="number" defaultValue="-1" value={ this.state.stepsBeforePaddingGrows } onChange={ this.onPaddingStepsChanged.bind(this) }/>
+      </div>
+    );
+  }
+
   public render() {
     const dimensionX = this.dataAdapter.xDimension;
     const dimensionY = this.dataAdapter.yDimension;
@@ -251,6 +265,7 @@ export class App extends Component<{}, State> {
             filters={ this.dataAdapter.getAllFilters() }
             highlightLastChunk={ this.state.highlightLatestPoints }
             presetSelection={ this.state.selectedScenarioPreset }
+            stepsBeforePaddingGrows={ this.state.stepsBeforePaddingGrows }
             onBrushedPoints={ this.onBrushedPoints.bind(this) }
             onBrushedRegion={ this.onBrushedRegion.bind(this) }
             onNewPointsInSelection={ this.onNewPointsInSelection.bind(this) }
@@ -268,6 +283,7 @@ export class App extends Component<{}, State> {
           <div className="left">
           { this.renderEvaluationMetrics() }
           { this.renderHighlightLatestPointsToggle() }
+          { this.renderPaddingStepsInput() }
           </div>
 
           <div className="right">
