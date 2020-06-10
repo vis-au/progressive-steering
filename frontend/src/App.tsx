@@ -202,7 +202,7 @@ export class App extends Component<{}, State> {
         <EvaluationMetric label={ "Points received" } values={ this.dataAdapter.cumulativeDataSize } />
         {
           DEFAULT_EVALUATION_METRICS.map(metric => {
-            const label = metric === "recall" ? "collected" : metric;
+            const label = metric === "recall" ? "in selection" : metric;
             return (
               <EvaluationMetric
                 key={ metric }
