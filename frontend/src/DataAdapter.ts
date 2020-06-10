@@ -1,4 +1,4 @@
-import { sendUserSelectionBounds, sendUserSelection, sendUserParameters, SelectionSize, ScenarioPreset, ProgressionState, sendProgressionState } from "./EelBridge";
+import { sendUserSelectionBounds, sendUserSelection, sendUserParameters, SelectionSize, ScenarioPreset, ProgressionState, sendProgressionState, TrainingState } from "./EelBridge";
 import * as d3 from 'd3';
 import { DEFAULT_TOTAL_DATA_SIZE, DEFAULT_POIS } from "./EelBackendDummy";
 
@@ -6,6 +6,7 @@ class DataAdapter {
   private _chunkSize: number = 0;
   private _progressionBuffer: any[] = [];
   private _progressionState: ProgressionState = 'running';
+  private _trainingState: TrainingState = "collecting data";
   private _data: any[] = [];
   private _dimensions: string[] = [];
   private _xDimension: string | null = null;
@@ -223,6 +224,14 @@ class DataAdapter {
 
   public get progressionState(): ProgressionState {
     return this._progressionState;
+  }
+
+  public set trainingState(newState: TrainingState) {
+    this._trainingState = newState;
+  }
+
+  public get trainingState(): TrainingState {
+    return this._trainingState;
   }
 
   public get data(): any[] { return this._data; }
