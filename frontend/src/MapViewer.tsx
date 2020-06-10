@@ -28,12 +28,12 @@ export default class MapViewRenderer extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    fetch("https://raw.githubusercontent.com/larsbouwens/nl-geojson/master/nl.geojson")
-      .then(res => res.json())
-      .then(data => {
-        this.mapData = parisGeo;
-      })
-      .then(() => this.renderMap());
+    // fetch("https://raw.githubusercontent.com/larsbouwens/nl-geojson/master/nl.geojson")
+    //   .then(res => res.json())
+    //   .then(data => {
+    //     this.mapData = parisGeo;
+    //   })
+    //   .then(() => this.renderMap());
 
     this.buttonWidth = this.props.buttonWidth || this.buttonWidth;
 
@@ -76,13 +76,14 @@ export default class MapViewRenderer extends React.Component<Props, State> {
   }
 
   public render() {
+    const isMapVisible = this.state.mapVisible ? "" : "hidden";
     this.updateSelectedPOI();
 
     return (
       <div className="map-view-component"
         style={ { width: this.state.mapVisible ? this.props.width : this.buttonWidth } }>
         <svg
-          className="map-canvas"
+          className={`map-canvas ${isMapVisible}`}
           width={ this.props.width }
           height={ this.props.height }
           style={{display: this.state.mapVisible ? "block" : "none" }}>
@@ -93,7 +94,7 @@ export default class MapViewRenderer extends React.Component<Props, State> {
           className="toggle-map"
           style={{ width: this.buttonWidth }}
           onClick={ this.toggleMap.bind(this) }>
-            POI Map
+            Map
         </button>
       </div>
     );
@@ -106,8 +107,6 @@ export default class MapViewRenderer extends React.Component<Props, State> {
         .attr("cx", d => d.lon)
         .attr("cy", d => d.lat)
         .attr("r", 10)
-        .on("mouseenter", function() { d3.select(this).attr("r", 15) })
-        .on("mouseout", function() { d3.select(this).attr("r", 10) })
         .on("click", this.selectPOI.bind(this));
   }
 }

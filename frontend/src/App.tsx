@@ -243,7 +243,7 @@ export class App extends Component<{}, State> {
     const dimensionY = this.dataAdapter.yDimension;
 
     const width = window.innerWidth - 1;
-    const height = window.innerHeight - 100;
+    const height = window.innerHeight - 85;
 
     return (
       <div className="App">
@@ -272,8 +272,8 @@ export class App extends Component<{}, State> {
             onNewPointsInSelection={ this.onNewPointsInSelection.bind(this) }
           />
           <MapViewerRenderer
-            width={ width * 0.3 }
-            height={ height }
+            width={ width * 0.45 }
+            height={ height - 1 }
             pois={ getPOIs() }
             initialPOI={ null }
             onPOISelected={ (poi: POI) => this.dataAdapter.filterCategoricalDimension("city", poi.label) }
