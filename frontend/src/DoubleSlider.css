@@ -12,3 +12,7 @@
 g.histogram rect.bin {
   fill: steelblue;
 }
+
+g.selectionOverlay rect.bin {
+  fill: lightsteelblue;
+}

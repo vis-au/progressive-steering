@@ -77,9 +77,13 @@ export class App extends Component<{}, State> {
     this.dataAdapter.selectRegion(region);
   }
 
-  private onNewPointsInSelection(points: any[]) {
-    console.log(`found ${points.length} new points in current selection. Updating steering ...`);
-    this.dataAdapter.selectItems(points);
+  private onNewPointsInSelection(newPoints: any[], allPoints?: any[]) {
+    console.log(`found ${newPoints.length} new points in current selection. Updating steering ...`);
+    this.dataAdapter.selectItems(newPoints);
+
+    if (!!allPoints) {
+      this.dataAdapter.updateAllSelectedItems(allPoints);
+    }
   }
 
   private onHighlightLatestPointChanged() {
@@ -141,6 +145,7 @@ export class App extends Component<{}, State> {
   private renderDimensionSlider(dimension: string) {
     const extent = this.dataAdapter.getDomain(dimension).slice();
     const bins = this.dataAdapter.getHistogram(dimension);
+    const selectedBins = this.dataAdapter.getHistogram(dimension, true);
 
     return (
       <DoubleSlider
@@ -150,6 +155,7 @@ export class App extends Component<{}, State> {
         max={ extent[1] }
         width={ 125 }
         bins={ bins }
+        selectedBins={ selectedBins }
         onSelection={ (filter: [number, number]) => this.dataAdapter.filterNumericalDimension(dimension, filter) }
       />
     );

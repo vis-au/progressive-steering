@@ -16,6 +16,7 @@ class DataAdapter {
   private _onFilterChangedCallbacks: any[] = [];
   private _onMetricChangedCallbacks: any[] = [];
   private _scenarioPresets: ScenarioPreset[] = [];
+  private _allItemsInSelection: any[] = [];
 
   private dimensionFilters: Map<string, [number, number]> = new Map();
   private dimensionExtents: Map<string, [number, number]> = new Map();
@@ -142,14 +143,20 @@ class DataAdapter {
    * Computes the histogram for a dimension in the data. Is not progressive.
    * @param dimension dimension of the data
    */
-  public getHistogram(dimension: string | null) {
+  public getHistogram(dimension: string | null, onlySelected: boolean = false) {
     if (dimension === null) {
       return;
     }
     const histogramGenerator = d3.histogram()
       .value((d: any) => d[dimension]);
 
-    const histogram: d3.Bin<number, number>[] = histogramGenerator(this._data);
+    let histogram: d3.Bin<number, number>[] | null = null;
+    if (onlySelected) {
+      histogram = histogramGenerator(this._allItemsInSelection);
+    } else {
+      histogram = histogramGenerator(this._data);
+    }
+
     const values = histogram.map(bin => bin.length);
 
     return values;
@@ -169,6 +176,10 @@ class DataAdapter {
   public selectItems(items: any[]) {
     const selectedIds = items.map(d => d.id);
     sendUserSelection(selectedIds)
+  }
+
+  public updateAllSelectedItems(allSelectedItems: any[]) {
+    this._allItemsInSelection = allSelectedItems;
   }
 
   public selectRegion(region: number[][]) {
@@ -249,6 +260,10 @@ class DataAdapter {
   public set minSelectionSize(minSelectionSize: SelectionSize) {
     console.log("new selection size received:", minSelectionSize)
     this._selectionSize = minSelectionSize;
+  }
+
+  public get allItemsInSelection(): any[] {
+    return this._allItemsInSelection;
   }
 
   public set scenarioPresets(presets: ScenarioPreset[]) {

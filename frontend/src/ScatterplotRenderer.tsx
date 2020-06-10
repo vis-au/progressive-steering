@@ -24,7 +24,7 @@ interface Props {
   stepsBeforePaddingGrows: number,
   onBrushedPoints?: (points: any[]) => any,
   onBrushedRegion?: (extent: number[][]) => any,
-  onNewPointsInSelection?: (points: any[]) => any
+  onNewPointsInSelection?: (currentPoints: any[], allPoints?: any[]) => any
 }
 
 const DEFAULT_POINT_RADIUS = 2;
@@ -181,10 +181,11 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   }
 
   private updateNewPointsInCurrentSelection(newPoints: any[]) {
-    const pointsInSelection = this.getNewPointsInCurrentSelection(newPoints);
+    const newPointsInSelection = this.getNewPointsInCurrentSelection(newPoints);
+    const allPointsInSelection = this.getCurrentlyBrushedPoints();
 
-    if (pointsInSelection.length > 0 && !!this.props.onNewPointsInSelection) {
-      this.props.onNewPointsInSelection(pointsInSelection);
+    if (newPointsInSelection.length > 0 && !!this.props.onNewPointsInSelection) {
+      this.props.onNewPointsInSelection(newPointsInSelection, allPointsInSelection);
     }
   }
 

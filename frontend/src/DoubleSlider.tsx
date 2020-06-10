@@ -10,6 +10,7 @@ interface Props {
   height?: number,
   margin?: number,
   bins?: number[],
+  selectedBins?: number[],
   onSelection: (selection: [number, number]) => any
 }
 interface State {
@@ -121,6 +122,20 @@ export default class DoubleSlider extends React.Component<Props, State> {
         .attr("height", d => barScale(0) - barScale(d))
         .attr("x", (d, i) => binScale(i + 1.5))
         .attr("y", barScale);
+
+
+    if (this.props.selectedBins === undefined) {
+      return;
+    }
+
+    const histogramOverlay = svg.select("g.selectionOverlay");
+    histogramOverlay.selectAll("rect.bin").data(this.props.selectedBins)
+      .join("rect")
+        .attr("class", "bin")
+        .attr("width", binSize)
+        .attr("height", d => barScale(0) - barScale(d))
+        .attr("x", (d, i) => binScale(i + 1.5))
+        .attr("y", barScale);
   }
 
   public render() {
@@ -138,6 +153,7 @@ export default class DoubleSlider extends React.Component<Props, State> {
           height={ this.props.height || DEFAULT_HEIGHT }>
 
           <g className="histogram"></g>
+          <g className="selectionOverlay"></g>
           <g className="boundary-scale"></g>
         </svg>
       </div>
