@@ -72,3 +72,10 @@
   flex-direction: row;
   justify-content: flex-start;
 }
+.footer .highlight-latest-point-toggle,
+.footer .selection-padding-input {
+  padding: 0 0.5rem;
+}
+.footer .selection-padding-input input {
+  width: 2rem;
+}

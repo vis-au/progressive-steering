@@ -232,7 +232,8 @@ export class App extends Component<{}, State> {
   private renderPaddingStepsInput() {
     return (
       <div className="selection-padding-input">
-        <input type="number" defaultValue="-1" value={ this.state.stepsBeforePaddingGrows } onChange={ this.onPaddingStepsChanged.bind(this) }/>
+        <label htmlFor="selection-padding-steps">Steps before padding: </label>
+        <input id="selection-padding-steps" name="selection-padding-steps" type="number" defaultValue="-1" value={ this.state.stepsBeforePaddingGrows } onChange={ this.onPaddingStepsChanged.bind(this) }/>
       </div>
     );
   }
