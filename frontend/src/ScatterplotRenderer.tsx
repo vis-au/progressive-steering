@@ -117,10 +117,10 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     const currentlySelectedPoints = this.getNewPointsInCurrentSelection(this.getLatestChunk());
 
     if (currentlySelectedPoints.length <= MIN_SELECTION_THRESHOLD) {
-      if (this.stepsWithoutHit > this.props.stepsBeforePaddingGrows) {
+      this.stepsWithoutHit = this.stepsWithoutHit + 1;
+      if (this.stepsWithoutHit >= this.props.stepsBeforePaddingGrows) {
         this.brushScaleFactor = this.brushScaleFactor + SELECTION_INCREMENT;
       }
-      this.stepsWithoutHit = this.stepsWithoutHit + 1;
     } else {
       this.brushScaleFactor = 1;
       this.stepsWithoutHit = 0;
@@ -254,6 +254,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   }
 
   private onBrushStart() {
+    this.stepsWithoutHit = 0;
+    this.brushScaleFactor = 1;
   }
 
   private onBrush() {
