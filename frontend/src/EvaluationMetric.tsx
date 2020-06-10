@@ -18,7 +18,7 @@ const DEFAULT_POINTS_SHOWN = 100;
 export default class EvaluationMetric extends React.Component<Props, State> {
   private scaleX = d3.scaleLinear().range([0, DEFAULT_WIDTH]);
   private scaleY = d3.scaleLinear().domain([0, 1]).range([DEFAULT_HEIGHT, 0]);
-  private lineGenerator: d3.Line<[number, number]> = d3.line().curve(d3.curveNatural);
+  private lineGenerator: d3.Line<[number, number]> = d3.line().curve(d3.curveStep);
 
   constructor(props: Props) {
     super(props);
