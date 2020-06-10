@@ -33,6 +33,7 @@ const DEFAULT_POINT_HIGHLIGHTED_STROKE_WIDTH = 5;
 const DEFAULT_KERNEL_STD = 25;
 const DEFAULT_DENSITY_LEVELS = 10;
 const MIN_SELECTION_THRESHOLD = 0;
+const MAX_BRUSH_SCALE_FACTOR = 2;
 const SELECTION_INCREMENT = 0.05;
 
 export default class ScatterplotRenderer extends React.Component<Props, State> {
@@ -124,6 +125,10 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     } else {
       this.brushScaleFactor = 1;
       this.stepsWithoutHit = 0;
+    }
+
+    if (this.brushScaleFactor > MAX_BRUSH_SCALE_FACTOR) {
+      this.brushScaleFactor = MAX_BRUSH_SCALE_FACTOR;
     }
   }
 
