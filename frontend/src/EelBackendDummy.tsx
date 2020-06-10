@@ -11,7 +11,7 @@ export const DEFAULT_TOTAL_DATA_SIZE = 100000;
 export const DEFAULT_EVALUATION_METRICS = ["recall", "precision"];
 
 export const DEFAULT_POIS = [
-  {lon: 540, lat: 300, label: "poi 1"},
+  {lon: 560, lat: 470, label: "poi 1"},
   {lon: 200, lat: 500, label: "poi 2"},
   {lon: 360, lat: 650, label: "poi 3"},
   {lon: 276, lat: 600, label: "poi 4"},
