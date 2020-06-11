@@ -173,8 +173,7 @@ export class App extends Component<{}, State> {
     return (
       <option
         key={ preset.name }
-        value={ preset.name }
-        selected={ preset === this.state.selectedScenarioPreset }>
+        value={ preset.name }>
 
         { preset.name }
       </option>
@@ -182,9 +181,18 @@ export class App extends Component<{}, State> {
   }
 
   private renderScenarioPresets() {
+    const value = this.state.selectedScenarioPreset === null
+      ? ""
+      : this.state.selectedScenarioPreset.name;
+
     return (
-      <select name="scenario-presets" id="scenario-presets" onChange={ this.onScenarioPresetSelected.bind(this) } defaultValue={ "null" }>
+      <select
+        name="scenario-presets"
+        id="scenario-presets"
+        onChange={ this.onScenarioPresetSelected.bind(this) }
+        value={ value }>
         <option key="null">Select Scenario ...</option>
+
         { this.dataAdapter.scenarioPresets.map(this.renderScenarioPreset.bind(this)) }
       </select>
     );
@@ -240,7 +248,7 @@ export class App extends Component<{}, State> {
     return (
       <div className="selection-padding-input">
         <label htmlFor="selection-padding-steps">Steps before padding: </label>
-        <input id="selection-padding-steps" name="selection-padding-steps" type="number" defaultValue="-1" value={ this.state.stepsBeforePaddingGrows } onChange={ this.onPaddingStepsChanged.bind(this) }/>
+        <input id="selection-padding-steps" name="selection-padding-steps" type="number" value={ this.state.stepsBeforePaddingGrows } onChange={ this.onPaddingStepsChanged.bind(this) }/>
       </div>
     );
   }

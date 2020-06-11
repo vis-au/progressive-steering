@@ -157,9 +157,9 @@ class DataAdapter {
       histogram = histogramGenerator(this._data);
     }
 
-    const values = histogram.map(bin => bin.length);
+    const bins = histogram.map(bin => bin.length);
 
-    return values;
+    return bins;
   }
 
   public getEvaluationMetric(label: string) {
