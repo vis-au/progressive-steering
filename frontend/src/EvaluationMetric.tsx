@@ -13,7 +13,6 @@ interface State {
 const DEFAULT_WIDTH = 500;
 const DEFAULT_HEIGHT = 75;
 const DEFAULT_PADDING = 30;
-const DEFAULT_POINTS_SHOWN = 100;
 
 export default class EvaluationMetric extends React.Component<Props, State> {
   private scaleX = d3.scaleLinear().range([0, DEFAULT_WIDTH]);
