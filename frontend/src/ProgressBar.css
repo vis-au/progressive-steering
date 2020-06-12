@@ -19,6 +19,6 @@
 .progress {
   background: steelblue;
   height: 1rem;
-  padding-left: 1rem;
+  padding-left: 0rem;
   line-height: 0.9rem;
 }
