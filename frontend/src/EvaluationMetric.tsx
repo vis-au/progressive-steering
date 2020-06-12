@@ -1,10 +1,14 @@
 import * as React from 'react';
 import * as d3 from 'd3';
+
+import { TrainingState } from './EelBridge';
+
 import "./EvaluationMetric.css";
 
 interface Props {
   label: string,
-  values: number[]
+  values: number[],
+  trainingStates: TrainingState[]
 }
 interface State {
   canvasVisible: boolean
@@ -12,7 +16,8 @@ interface State {
 
 const DEFAULT_WIDTH = 500;
 const DEFAULT_HEIGHT = 75;
-const DEFAULT_PADDING = 30;
+const DEFAULT_PADDING = 40;
+const INDICATOR_LINE_WIDTH = 1;
 
 export default class EvaluationMetric extends React.Component<Props, State> {
   private scaleX = d3.scaleLinear().range([0, DEFAULT_WIDTH]);
@@ -68,6 +73,21 @@ export default class EvaluationMetric extends React.Component<Props, State> {
       .attr("cy", this.scaleY(this.props.values[this.props.values.length - 1]));
   }
 
+  private updateStatusIndicator() {
+    const container = d3.select(`#${this.getCanvasSelector()}`).select("g.content");
+    container.selectAll("g.state-indicator");
+
+    const stateIndicator = container.append("g")
+      .attr("class", "state-indicator")
+      .attr("transform", `translate(0,${this.scaleY.range()[0] + 10})`);
+
+    stateIndicator.selectAll("line.indicator").data(this.props.trainingStates).join("line")
+      .attr("class", d => `indicator ${d}`)
+      .attr("x1", (d, i) => this.scaleX.range()[1] * (i/this.props.trainingStates.length))
+      .attr("x2", (d, i) => this.scaleX.range()[1] * ((i+1)/this.props.trainingStates.length))
+      .attr("stroke-width", INDICATOR_LINE_WIDTH);
+  }
+
   private updateScales() {
     this.scaleX.domain([0, this.props.values.length - 1]);
     const minY = d3.min(this.props.values) || 0;
@@ -91,6 +111,7 @@ export default class EvaluationMetric extends React.Component<Props, State> {
   public componentDidUpdate(previousProps: Props) {
     this.updateScales();
     this.updateTimeSeries();
+    this.updateStatusIndicator();
     this.updateAxes();
   }
 }

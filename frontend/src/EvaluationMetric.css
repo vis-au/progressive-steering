@@ -31,3 +31,13 @@
 .evaluationMetric svg.canvas circle.endpoint {
   fill: steelblue;
 }
+
+.evaluationMetric .state-indicator .indicator.collecting {
+  stroke: blueviolet;
+}
+.evaluationMetric .state-indicator .indicator.tree {
+  stroke: teal;
+}
+.evaluationMetric .state-indicator .indicator.flushing {
+  stroke: firebrick;
+}

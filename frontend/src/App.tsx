@@ -212,8 +212,15 @@ export class App extends Component<{}, State> {
   private renderEvaluationMetrics() {
     return (
       <div className="metrics">
-        <EvaluationMetric label={ "Points selected" } values={ [this.state.selectedPoints.length] } />
-        <EvaluationMetric label={ "Points received" } values={ this.dataAdapter.cumulativeDataSize } />
+        <EvaluationMetric
+          label={ "Points selected" }
+          values={ [this.state.selectedPoints.length] }
+          trainingStates={ this.dataAdapter.trainingStateHistory } />
+
+        <EvaluationMetric
+          label={ "Points received" }
+          values={ this.dataAdapter.cumulativeDataSize }
+          trainingStates={ this.dataAdapter.trainingStateHistory } />
         {
           DEFAULT_EVALUATION_METRICS.map(metric => {
             const label = metric === "recall" ? "in selection" : metric;
@@ -222,7 +229,7 @@ export class App extends Component<{}, State> {
                 key={ metric }
                 label={ label }
                 values={ this.dataAdapter.getEvaluationMetric(metric) }
-              />
+                trainingStates={ this.dataAdapter.trainingStateHistory } />
             );
           })
         }

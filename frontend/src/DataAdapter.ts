@@ -17,6 +17,7 @@ class DataAdapter {
   private _onMetricChangedCallbacks: any[] = [];
   private _scenarioPresets: ScenarioPreset[] = [];
   private _allItemsInSelection: any[] = [];
+  private _trainingStateHistory: TrainingState[] = [];
 
   private dimensionFilters: Map<string, [number, number]> = new Map();
   private dimensionExtents: Map<string, [number, number]> = new Map();
@@ -42,10 +43,12 @@ class DataAdapter {
         this._chunkSize = data.length;
       }
       this._data.push(...data);
+      this._trainingStateHistory.push(this._trainingState);
       this.notifyDataObservers();
     } else if (this.progressionState === 'paused') {
       this._chunkSize += data.length;
       this._data.push(...data);
+      this._trainingStateHistory.push(this._trainingState);
     }
 
     const lastLength = this._cumulativeDataSize[this._cumulativeDataSize.length - 1];
@@ -247,6 +250,10 @@ class DataAdapter {
 
   public get trainingState(): TrainingState {
     return this._trainingState;
+  }
+
+  public get trainingStateHistory(): TrainingState[] {
+    return this._trainingStateHistory;
   }
 
   public get data(): any[] { return this._data; }
