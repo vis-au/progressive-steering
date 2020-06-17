@@ -18,6 +18,7 @@ interface State {
 
 const X_AXIS_SELECTOR = "x-dimension";
 const Y_AXIS_SELECTOR = "y-dimension";
+const STEPS_BEFORE_PADDING_GROWS = 1;
 
 export class App extends Component<{}, State> {
   private dataAdapter: EelDataAdapter;
@@ -46,7 +47,7 @@ export class App extends Component<{}, State> {
       selectedPoints: [],
       highlightLatestPoints: true,
       selectedScenarioPreset: null,
-      stepsBeforePaddingGrows: 1
+      stepsBeforePaddingGrows: STEPS_BEFORE_PADDING_GROWS
     };
   }
 

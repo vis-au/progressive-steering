@@ -115,7 +115,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.scaleY.domain([this.props.extentY[1], this.props.extentY[0]]);
   }
 
-  private updateBrushSize() {
+  private updatePaddedBrushSize() {
     if (this.svg === null) {
       return;
     } else if (!this.receivedNewData()) {
@@ -276,8 +276,6 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   }
 
   private onBrushStart() {
-    this.stepsWithoutHit = 0;
-    this.brushScaleFactor = 1;
   }
 
   private onBrush() {
@@ -297,6 +295,9 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       .attr("opacity", 1)
       .attr("transform", `translate(${x0},${y0 - 5})`)
       .text(`x: [${xMin}, ${xMax}], y: [${yMax}, ${yMin}]`);
+
+    this.stepsWithoutHit = 0;
+    this.brushScaleFactor = 1;
   }
 
   private onBrushEnd() {
@@ -304,6 +305,9 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.updateCurrentlySelectedPoints();
 
     d3.select("g.brush text").transition().attr("opacity", 0);
+
+    this.stepsWithoutHit = 0;
+    this.brushScaleFactor = 1;
   }
 
   private wasPresetAlreadyDrawn(preset: number[][]) {
@@ -586,7 +590,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.renderInsideOutsidePoints();
     this.renderDensityPlots();
     this.renderPresetSelection();
-    this.updateBrushSize();
+    this.updatePaddedBrushSize();
 
     this.lastChunk = this.getLatestChunk();
 
