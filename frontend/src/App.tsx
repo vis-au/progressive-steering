@@ -214,11 +214,6 @@ export class App extends Component<{}, State> {
     return (
       <div className="metrics">
         <EvaluationMetric
-          label={ "Points selected" }
-          values={ [this.state.selectedPoints.length] }
-          trainingStates={ this.dataAdapter.trainingStateHistory } />
-
-        <EvaluationMetric
           label={ "Points received" }
           values={ this.dataAdapter.cumulativeDataSize }
           trainingStates={ this.dataAdapter.trainingStateHistory } />
