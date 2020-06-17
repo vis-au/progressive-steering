@@ -304,6 +304,7 @@ export class App extends Component<{}, State> {
             trainingState={ this.dataAdapter.trainingState }
             filters={ this.dataAdapter.getAllFilters() }
             highlightLastChunk={ this.state.highlightLatestPoints }
+            showNonSteeringData={ true }
             presetSelection={ this.state.selectedScenarioPreset }
             stepsBeforePaddingGrows={ this.state.stepsBeforePaddingGrows }
             onBrushedPoints={ this.onBrushedPoints.bind(this) }

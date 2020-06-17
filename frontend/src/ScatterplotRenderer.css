@@ -1,7 +1,9 @@
 svg.axisCanvas,
+svg.nonSteeringAxesCanvas,
 svg.densityCanvas,
 svg.recentPointsCanvas,
-canvas.scatterplotCanvas {
+canvas.scatterplotCanvas,
+canvas.nonSteeringCanvas {
   position: absolute;
 }
 
@@ -15,6 +17,11 @@ svg.recentPointsCanvas circle.recent-point {
 }
 svg.recentPointsCanvas circle.recent-point.inside-selection {
   fill: green;
+}
+
+svg.nonSteeringAxesCanvas,
+canvas.nonSteeringCanvas {
+  right: 0;
 }
 
 rect.brushedRegion {

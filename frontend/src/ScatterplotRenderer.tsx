@@ -19,6 +19,7 @@ interface Props {
   trainingState: TrainingState,
   filters: Map<string, number[]>,
   presetSelection: ScenarioPreset | null,
+  showNonSteeringData: boolean;
   highlightLastChunk?: boolean,
   chunkSize?: number,
   stepsBeforePaddingGrows: number,
@@ -29,6 +30,7 @@ interface Props {
 
 const DEFAULT_POINT_RADIUS = 2;
 const DEFAULT_POINT_COLOR = "rgba(70, 130, 180, 0.3)";
+const NON_STEERING_POINT_COLOR = "rgba(30, 30, 30, 0.3)";
 const DEFAULT_POINT_STROKE_WIDTH = 0;
 const DEFAULT_POINT_HIGHLIGHTED_STROKE_WIDTH = 5;
 const DEFAULT_KERNEL_STD = 25;
@@ -42,7 +44,9 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   private selection: any;
 
   private svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any> | null;
+  private nonSteeringSVG: d3.Selection<d3.BaseType, unknown, HTMLElement, any> | null;
   private canvas: d3.Selection<d3.BaseType, unknown, HTMLElement, any> | null;
+  private nonSteeringCanvas: d3.Selection<d3.BaseType, unknown, HTMLElement, any> | null;
 
   private scaleX: d3.ScaleLinear<number, number>;
   private scaleY: d3.ScaleLinear<number, number>;
@@ -65,6 +69,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
     this.svg = null;
     this.canvas = null;
+    this.nonSteeringCanvas = null;
+    this.nonSteeringSVG = null;
     this.selection = null;
 
     this.quadtree = d3.quadtree()
@@ -415,27 +421,36 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     );
   }
 
-  private renderAxes() {
-    if (this.svg === null) {
+  private renderAxes(useNonSteeringData: boolean = false) {
+    if (this.svg === null || this.nonSteeringSVG === null) {
       return;
     }
+
+    const svg = useNonSteeringData
+      ? this.nonSteeringSVG
+      : this.svg;
 
     const xAxis = d3.axisTop(this.scaleX);
     const yAxis = d3.axisRight(this.scaleY);
 
-    this.svg.selectAll("g.axis").remove();
+    svg.selectAll("g.axis").remove();
 
-    this.svg.select("g.axes")
+    svg.select("g.axes")
       .append("g")
       .attr("class", "axis x")
       .attr("transform", `translate(0,${this.props.height - 1})`)
       .call(xAxis);
 
-    this.svg.select("g.axes")
+    svg.select("g.axes")
       .append("g")
       .attr("class", "axis y")
       .attr("transform", `translate(0,0)`)
       .call(yAxis);
+  }
+
+  private updateAxes() {
+    this.renderAxes(true);
+    this.renderAxes(false);
   }
 
   private renderUnsetDimensionsWarning() {
@@ -450,15 +465,19 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     );
   }
 
-  private getLatestChunk() {
+  private getLatestChunk(useNonSteeringData: boolean = false) {
     const itemCount = this.props.data.length;
+
+    if (useNonSteeringData) {
+      // TODO: return the data that is not steered.
+    }
 
     // if chunksize property is not defined, return the full dataset
     return this.props.data.slice(itemCount - (this.props.chunkSize || itemCount), itemCount);
   }
 
-  private renderPoints() {
-    if (this.canvas === null) {
+  private renderPoints(useNonSteeringData: boolean = false) {
+    if (this.canvas === null || this.nonSteeringCanvas === null) {
       return;
     }
     if (this.props.dimensionX === null || this.props.dimensionY === null) {
@@ -470,14 +489,21 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
     const dimX = this.props.dimensionX;
     const dimY = this.props.dimensionY;
-    const context = (this.canvas.node() as any).getContext("2d");
+    let context: any = (this.canvas.node() as any).getContext("2d");
+
+    const chunk = this.getLatestChunk(useNonSteeringData);
 
     context.fillStyle = DEFAULT_POINT_COLOR;
     context.strokeStyle = DEFAULT_POINT_COLOR;
     context.lineWidth = DEFAULT_POINT_STROKE_WIDTH;
 
-    const chunk = this.getLatestChunk()
-    this.quadtree.addAll(chunk);
+    if (useNonSteeringData) {
+      context = (this.nonSteeringCanvas.node() as any).getContext("2d");
+      context.fillStyle = NON_STEERING_POINT_COLOR;
+      context.strokeStyle = NON_STEERING_POINT_COLOR;
+    } else {
+      this.quadtree.addAll(chunk);
+    }
 
     chunk.forEach(datum => {
       const px = this.scaleX(datum[dimX]);
@@ -489,7 +515,22 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       context.closePath();
     });
 
-    this.updateNewPointsInCurrentSelection(chunk);
+    if (!useNonSteeringData) {
+      this.updateNewPointsInCurrentSelection(chunk);
+    }
+  }
+
+  private renderNonSteeringPoints() {
+    this.renderPoints(true);
+  }
+
+  private renderSteeringPoints() {
+    this.renderPoints(false);
+  }
+
+  private updatePoints() {
+    this.renderSteeringPoints();
+    this.renderNonSteeringPoints();
   }
 
   private renderInsideOutsidePoints() {
@@ -540,8 +581,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
   public render() {
     this.updateScales();
-    this.renderAxes();
-    this.renderPoints();
+    this.updateAxes();
+    this.updatePoints();
     this.renderInsideOutsidePoints();
     this.renderDensityPlots();
     this.renderPresetSelection();
@@ -549,12 +590,20 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
     this.lastChunk = this.getLatestChunk();
 
+    const canvasWidth = this.props.showNonSteeringData
+      ? this.props.width / 2
+      : this.props.width;
+
     return (
-      <div className="scatterplotRenderer" style={ { width: this.props.width } }>
-        <canvas className="scatterplotCanvas" width={ this.props.width } height={ this.props.height } />
-        <svg className="recentPointsCanvas" width={ this.props.width } height={ this.props.height } />
-        <svg className="densityCanvas" width={ this.props.width } height={ this.props.height } />
-        <svg className="axisCanvas" width={ this.props.width } height={ this.props.height }>
+      <div className="scatterplotRenderer" style={ { width: canvasWidth } }>
+        <canvas className="scatterplotCanvas" width={ canvasWidth } height={ this.props.height } />
+        <canvas className="nonSteeringCanvas" width={ canvasWidth } height={ this.props.height }></canvas>
+        <svg className="recentPointsCanvas" width={ canvasWidth } height={ this.props.height } />
+        <svg className="densityCanvas" width={ canvasWidth } height={ this.props.height } />
+        <svg className="nonSteeringAxesCanvas" width={ canvasWidth } height={ this.props.height }>
+          <g className="axes"></g>
+        </svg>
+        <svg className="axisCanvas" width={ canvasWidth } height={ this.props.height }>
           <g className="axes"></g>
           { this.renderBrushedRegions() }
           { this.renderPaddedBrush() }
@@ -567,6 +616,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   public componentDidMount() {
     this.svg = d3.select("svg.axisCanvas");
     this.canvas = d3.select("canvas.scatterplotCanvas");
+    this.nonSteeringCanvas = d3.select("canvas.nonSteeringCanvas");
+    this.nonSteeringSVG = d3.select("svg.nonSteeringAxesCanvas");
 
     this.svg.append("g")
       .attr("class", "brush")
