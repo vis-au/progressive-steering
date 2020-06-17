@@ -20,7 +20,8 @@ interface Props {
   trainingState: TrainingState,
   filters: Map<string, number[]>,
   presetSelection: ScenarioPreset | null,
-  showNonSteeringData: boolean;
+  showNonSteeringData: boolean,
+  showHeatMap: boolean,
   highlightLastChunk?: boolean,
   chunkSize?: number,
   stepsBeforePaddingGrows: number,
@@ -584,6 +585,27 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
         .attr("d", d3.geoPath());
   }
 
+  private renderHeatMap(canvasWidth: number) {
+    if (this.props.showHeatMap) {
+      return (
+        <HeatMapRenderer
+          width={ canvasWidth }
+          height={ this.props.height }
+          dimensionX={ this.props.dimensionX }
+          dimensionY={ this.props.dimensionY }
+          scaleX={ this.scaleX }
+          scaleY={ this.scaleY }
+          data={ this.props.data }
+          showNonSteeringData={ this.props.showNonSteeringData }
+          highlightLastChunk={ this.props.highlightLastChunk }
+          chunkSize={ this.props.chunkSize }
+        />
+      );
+    } else {
+      return null;
+    }
+  }
+
   public render() {
     this.updateScales();
     this.updateAxes();
@@ -601,18 +623,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
     return (
       <div className="scatterplotRenderer" style={ { width: canvasWidth } }>
-        <HeatMapRenderer
-          width={ canvasWidth }
-          height={ this.props.height }
-          dimensionX={ this.props.dimensionX }
-          dimensionY={ this.props.dimensionY }
-          scaleX={ this.scaleX }
-          scaleY={ this.scaleY }
-          data={ this.props.data }
-          showNonSteeringData={ this.props.showNonSteeringData }
-          highlightLastChunk={ this.props.highlightLastChunk }
-          chunkSize={ this.props.chunkSize }
-        />
+        { this.renderHeatMap(canvasWidth) }
         <canvas className="scatterplotCanvas" width={ canvasWidth } height={ this.props.height } />
         <canvas className="nonSteeringCanvas" width={ canvasWidth } height={ this.props.height }></canvas>
         <svg className="recentPointsCanvas" width={ canvasWidth } height={ this.props.height } />

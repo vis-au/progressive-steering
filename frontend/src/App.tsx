@@ -12,6 +12,7 @@ import './App.css';
 interface State {
   selectedPoints: any[],
   highlightLatestPoints: boolean,
+  showHeatMap: boolean,
   selectedScenarioPreset: ScenarioPreset | null,
   stepsBeforePaddingGrows: number
 }
@@ -46,6 +47,7 @@ export class App extends Component<{}, State> {
     this.state = {
       selectedPoints: [],
       highlightLatestPoints: true,
+      showHeatMap: true,
       selectedScenarioPreset: null,
       stepsBeforePaddingGrows: STEPS_BEFORE_PADDING_GROWS
     };
@@ -89,6 +91,10 @@ export class App extends Component<{}, State> {
 
   private onHighlightLatestPointChanged() {
     this.setState({ highlightLatestPoints: !this.state.highlightLatestPoints });
+  }
+
+  private onShowHeatMapChanged() {
+    this.setState({ showHeatMap: !this.state.showHeatMap });
   }
 
   private onPaddingStepsChanged(event: React.ChangeEvent<HTMLInputElement>) {
@@ -247,6 +253,21 @@ export class App extends Component<{}, State> {
     );
   }
 
+  private renderShowHeatMapToggle() {
+    return (
+      <div className="highlight-show-heatmap-toggle">
+        <label htmlFor="highlight-show-heatmap-toggle">show heatmap</label>
+        <input
+          type="checkbox"
+          name="highlight-show-heatmap-toggle"
+          id="highlight-show-heatmap-toggle"
+          checked={ this.state.showHeatMap  }
+          onChange={ this.onShowHeatMapChanged.bind(this) }/>
+      </div>
+    );
+
+  }
+
   private renderPaddingStepsInput() {
     return (
       <div className="selection-padding-input">
@@ -300,6 +321,7 @@ export class App extends Component<{}, State> {
             trainingState={ this.dataAdapter.trainingState }
             filters={ this.dataAdapter.getAllFilters() }
             highlightLastChunk={ this.state.highlightLatestPoints }
+            showHeatMap={ this.state.showHeatMap }
             showNonSteeringData={ true }
             presetSelection={ this.state.selectedScenarioPreset }
             stepsBeforePaddingGrows={ this.state.stepsBeforePaddingGrows }
@@ -321,6 +343,7 @@ export class App extends Component<{}, State> {
           { this.renderTrainingState() }
           { this.renderEvaluationMetrics() }
           { this.renderHighlightLatestPointsToggle() }
+          { this.renderShowHeatMapToggle() }
           { this.renderPaddingStepsInput() }
           </div>
 
