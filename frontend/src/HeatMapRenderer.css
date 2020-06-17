@@ -1,0 +1,6 @@
+div.heatMapRenderer {
+  position: absolute;
+}
+svg.heat-map {
+  position: absolute;
+}

@@ -4,6 +4,7 @@ import * as d3 from 'd3';
 import { ScenarioPreset, TrainingState } from './EelBridge';
 
 import "./ScatterplotRenderer.css";
+import HeatMapRenderer from './HeatMapRenderer';
 
 interface State {
   brushedRegions: number[][][]
@@ -600,6 +601,18 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
     return (
       <div className="scatterplotRenderer" style={ { width: canvasWidth } }>
+        <HeatMapRenderer
+          width={ canvasWidth }
+          height={ this.props.height }
+          dimensionX={ this.props.dimensionX }
+          dimensionY={ this.props.dimensionY }
+          scaleX={ this.scaleX }
+          scaleY={ this.scaleY }
+          data={ this.props.data }
+          showNonSteeringData={ this.props.showNonSteeringData }
+          highlightLastChunk={ this.props.highlightLastChunk }
+          chunkSize={ this.props.chunkSize }
+        />
         <canvas className="scatterplotCanvas" width={ canvasWidth } height={ this.props.height } />
         <canvas className="nonSteeringCanvas" width={ canvasWidth } height={ this.props.height }></canvas>
         <svg className="recentPointsCanvas" width={ canvasWidth } height={ this.props.height } />
