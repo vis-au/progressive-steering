@@ -145,8 +145,8 @@ def feedTuples(query,chunkSize):
          for x in myresult:
              #print('X40s****',x[40:],aboveMinimum(x[0],x[16],userLat,userLon,0.5),x[45])
              mycursor.execute('INSERT INTO plotted (id) VALUES (' +str(x[0])+')')
-             DIZ_plotted[x[0]]={'host_id':x[0],'state':'collecting data', 'zipcode':x[7], 'latitude':x[10],'longitude':x[11],'accommodates':x[12],'bathrooms':x[13],'bedrooms':x[14],'beds':x[15],'price':x[16],'cleaning_fee':x[18],'minimum_nights':x[21],'maximum_nights':x[22],'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.3,x[45],x[46]),'chunk':chunks,'inside':0}
-             actualChunk[x[0]]={'chunk':chunks,'state':'collecting data','values':x, 'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.3,x[45],x[46])}
+             DIZ_plotted[x[0]]={'host_id':x[0],'state':state, 'zipcode':x[7], 'latitude':x[10],'longitude':x[11],'accommodates':x[12],'bathrooms':x[13],'bedrooms':x[14],'beds':x[15],'price':x[16],'cleaning_fee':x[18],'minimum_nights':x[21],'maximum_nights':x[22],'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.3,x[45],x[46]),'chunk':chunks,'inside':0}
+             actualChunk[x[0]]={'chunk':chunks,'state':state,'values':x, 'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.3,x[45],x[46])}
              mydb.commit()
              eel.sleep(0.001)
          sendChunk(actualChunk)
@@ -162,7 +162,7 @@ def feedTuples(query,chunkSize):
          mycursor.execute(query)
          myresult = mycursor.fetchall()
          pmodifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
-         print('----------------------------potential modifier at chunk:',chunks,pmodifier)
+         #print('----------------------------potential modifier at chunk:',chunks,pmodifier)
          return chunks,myresult,mycursor
 
     while not userSelectionUpdated: #waiting for the first box
