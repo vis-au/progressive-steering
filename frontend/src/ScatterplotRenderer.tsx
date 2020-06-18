@@ -618,7 +618,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.lastChunk = this.getLatestChunk();
 
     const canvasWidth = this.props.showNonSteeringData
-      ? this.props.width / 2
+      ? this.props.width / 2 - 1
       : this.props.width;
 
     const isNonSteeringCanvasHidden = this.props.showNonSteeringData ? "" : "hidden";

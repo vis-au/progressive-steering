@@ -40,6 +40,12 @@ svg.densityCanvas path.density-region {
   fill: black;
 }
 
+g.brush .selection {
+  fill: transparent;
+  stroke: #777;
+  stroke-width: 2px;
+}
+
 rect.padded-brush {
   fill: transparent;
   stroke: #555;
