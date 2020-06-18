@@ -621,11 +621,13 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       ? this.props.width / 2
       : this.props.width;
 
+    const isNonSteeringCanvasHidden = this.props.showNonSteeringData ? "" : "hidden";
+
     return (
       <div className="scatterplotRenderer" style={ { width: canvasWidth } }>
         { this.renderHeatMap(canvasWidth) }
         <canvas className="scatterplotCanvas" width={ canvasWidth } height={ this.props.height } />
-        <canvas className="nonSteeringCanvas" width={ canvasWidth } height={ this.props.height }></canvas>
+        <canvas className={ `nonSteeringCanvas ${isNonSteeringCanvasHidden}` } width={ canvasWidth } height={ this.props.height }></canvas>
         <svg className="recentPointsCanvas" width={ canvasWidth } height={ this.props.height } />
         <svg className="densityCanvas" width={ canvasWidth } height={ this.props.height } />
         <svg className="nonSteeringAxesCanvas" width={ canvasWidth } height={ this.props.height }>
@@ -656,11 +658,23 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       //.call(this.brush.move, [[830, 885], [1088, 1030]])   //29..37 0..2
       //.call(this.brush.move, [[920, 680], [1088, 1030]])   //32..37 0..5
       // .call(this.brush.move, [[100, 100], [200, 200]])
-      .call(g => g.select(".overlay").style("cursor", "default"));
 
     this.svg.select("g.brush").append("text")
       .attr("fill", "black")
       .attr("transform", "translate(0, 10)")
       .text("xdimension: 123, ydimension: 456");
+  }
+
+  public componentDidUpdate(prevProps: Props) {
+    if (prevProps.showNonSteeringData !== this.props.showNonSteeringData) {
+      if (this.svg === null) {
+        return;
+      }
+
+      this.svg.selectAll("g.brush").remove();
+      this.svg.append("g")
+        .attr("class", "brush")
+        .call(this.brush);
+    }
   }
 }

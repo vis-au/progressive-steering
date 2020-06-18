@@ -100,6 +100,8 @@
   justify-content: flex-start;
 }
 .footer .highlight-latest-point-toggle,
+.footer .show-heatmap-toggle,
+.footer .show-sidebyside-toggle,
 .footer .selection-padding-input {
   padding: 0 0.5rem;
 }

@@ -13,6 +13,7 @@ interface State {
   selectedPoints: any[],
   highlightLatestPoints: boolean,
   showHeatMap: boolean,
+  showSideBySideView: boolean,
   selectedScenarioPreset: ScenarioPreset | null,
   stepsBeforePaddingGrows: number
 }
@@ -48,6 +49,7 @@ export class App extends Component<{}, State> {
       selectedPoints: [],
       highlightLatestPoints: true,
       showHeatMap: true,
+      showSideBySideView: true,
       selectedScenarioPreset: null,
       stepsBeforePaddingGrows: STEPS_BEFORE_PADDING_GROWS
     };
@@ -95,6 +97,10 @@ export class App extends Component<{}, State> {
 
   private onShowHeatMapChanged() {
     this.setState({ showHeatMap: !this.state.showHeatMap });
+  }
+
+  private onShowSideBySideViewChanged() {
+    this.setState({ showSideBySideView: !this.state.showSideBySideView });
   }
 
   private onPaddingStepsChanged(event: React.ChangeEvent<HTMLInputElement>) {
@@ -255,17 +261,30 @@ export class App extends Component<{}, State> {
 
   private renderShowHeatMapToggle() {
     return (
-      <div className="highlight-show-heatmap-toggle">
-        <label htmlFor="highlight-show-heatmap-toggle">show heatmap</label>
+      <div className="show-heatmap-toggle">
+        <label htmlFor="show-heatmap-toggle">show heatmap</label>
         <input
           type="checkbox"
-          name="highlight-show-heatmap-toggle"
-          id="highlight-show-heatmap-toggle"
+          name="show-heatmap-toggle"
+          id="show-heatmap-toggle"
           checked={ this.state.showHeatMap  }
           onChange={ this.onShowHeatMapChanged.bind(this) }/>
       </div>
     );
+  }
 
+  private renderShowSideBySideViewToggle() {
+    return (
+      <div className="show-sidebyside-toggle">
+        <label htmlFor="show-sidebyside-toggle">show non-steered data</label>
+        <input
+          type="checkbox"
+          name="show-sidebyside-toggle"
+          id="show-sidebyside-toggle"
+          checked={ this.state.showSideBySideView  }
+          onChange={ this.onShowSideBySideViewChanged.bind(this) }/>
+      </div>
+    );
   }
 
   private renderPaddingStepsInput() {
@@ -322,7 +341,7 @@ export class App extends Component<{}, State> {
             filters={ this.dataAdapter.getAllFilters() }
             highlightLastChunk={ this.state.highlightLatestPoints }
             showHeatMap={ this.state.showHeatMap }
-            showNonSteeringData={ true }
+            showNonSteeringData={ this.state.showSideBySideView }
             presetSelection={ this.state.selectedScenarioPreset }
             stepsBeforePaddingGrows={ this.state.stepsBeforePaddingGrows }
             onBrushedPoints={ this.onBrushedPoints.bind(this) }
@@ -344,6 +363,7 @@ export class App extends Component<{}, State> {
           { this.renderEvaluationMetrics() }
           { this.renderHighlightLatestPointsToggle() }
           { this.renderShowHeatMapToggle() }
+          { this.renderShowSideBySideViewToggle() }
           { this.renderPaddingStepsInput() }
           </div>
 
