@@ -30,7 +30,7 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
 
     this.binScaleX
       .domain(props.scaleX.range() as [number, number])
-      .range(d3.range(BINS_X).reverse());
+      .range(d3.range(BINS_X));
 
     this.binScaleY
       .domain(props.scaleY.range() as [number, number])
