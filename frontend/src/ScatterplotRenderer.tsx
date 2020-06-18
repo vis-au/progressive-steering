@@ -253,26 +253,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   private addCurrentSelectionToBrushedRegions() {
     const brushedRegions = this.state.brushedRegions;
 
-    if (this.selection === null) {
-      brushedRegions.splice(0, 1);
-      return;
-    }
-    if (this.selection[0][0] - this.selection[1][0] === 0) {
-      brushedRegions.splice(0, 1);
-      this.selection = null;
-      return;
-    }
-    if (this.selection === brushedRegions[brushedRegions.length - 1]) {
-      brushedRegions.splice(0, 1);
-      this.selection = null;
-      return;
-    }
-
     brushedRegions.push(this.selection);
-
-    if (brushedRegions.length > 10) {
-      brushedRegions.splice(0, 1);
-    }
 
     this.setState({ brushedRegions });
   }

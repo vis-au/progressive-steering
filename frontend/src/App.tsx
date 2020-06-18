@@ -48,8 +48,8 @@ export class App extends Component<{}, State> {
     this.state = {
       selectedPoints: [],
       highlightLatestPoints: true,
-      showHeatMap: true,
-      showSideBySideView: true,
+      showHeatMap: false,
+      showSideBySideView: false,
       selectedScenarioPreset: null,
       stepsBeforePaddingGrows: STEPS_BEFORE_PADDING_GROWS
     };
