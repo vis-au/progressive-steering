@@ -6,7 +6,7 @@ class DataAdapter {
   private _chunkSize: number = 0;
   private _progressionBuffer: any[] = [];
   private _progressionState: ProgressionState = 'running';
-  private _trainingState: TrainingState = "collecting data";
+  private _trainingState: TrainingState = "collectingData";
   private _data: any[] = [];
   private _cumulativeDataSize: number[] = [0];
   private _dimensions: string[] = [];

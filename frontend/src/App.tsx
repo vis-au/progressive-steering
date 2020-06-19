@@ -298,7 +298,7 @@ export class App extends Component<{}, State> {
 
   private renderTrainingState() {
     let trainingStateClass = "collecting";
-    if (this.dataAdapter.trainingState === "using tree") {
+    if (this.dataAdapter.trainingState === "usingTree") {
       trainingStateClass = "tree";
     } else if (this.dataAdapter.trainingState === "flushing") {
       trainingStateClass = "flushing";

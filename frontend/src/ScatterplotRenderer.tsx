@@ -132,7 +132,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
         this.brushScaleFactor = this.brushScaleFactor + SELECTION_INCREMENT;
       }
     } else {
-      if (this.props.trainingState !== "collecting data") {
+      if (this.props.trainingState !== "collectingData") {
         this.brushScaleFactor = 1;
       }
 
@@ -167,7 +167,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     if (bounds === null) {
       return [];
     }
-    if (this.props.trainingState === "using tree") {
+    if (this.props.trainingState === "usingTree") {
       bounds = this.selection;
       if (bounds === null) {
         bounds = [[0, 0], [0, 0]];
@@ -421,6 +421,10 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     const yAxis = d3.axisRight(this.scaleY);
 
     svg.selectAll("g.axis").remove();
+
+    if (useNonSteeringData && !this.props.showNonSteeringData) {
+      return;
+    }
 
     svg.select("g.axes")
       .append("g")

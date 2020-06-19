@@ -32,10 +32,10 @@
   fill: steelblue;
 }
 
-.evaluationMetric .state-indicator .indicator.collecting {
+.evaluationMetric .state-indicator .indicator.collectingData {
   stroke: blueviolet;
 }
-.evaluationMetric .state-indicator .indicator.tree {
+.evaluationMetric .state-indicator .indicator.usingTree {
   stroke: teal;
 }
 .evaluationMetric .state-indicator .indicator.flushing {

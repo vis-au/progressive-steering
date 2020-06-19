@@ -23,7 +23,7 @@ export type ScenarioPreset = {
 
 export type ProgressionState = 'ready' | 'running' | 'paused' | 'done';
 
-export type TrainingState = 'collecting data' | 'using tree' | 'flushing';
+export type TrainingState = 'collectingData' | 'usingTree' | 'flushing';
 
 // datamanger is a singleton instance that we reference from different places in the bridge
 // functions
@@ -31,9 +31,9 @@ const dataAdapter = getEelDataAdapter();
 
 function getTrainingStateFromChunk(chunk: any): TrainingState {
   if (chunk.length !== undefined && chunk.length > 0) {
-    return chunk[0].state as TrainingState;
+    return chunk[0].status as TrainingState;
   } else {
-    return "collecting data";
+    return "collectingData";
   }
 }
 
@@ -65,7 +65,7 @@ function serializeChunk(chunk: any) {
 export function sendDataChunk(chunk: any) {
   console.log("received new chunk of data:", chunk)
   const serializedChunk = serializeChunk(chunk);
-  dataAdapter.trainingState = getTrainingStateFromChunk(chunk);
+  dataAdapter.trainingState = getTrainingStateFromChunk(serializedChunk);
   dataAdapter.addData(serializedChunk);
 }
 
