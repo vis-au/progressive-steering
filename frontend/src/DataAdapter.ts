@@ -8,6 +8,7 @@ class DataAdapter {
   private _progressionState: ProgressionState = 'running';
   private _trainingState: TrainingState = "collectingData";
   private _data: any[] = [];
+  private _nonSteeringData: any[] = [];
   private _cumulativeDataSize: number[] = [0];
   private _dimensions: string[] = [];
   private _xDimension: string | null = null;
@@ -53,6 +54,11 @@ class DataAdapter {
 
     const lastLength = this._cumulativeDataSize[this._cumulativeDataSize.length - 1];
     this._cumulativeDataSize.push(data.length + lastLength);
+  }
+
+  public addNonSteeringData(data: any[]) {
+    this._nonSteeringData.push(...data);
+    this.notifyDataObservers();
   }
 
   public subscribeOnDataChanged(callback: any) {
@@ -257,6 +263,8 @@ class DataAdapter {
   }
 
   public get data(): any[] { return this._data; }
+
+  public get nonSteeringData(): any[] { return this._nonSteeringData; }
 
   public get cumulativeDataSize(): number[] { return this._cumulativeDataSize; }
 

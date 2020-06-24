@@ -336,6 +336,7 @@ export class App extends Component<{}, State> {
             dimensionX={ dimensionX }
             dimensionY={ dimensionY }
             data={ this.dataAdapter.data }
+            nonSteeringData={ this.dataAdapter.nonSteeringData }
             chunkSize={ this.dataAdapter.chunkSize }
             trainingState={ this.dataAdapter.trainingState }
             filters={ this.dataAdapter.getAllFilters() }

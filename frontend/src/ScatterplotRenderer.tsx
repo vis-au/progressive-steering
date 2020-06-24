@@ -17,6 +17,7 @@ interface Props {
   extentX: [number, number],
   extentY: [number, number],
   data: any[],
+  nonSteeringData: any[],
   trainingState: TrainingState,
   filters: Map<string, number[]>,
   presetSelection: ScenarioPreset | null,
@@ -460,7 +461,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     const itemCount = this.props.data.length;
 
     if (useNonSteeringData) {
-      // TODO: return the data that is not steered.
+      return this.props.nonSteeringData.slice(itemCount - (this.props.chunkSize || itemCount), itemCount);
     }
 
     // if chunksize property is not defined, return the full dataset

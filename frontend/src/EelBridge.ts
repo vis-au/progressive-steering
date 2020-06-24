@@ -70,16 +70,13 @@ export function sendDataChunk(chunk: any) {
 }
 
 /**
- * Send a chunk of data of variable size to the frontend.
+ * Send a chunk of data that was produced by the progression without any steering.
  * @param chunk contains arbitrary data
  */
 export function sendRandomDataChunk(chunk: any) {
-  /** 
-  console.log("received new random chunk of data:", chunk)
+  console.log("received new non-steering chunk of data:", chunk);
   const serializedChunk = serializeChunk(chunk);
-  dataAdapter.trainingState = getTrainingStateFromChunk(serializedChunk);
-  dataAdapter.addData(serializedChunk);
-  */
+  dataAdapter.addNonSteeringData(serializedChunk);
 }
 
 /**
