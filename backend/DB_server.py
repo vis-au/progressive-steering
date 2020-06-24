@@ -180,6 +180,7 @@ def feedTuples(query,chunkSize):
      
     def processRandomResult(chunksRandom,myresultRandom,state):
          global actualChunkRandom
+         state='random_('+state+')'
          actualChunkRandom={}
          for x in myresultRandom[chunksRandom*chunkSize:(chunksRandom+1)*chunkSize]:
              actualChunkRandom[x[0]]={'chunk':chunks,'state':state,'values':x, 'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.3,x[45],x[46])}

@@ -1,2 +1,2 @@
 {'floatSaving':True,
-'doubleSending':False}
+'doubleSending':True}
