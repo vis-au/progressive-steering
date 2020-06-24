@@ -70,6 +70,19 @@ export function sendDataChunk(chunk: any) {
 }
 
 /**
+ * Send a chunk of data of variable size to the frontend.
+ * @param chunk contains arbitrary data
+ */
+export function sendRandomDataChunk(chunk: any) {
+  /** 
+  console.log("received new random chunk of data:", chunk)
+  const serializedChunk = serializeChunk(chunk);
+  dataAdapter.trainingState = getTrainingStateFromChunk(serializedChunk);
+  dataAdapter.addData(serializedChunk);
+  */
+}
+
+/**
  * Send the extent of the dimension mapped to the horizontal axis to the frontend.
  * @param extent minimum and maximum value for the dimension represented on the x axis.
  */
@@ -171,6 +184,7 @@ export function sendProgressionState(newState: ProgressionState) {
 
 // Make functions acessible to the backend via eel
 window.eel.expose(sendDataChunk, 'send_data_chunk');
+window.eel.expose(sendRandomDataChunk, 'send_random_data_chunk');
 window.eel.expose(sendXDomain, 'send_x_domain');
 window.eel.expose(sendYDomain, 'send_y_domain');
 window.eel.expose(setXName, 'set_x_name');

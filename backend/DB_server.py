@@ -17,6 +17,7 @@ global userSelectionUpdated #new box
 global lastSelectedItems
 
 global floatSaving
+global doubleSending
 
 userSelectionUpdated=False
 totalChunkNumber=0
@@ -66,6 +67,10 @@ class FrontEndListener(Thread):
 def sendChunk(chunk):
     eel.send_data_chunk(chunk)
     #print('----------------------',len(chunk),chunk)
+    
+def sendRandomChunk(chunk):
+    eel.send_random_data_chunk(chunk)
+    print('----------------------',len(chunk),chunk)
 
 def distance(lat1, long1, lat2, long2):
     degrees_to_radians = math.pi/180.0
@@ -97,7 +102,7 @@ def aboveMinimum(bbId,actualPrice,lat,long,more,x45,x46): # the search is bound 
 
     mycursor = mydb.cursor()
     qq=buildQuery(userLat,userLon,userRange,userDay,queryAtt,'True',chunkSize)
-    qq = "SELECT * FROM listings WHERE price>0 and price <="+str(userRange[1])+ " LIMIT 0,100"
+    qq = "SELECT * FROM listings WHERE price>0 and price <="+str(userRange[1])+ " LIMIT 0,"+str(chunkSize)
     mycursor.execute(qq)
     myresult = mycursor.fetchall()
     minimo=actualPrice
@@ -117,6 +122,11 @@ def buildQuery(userLat,userLon,userRange,userDay,att,modifier,chunkSize):
     WHERE  = "WHERE price >="+str(userRange[0])+" AND price <="+str(userRange[1])+"  AND listings.id NOT IN (SELECT id from plotted ) "
     return SELECT+' '+FROM+' '+ WHERE + ' AND '+modifier+' LIMIT 0,'+str(chunkSize)
 
+global actualChunk   #debug
+actualChunk={}
+global actualChunkRandom  #debug
+actualChunkRandom={}
+
 def feedTuples(query,chunkSize):
     global modifier
     global DIZ_plotted
@@ -127,6 +137,8 @@ def feedTuples(query,chunkSize):
     global userSelectionUpdated
     global progression_state
     global PROGRESSTION_STATES
+    global doubleSending
+    doubleSending=True
 
 
 ######################## WAIT selection loop
@@ -140,6 +152,7 @@ def feedTuples(query,chunkSize):
          global totalInb
          global totalChunkNumber
          global userSelectionUpdated
+         global actualChunk
          chunks+=1
          actualChunk={}
          for x in myresult:
@@ -161,9 +174,19 @@ def feedTuples(query,chunkSize):
          eel.send_evaluation_metric({"name":"recall","value":totalInb})
          mycursor.execute(query)
          myresult = mycursor.fetchall()
-         pmodifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
+         #pmodifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
          #print('----------------------------potential modifier at chunk:',chunks,pmodifier)
          return chunks,myresult,mycursor
+     
+    def processRandomResult(chunksRandom,myresultRandom,state):
+         global actualChunkRandom
+         actualChunkRandom={}
+         for x in myresultRandom[chunksRandom*chunkSize:(chunksRandom+1)*chunkSize]:
+             actualChunkRandom[x[0]]={'chunk':chunks,'state':state,'values':x, 'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.3,x[45],x[46])}
+             eel.sleep(0.001)
+         sendRandomChunk(actualChunkRandom)
+         eel.sleep(0.04)
+     
 
     while not userSelectionUpdated: #waiting for the first box
         eel.sleep(1)
@@ -176,6 +199,14 @@ def feedTuples(query,chunkSize):
     chunks=0
     mycursor.execute(query)
     myresult = mycursor.fetchall()
+    if doubleSending:
+        queryA=query.replace('AND True LIMIT 0,100','')
+        queryA=query[0:query.find('LIMIT')]
+        mycursor.execute(queryA)
+        myresultA = mycursor.fetchall()
+        print('query:',queryA,len(myresultA)) 
+
+
 
 ####################### COLLECTING DATA NO TREE °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
     print('Entering LOOP1 - Query:',query,modifier)
@@ -189,6 +220,8 @@ def feedTuples(query,chunkSize):
             eel.sleep(1)
         else:
             chunks,myresult,mycursor=processResult(chunks,myresult,mycursor,state)
+            if doubleSending:
+                processRandomResult(chunks,myresultA,state)
     print('uscito loop 1 treeready=',treeReady,'modifier=',modifier)
     totalChunkNumber=chunks
 ########################## USING TREE ∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞
@@ -203,6 +236,8 @@ def feedTuples(query,chunkSize):
             eel.sleep(1)
         else:
             chunks,myresult,mycursor=processResult(chunks,myresult,mycursor,state)
+            if doubleSending:
+                processRandomResult(chunks,myresultA,state)
     print('uscito loop 2 treeready=',treeReady,'modifier=',modifier)
     totalChunkNumber=chunks
 ######################### FLUSHING °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
@@ -218,6 +253,8 @@ def feedTuples(query,chunkSize):
             eel.sleep(1)
         else:
             chunks,myresult,mycursor=processResult(chunks,myresult,mycursor,state)
+            if doubleSending:
+                processRandomResult(chunks,myresultA,state)
     print('uscito loop 3 treeready=',treeReady,'modifier=',modifier)
     totalChunkNumber=chunks
 #######################################################################################
@@ -379,12 +416,15 @@ def send_progression_state(state):
 
 def loadConfig():
     global floatSaving
+    global doubleSending
     global testCases
     s=eval(open("DB_server_config.txt",encoding="UTF8").read())
     floatSaving=s['floatSaving']
+    doubleSending=s['doubleSending']
     testCases=eval(open("testCases.txt",encoding="UTF8").read()) 
     print("Configuration loaded")
     print('floatSaving:',floatSaving)
+    print('doubleSending:',doubleSending)
     print("testCases loaded")
     for i in range(len(testCases)):
         print(i+1,testCases[i])
