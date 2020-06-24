@@ -191,7 +191,7 @@ def feedTuples(query,chunkSize):
     while not userSelectionUpdated: #waiting for the first box
         eel.sleep(1)
     userSelectionUpdated=False
-# init database
+    # init database
     mydb=dbConnect("localhost",'root', USER_PW,'airbnb')
     mycursor = mydb.cursor()
     mycursor.execute('DELETE FROM plotted')
@@ -199,12 +199,12 @@ def feedTuples(query,chunkSize):
     chunks=0
     mycursor.execute(query)
     myresult = mycursor.fetchall()
-    if doubleSending:
+    if doubleSending: #compute the whole results
         queryA=query.replace('AND True LIMIT 0,100','')
         queryA=query[0:query.find('LIMIT')]
         mycursor.execute(queryA)
-        myresultA = mycursor.fetchall()
-        print('query:',queryA,len(myresultA)) 
+        myresultRandom = mycursor.fetchall()
+        #print('query:',queryA,len(myresultA)) 
 
 
 
@@ -221,7 +221,7 @@ def feedTuples(query,chunkSize):
         else:
             chunks,myresult,mycursor=processResult(chunks,myresult,mycursor,state)
             if doubleSending:
-                processRandomResult(chunks,myresultA,state)
+                processRandomResult(chunks,myresultRandom,state)
     print('uscito loop 1 treeready=',treeReady,'modifier=',modifier)
     totalChunkNumber=chunks
 ########################## USING TREE ∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞
@@ -237,7 +237,7 @@ def feedTuples(query,chunkSize):
         else:
             chunks,myresult,mycursor=processResult(chunks,myresult,mycursor,state)
             if doubleSending:
-                processRandomResult(chunks,myresultA,state)
+                processRandomResult(chunks,myresultRandom,state)
     print('uscito loop 2 treeready=',treeReady,'modifier=',modifier)
     totalChunkNumber=chunks
 ######################### FLUSHING °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
@@ -254,7 +254,7 @@ def feedTuples(query,chunkSize):
         else:
             chunks,myresult,mycursor=processResult(chunks,myresult,mycursor,state)
             if doubleSending:
-                processRandomResult(chunks,myresultA,state)
+                processRandomResult(chunks,myresultRandom,state)
     print('uscito loop 3 treeready=',treeReady,'modifier=',modifier)
     totalChunkNumber=chunks
 #######################################################################################
