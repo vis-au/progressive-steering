@@ -154,7 +154,10 @@ def plotCase(filename,case,style):
         avg_precision=0;
         for k in range(iteration_tree,iteration_final+1):
             avg_precision=avg_precision+i_precision[k]
-        avg_precision=avg_precision/(iteration_final-iteration_tree)
+        if ((iteration_final -iteration_tree) != 0):
+            avg_precision=avg_precision/(iteration_final-iteration_tree)
+        else:
+            avg_precision=0 #check situation which tree is never activated
     else:
         avg_precision=cm_precision[iteration_final]
         
