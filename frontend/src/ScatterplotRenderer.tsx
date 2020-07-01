@@ -458,9 +458,10 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   }
 
   private getLatestChunk(useNonSteeringData: boolean = false) {
-    const itemCount = this.props.data.length;
+    let itemCount = this.props.data.length;
 
     if (useNonSteeringData) {
+      itemCount = this.props.nonSteeringData.length;
       return this.props.nonSteeringData.slice(itemCount - (this.props.chunkSize || itemCount), itemCount);
     }
 
