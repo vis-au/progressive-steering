@@ -458,9 +458,10 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   }
 
   private getLatestChunk(useNonSteeringData: boolean = false) {
-    const itemCount = this.props.data.length;
+    let itemCount = this.props.data.length;
 
     if (useNonSteeringData) {
+      itemCount = this.props.nonSteeringData.length;
       return this.props.nonSteeringData.slice(itemCount - (this.props.chunkSize || itemCount), itemCount);
     }
 
@@ -514,18 +515,23 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
   private renderNonSteeringPoints() {
     this.renderPoints(true);
+    this.renderInsideOutsidePoints(true);
   }
 
   private renderSteeringPoints() {
     this.renderPoints(false);
+    this.renderInsideOutsidePoints(false);
   }
 
   private updatePoints() {
     this.renderSteeringPoints();
-    this.renderNonSteeringPoints();
+
+    if (this.props.showNonSteeringData) {
+      this.renderNonSteeringPoints();
+    }
   }
 
-  private renderInsideOutsidePoints() {
+  private renderInsideOutsidePoints(useNonSteeringData: boolean) {
     if (this.props.dimensionX === null || this.props.dimensionY === null) {
       return;
     }
@@ -535,14 +541,17 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       return;
     }
 
-    const canvas = d3.select("svg.recentPointsCanvas");
+    const canvas = useNonSteeringData
+      ? d3.select("svg.recentNonSteeredPointsCanvas")
+      : d3.select("svg.recentPointsCanvas");
+
     canvas.selectAll("circle.recent-point").remove();
 
     if (!this.props.highlightLastChunk) {
       return;
     }
 
-    const chunk = this.getLatestChunk();
+    const chunk = this.getLatestChunk(useNonSteeringData);
     const pointsInSelection = this.getNewPointsInCurrentSelection(chunk);
     const dimX = this.props.dimensionX;
     const dimY = this.props.dimensionY;
@@ -551,6 +560,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       .join("circle")
         .attr("class", "recent-point")
         .classed("inside-selection", d => pointsInSelection.indexOf(d) > -1)
+        .classed("steered", !useNonSteeringData)
         .attr("cx", d => this.scaleX(d[dimX]))
         .attr("cy", d => this.scaleY(d[dimY]))
         .attr("r", DEFAULT_POINT_RADIUS);
@@ -596,7 +606,6 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.updateScales();
     this.updateAxes();
     this.updatePoints();
-    this.renderInsideOutsidePoints();
     this.renderDensityPlots();
     this.renderPresetSelection();
     this.updatePaddedBrushSize();
@@ -616,6 +625,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
         <canvas className={ `nonSteeringCanvas ${isNonSteeringCanvasHidden}` } width={ canvasWidth } height={ this.props.height }></canvas>
         <svg className="recentPointsCanvas" width={ canvasWidth } height={ this.props.height } />
         <svg className="densityCanvas" width={ canvasWidth } height={ this.props.height } />
+        <svg className="recentNonSteeredPointsCanvas" width={ canvasWidth } height={ this.props.height } />
         <svg className="nonSteeringAxesCanvas" width={ canvasWidth } height={ this.props.height }>
           <g className="axes"></g>
         </svg>

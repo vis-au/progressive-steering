@@ -29,6 +29,10 @@
   margin: 0 1rem;
 }
 
+.header #scenario-presets {
+  max-width: 200px;
+}
+
 .mainView {
   width: 100%;
   display: flex;

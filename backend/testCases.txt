@@ -1,9 +1,12 @@
 [
-           {'boxMinRange':15, 'boxMaxRange':30,'boxMinDistance':3, 'boxMaxDistance':12, 'tuples':5972, 'tuplesF':4742},                       
-           {'boxMinRange':25, 'boxMaxRange':30,'boxMinDistance':0, 'boxMaxDistance':4,  'tuples':3320, 'tuplesF':1850},
-           {'boxMinRange':29, 'boxMaxRange':30,'boxMinDistance':1, 'boxMaxDistance':2,  'tuples':696, 'tuplesF':258},
-           {'boxMinRange':10, 'boxMaxRange':20,'boxMinDistance':0, 'boxMaxDistance':3,  'tuples':4580, 'tuplesF':3180},
-           {'boxMinRange':1.2,   'boxMaxRange':50.15,'boxMinDistance':3.16, 'boxMaxDistance':3.9,  'tuples':2913, 'tuplesF':2923},
-           {'boxMinRange':37.69, 'boxMaxRange':38.38,'boxMinDistance':1.78, 'boxMaxDistance':2.71, 'tuples':0, 'tuplesF':0},
-           {'boxMinRange':11.37, 'boxMaxRange':22.57,'boxMinDistance':5.71, 'boxMaxDistance':6.19, 'tuples':251, 'tuplesF':253}
+{'boxMinRange':18.243314313223365, 'boxMaxRange':20.06614785165546,'boxMinDistance':3.407266746723863, 'boxMaxDistance':5.035010716235203, 'tuples':5972, 'tuplesF':4742},
+{'boxMinRange':10.343717225010147, 'boxMaxRange':25.471176165560436,'boxMinDistance':0.5765204956931091, 'boxMaxDistance':11.25645731151026, 'tuples':5972, 'tuplesF':4742},
+{'boxMinRange':23.453105463227395, 'boxMaxRange':24.789143164794474,'boxMinDistance':5.8761279684296746, 'boxMaxDistance':8.142139870331984, 'tuples':5972, 'tuplesF':4742},
+{'boxMinRange':16.533278773591007, 'boxMaxRange':25.819581136293372,'boxMinDistance':1.1023657652535874, 'boxMaxDistance':10.118454121025302, 'tuples':5972, 'tuplesF':4742},
+{'boxMinRange':23.467306202661298, 'boxMaxRange':25.019093822762756,'boxMinDistance':2.2007619741960425, 'boxMaxDistance':2.9098802881714314, 'tuples':5972, 'tuplesF':4742},
+{'boxMinRange':19.491784285715664, 'boxMaxRange':20.23263414021637,'boxMinDistance':10.435980160105288, 'boxMaxDistance':10.563149315309223, 'tuples':5972, 'tuplesF':4742},
+{'boxMinRange':4.539928228721174, 'boxMaxRange':11.855204043007094,'boxMinDistance':2.8070875431425937, 'boxMaxDistance':6.898827171659185, 'tuples':5972, 'tuplesF':4742},
+{'boxMinRange':30.229657007014577, 'boxMaxRange':30.772143002100897,'boxMinDistance':9.482396070025004, 'boxMaxDistance':10.709048635513078, 'tuples':5972, 'tuplesF':4742},
+{'boxMinRange':10.904522650429154, 'boxMaxRange':15.02779858257799,'boxMinDistance':11.320813929354337, 'boxMaxDistance':11.798725653585473, 'tuples':5972, 'tuplesF':4742},
+{'boxMinRange':28.5683910189052, 'boxMaxRange':29.781004146060397,'boxMinDistance':6.349373280074349, 'boxMaxDistance':9.200968912925743, 'tuples':5972, 'tuplesF':4742}
 ]

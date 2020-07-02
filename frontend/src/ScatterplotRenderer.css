@@ -2,6 +2,7 @@ svg.axisCanvas,
 svg.nonSteeringAxesCanvas,
 svg.densityCanvas,
 svg.recentPointsCanvas,
+svg.recentNonSteeredPointsCanvas,
 canvas.scatterplotCanvas,
 canvas.nonSteeringCanvas {
   position: absolute;
@@ -13,15 +14,20 @@ svg.densityCanvas rect.selection {
 }
 
 svg.recentPointsCanvas circle.recent-point {
-  fill: red;
+  fill: rgb(199, 210, 224);
 }
 svg.recentPointsCanvas circle.recent-point.inside-selection {
-  fill: green;
+  fill: steelblue;
 }
 
 svg.nonSteeringAxesCanvas,
-canvas.nonSteeringCanvas {
+canvas.nonSteeringCanvas,
+svg.recentNonSteeredPointsCanvas {
   right: 0;
+}
+
+svg.recentNonSteeredPointsCanvas circle.recent-point {
+  fill: #555;
 }
 
 rect.brushedRegion {
