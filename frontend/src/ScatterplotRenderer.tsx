@@ -178,8 +178,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     const [[minX, minY], [maxX, maxY]] = bounds;
 
     newPoints.forEach(datum => {
-      const x = this.scaleX(datum[dimX]);
-      const y = this.scaleY(datum[dimY]);
+      const x = datum[dimX];
+      const y = datum[dimY];
 
       if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
         pointsInSelection.push(datum);
@@ -253,8 +253,10 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
   private addCurrentSelectionToBrushedRegions() {
     const brushedRegions = this.state.brushedRegions;
+    const [[x0, y1], [x1, y0]] = this.selection;
+    const selectionInDataSpace = [[x0, y0], [x1, y1]];
 
-    brushedRegions.push(this.selection);
+    brushedRegions.push(selectionInDataSpace);
 
     this.setState({ brushedRegions });
   }
@@ -263,17 +265,17 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   }
 
   private onBrush() {
-    // udpate the reference to the selected rectangle
-    this.selection = d3.event.selection;
-    const x0 = this.selection[0][0];
-    const x1 = this.selection[1][0];
-    const y0 = this.selection[0][1];
-    const y1 = this.selection[1][1];
+    const [[x0, y0], [x1, y1]] = d3.event.selection;
+    const x = this.scaleX.invert;
+    const y = this.scaleY.invert;
 
-    const xMin = Math.floor(this.scaleX.invert(x0) * 100) / 100;
-    const xMax = Math.floor(this.scaleX.invert(x1) * 100) / 100;
-    const yMin = Math.floor(this.scaleY.invert(y0) * 100) / 100;
-    const yMax = Math.floor(this.scaleY.invert(y1) * 100) / 100;
+    // udpate the reference to the selected rectangle
+    this.selection = [[x(x0), y(y1)], [x(x1), y(y0)]];
+
+    const xMin = Math.floor(x(x0) * 100) / 100;
+    const xMax = Math.floor(x(x1) * 100) / 100;
+    const yMin = Math.floor(y(y0) * 100) / 100;
+    const yMax = Math.floor(y(y1) * 100) / 100;
 
     d3.select("g.brush text")
       .attr("opacity", 1)
@@ -334,10 +336,10 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   }
 
   private renderBrushedRegion(brushedRegion: number[][], index: number) {
-    const x = brushedRegion[0][0];
-    const y = brushedRegion[0][1];
-    const width = Math.abs(brushedRegion[0][0] - brushedRegion[1][0]);
-    const height = Math.abs(brushedRegion[0][1] - brushedRegion[1][1]);
+    const x = this.scaleX(brushedRegion[0][0]);
+    const y = this.scaleY(brushedRegion[0][1]);
+    const width = Math.abs(this.scaleX(brushedRegion[0][0]) - this.scaleX(brushedRegion[1][0]));
+    const height = Math.abs(this.scaleY(brushedRegion[0][1]) - this.scaleY(brushedRegion[1][1]));
     // const opacity = index / this.state.brushedRegions.length + 0.1;
     const opacity = 1;
 
@@ -469,6 +471,12 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     return this.props.data.slice(itemCount - (this.props.chunkSize || itemCount), itemCount);
   }
 
+  private getCanvasWidth() {
+    return this.props.showNonSteeringData
+    ? this.props.width / 2 - 1
+    : this.props.width;
+  }
+
   private renderPoints(useNonSteeringData: boolean = false) {
     if (this.canvas === null || this.nonSteeringCanvas === null) {
       return;
@@ -592,7 +600,6 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
           scaleX={ this.scaleX }
           scaleY={ this.scaleY }
           data={ this.props.data }
-          showNonSteeringData={ this.props.showNonSteeringData }
           highlightLastChunk={ this.props.highlightLastChunk }
           chunkSize={ this.props.chunkSize }
         />
@@ -611,10 +618,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.updatePaddedBrushSize();
 
     this.lastChunk = this.getLatestChunk();
-
-    const canvasWidth = this.props.showNonSteeringData
-      ? this.props.width / 2 - 1
-      : this.props.width;
+    const canvasWidth = this.getCanvasWidth();
 
     const isNonSteeringCanvasHidden = this.props.showNonSteeringData ? "" : "hidden";
 
@@ -666,6 +670,10 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       if (this.svg === null) {
         return;
       }
+
+      const canvasWidth = this.getCanvasWidth();
+
+      this.scaleX.range([0, canvasWidth]);
 
       this.svg.selectAll("g.brush").remove();
       this.svg.append("g")
