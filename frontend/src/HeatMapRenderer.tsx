@@ -11,7 +11,6 @@ interface Props {
   scaleX: d3.ScaleLinear<number, number>,
   scaleY: d3.ScaleLinear<number, number>,
   data: any[],
-  showNonSteeringData: boolean;
   highlightLastChunk?: boolean,
   chunkSize?: number,
 }
@@ -70,6 +69,9 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
     if (this.props.dimensionX === null || this.props.dimensionY === null) {
       return;
     }
+
+    this.binScaleX.domain(this.props.scaleX.range() as [number, number]);
+    this.binScaleY.domain(this.props.scaleY.range() as [number, number]);
 
     const svg = d3.select("svg.heat-map");
     svg.selectAll("*").remove();
