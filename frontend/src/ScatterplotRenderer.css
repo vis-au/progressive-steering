@@ -27,6 +27,10 @@ svg.recentNonSteeredPointsCanvas {
 }
 
 svg.recentNonSteeredPointsCanvas circle.recent-point {
+  fill: #ccc;
+}
+
+svg.recentNonSteeredPointsCanvas circle.recent-point.inside-selection {
   fill: #555;
 }
 
