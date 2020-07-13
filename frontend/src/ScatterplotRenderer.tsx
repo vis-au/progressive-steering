@@ -632,6 +632,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
         <svg className="recentNonSteeredPointsCanvas" width={ canvasWidth } height={ this.props.height } />
         <svg className="nonSteeringAxesCanvas" width={ canvasWidth } height={ this.props.height }>
           <g className="axes"></g>
+          { this.renderBrushedRegions() }
         </svg>
         <svg className="axisCanvas" width={ canvasWidth } height={ this.props.height }>
           <g className="axes"></g>
