@@ -213,7 +213,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     );
   }
 
-  private getPointsInRegion(region: number[][]) {
+  private getPointsInRegion(region: number[][], useNonSteeringData: boolean = false) {
     if (this.selection === null || this.selection.length === 0) {
       return [];
     }
@@ -228,7 +228,11 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     const y3 = this.scaleY(region[1][1]);
     const y0 = this.scaleY(region[0][1]);
 
-    this.quadtree.visit((node: any, x1, y1, x2, y2) => {
+    const quadtree = useNonSteeringData
+      ? this.nonSteeringQuadtree
+      : this.quadtree;
+
+    quadtree.visit((node: any, x1, y1, x2, y2) => {
       if (!Array.isArray(node)) {
         do {
           const nodeIsInBounds = this.isNodeInBounds(node.data, region);
@@ -385,7 +389,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
     const currentSelection = this.state.brushedRegions[this.state.brushedRegions.length - 1];
 
-    let pointsInSelection = this.getPointsInRegion(currentSelection);
+    let pointsInSelection = this.getPointsInRegion(currentSelection, useNonSteeringData);
 
     const x = this.scaleX(currentSelection[0][0]);
     const y = this.scaleY(currentSelection[1][1]) + 15;
@@ -611,7 +615,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
   private renderDensityPlots() {
     const pointsInBrushedRegions = this.state.brushedRegions
-      .map(this.getPointsInRegion.bind(this))
+      .map(d => this.getPointsInRegion(d))
       .flat();
 
     const canvas = d3.select("svg.densityCanvas");
