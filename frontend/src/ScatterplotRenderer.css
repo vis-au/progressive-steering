@@ -14,7 +14,9 @@ svg.densityCanvas rect.selection {
 }
 
 svg.recentPointsCanvas circle.recent-point {
-  fill: rgb(199, 210, 224);
+  fill: white;
+  stroke: steelblue;
+  stroke-width: 2px;
 }
 svg.recentPointsCanvas circle.recent-point.inside-selection {
   fill: steelblue;
@@ -27,7 +29,9 @@ svg.recentNonSteeredPointsCanvas {
 }
 
 svg.recentNonSteeredPointsCanvas circle.recent-point {
-  fill: #ccc;
+  fill: white;
+  stroke: #555;
+  stroke-width: 2px;
 }
 
 svg.recentNonSteeredPointsCanvas circle.recent-point.inside-selection {

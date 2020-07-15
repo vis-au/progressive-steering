@@ -55,6 +55,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   private scaleY: d3.ScaleLinear<number, number>;
 
   private quadtree: d3.Quadtree<[number, number]>;
+  private nonSteeringQuadtree: d3.Quadtree<[number, number]>;
   private densityContourGenerator: d3.ContourDensity<[number, number]>;
 
   private lastChunk: any[] = [];
@@ -80,6 +81,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       .extent([[0, 0], [this.props.width, this.props.height]])
       .x((d: any) => this.scaleX(d[this.props.dimensionX || ""]))
       .y((d: any) => this.scaleY(d[this.props.dimensionY || ""]));
+
+    this.nonSteeringQuadtree = this.quadtree.copy();
 
     this.densityContourGenerator = d3.contourDensity()
       .size([this.props.width, this.props.height])
@@ -226,10 +229,10 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
         } while ((node = node.next));
       }
       return (
-        x0 >= region[1][0] ||
-        y0 >= region[1][1] ||
-        x1 < region[0][0] ||
-        y1 < region[0][1]
+        x0 >= this.scaleX(region[1][0]) ||
+        y0 >= this.scaleY(region[1][1]) ||
+        x1 < this.scaleX(region[0][0]) ||
+        y1 < this.scaleY(region[0][1])
       );
     });
 
@@ -362,6 +365,27 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       <g className="brushed-regions">
         { this.state.brushedRegions.map(this.renderBrushedRegion.bind(this)) }
       </g>
+    );
+  }
+
+  private renderPointsInSelectionLabel(useNonSteeringData: boolean = false) {
+    if (this.state.brushedRegions.length === 0) {
+      return;
+    }
+
+    const currentSelection = this.state.brushedRegions[0]
+
+    let pointsInSelection = useNonSteeringData
+      ? this.getNewPointsInCurrentSelection(this.nonSteeringQuadtree.data())
+      : this.getNewPointsInCurrentSelection(this.quadtree.data());
+
+    const x = this.scaleX(currentSelection[0][0]);
+    const y = this.scaleY(currentSelection[1][1]) + 15;
+
+    return (
+      <text className="brushed-regions" x={ x } y={ y }>
+        { pointsInSelection.length } points
+      </text>
     );
   }
 
@@ -502,8 +526,6 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       context = (this.nonSteeringCanvas.node() as any).getContext("2d");
       context.fillStyle = NON_STEERING_POINT_COLOR;
       context.strokeStyle = NON_STEERING_POINT_COLOR;
-    } else {
-      this.quadtree.addAll(chunk);
     }
 
     chunk.forEach(datum => {
@@ -516,7 +538,10 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       context.closePath();
     });
 
-    if (!useNonSteeringData) {
+    if (useNonSteeringData) {
+      this.nonSteeringQuadtree.addAll(chunk);
+    } else {
+      this.quadtree.addAll(chunk);
       this.updateNewPointsInCurrentSelection(chunk);
     }
   }
@@ -630,13 +655,15 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
         <svg className="recentPointsCanvas" width={ canvasWidth } height={ this.props.height } />
         <svg className="densityCanvas" width={ canvasWidth } height={ this.props.height } />
         <svg className="recentNonSteeredPointsCanvas" width={ canvasWidth } height={ this.props.height } />
-        <svg className="nonSteeringAxesCanvas" width={ canvasWidth } height={ this.props.height }>
+        <svg className={ `nonSteeringAxesCanvas ${isNonSteeringCanvasHidden}` } width={ canvasWidth } height={ this.props.height }>
           <g className="axes"></g>
           { this.renderBrushedRegions() }
+          { this.renderPointsInSelectionLabel(true) }
         </svg>
         <svg className="axisCanvas" width={ canvasWidth } height={ this.props.height }>
           <g className="axes"></g>
           { this.renderBrushedRegions() }
+          { this.renderPointsInSelectionLabel() }
           { this.renderPaddedBrush() }
           { this.renderUnsetDimensionsWarning() }
         </svg>
