@@ -201,6 +201,18 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     }
   }
 
+  private isNodeInBounds(node: any, bounds: number[][]) {
+    const dimX = this.props.dimensionX as string;
+    const dimY = this.props.dimensionY as string;
+
+    return (
+      node[dimX] >= bounds[0][0] &&
+      node[dimX] < bounds[1][0] &&
+      node[dimY] >= bounds[1][1] &&
+      node[dimY] < bounds[0][1]
+    );
+  }
+
   private getPointsInRegion(region: number[][]) {
     if (this.selection === null || this.selection.length === 0) {
       return [];
@@ -211,29 +223,27 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
     const pointsInRegion: any[] = [];
 
-    const dimX = this.props.dimensionX;
-    const dimY = this.props.dimensionY;
+    const x0 = this.scaleX(region[0][0]);
+    const x3 = this.scaleX(region[1][0]);
+    const y3 = this.scaleY(region[1][1]);
+    const y0 = this.scaleY(region[0][1]);
 
-    this.quadtree.visit((node: any, x0, y0, x1, y1) => {
+    this.quadtree.visit((node: any, x1, y1, x2, y2) => {
       if (!Array.isArray(node)) {
         do {
-          let d = node.data;
-          const inBounds = (this.scaleX(d[dimX]) >= region[0][0])
-            && (this.scaleX(d[dimX]) < region[1][0])
-            && (this.scaleY(d[dimY]) >= region[0][1])
-            && (this.scaleY(d[dimY]) < region[1][1]);
+          const nodeIsInBounds = this.isNodeInBounds(node.data, region);
 
-          if (inBounds) {
-            pointsInRegion.push(d);
+          if (nodeIsInBounds) {
+            pointsInRegion.push(node.data);
           }
-        } while ((node = node.next));
+        } while (node = node.next);
       }
-      return (
-        x0 >= this.scaleX(region[1][0]) ||
-        y0 >= this.scaleY(region[1][1]) ||
-        x1 < this.scaleX(region[0][0]) ||
-        y1 < this.scaleY(region[0][1])
+
+      const nodeOverlapsRegion = (
+        x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0
       );
+
+      return nodeOverlapsRegion;
     });
 
     return pointsInRegion;
@@ -373,11 +383,9 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       return;
     }
 
-    const currentSelection = this.state.brushedRegions[0]
+    const currentSelection = this.state.brushedRegions[this.state.brushedRegions.length - 1];
 
-    let pointsInSelection = useNonSteeringData
-      ? this.getNewPointsInCurrentSelection(this.nonSteeringQuadtree.data())
-      : this.getNewPointsInCurrentSelection(this.quadtree.data());
+    let pointsInSelection = this.getPointsInRegion(currentSelection);
 
     const x = this.scaleX(currentSelection[0][0]);
     const y = this.scaleY(currentSelection[1][1]) + 15;
@@ -654,7 +662,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
         <canvas className={ `nonSteeringCanvas ${isNonSteeringCanvasHidden}` } width={ canvasWidth } height={ this.props.height }></canvas>
         <svg className="recentPointsCanvas" width={ canvasWidth } height={ this.props.height } />
         <svg className="densityCanvas" width={ canvasWidth } height={ this.props.height } />
-        <svg className="recentNonSteeredPointsCanvas" width={ canvasWidth } height={ this.props.height } />
+        <svg className={ `recentNonSteeredPointsCanvas ${isNonSteeringCanvasHidden}` } width={ canvasWidth } height={ this.props.height } />
         <svg className={ `nonSteeringAxesCanvas ${isNonSteeringCanvasHidden}` } width={ canvasWidth } height={ this.props.height }>
           <g className="axes"></g>
           { this.renderBrushedRegions() }
