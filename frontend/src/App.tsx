@@ -91,6 +91,14 @@ export class App extends Component<{}, State> {
     }
   }
 
+  private onNewNonSteeredPointsInSelection(newPoints: any[], allPoints?: any[]) {
+    console.log(`found ${newPoints.length} new points in non-steered selection.`);
+
+    if (!!allPoints) {
+      this.dataAdapter.updateAllSelectedNonSteeredItems(allPoints);
+    }
+  }
+
   private onHighlightLatestPointChanged() {
     this.setState({ highlightLatestPoints: !this.state.highlightLatestPoints });
   }
@@ -348,6 +356,7 @@ export class App extends Component<{}, State> {
             onBrushedPoints={ this.onBrushedPoints.bind(this) }
             onBrushedRegion={ this.onBrushedRegion.bind(this) }
             onNewPointsInSelection={ this.onNewPointsInSelection.bind(this) }
+            onNewNonSteeredPointsInSelection={ this.onNewNonSteeredPointsInSelection.bind(this) }
           />
           <MapViewerRenderer
             width={ width * 0.45 }

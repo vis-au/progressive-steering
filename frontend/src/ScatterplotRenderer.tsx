@@ -28,7 +28,8 @@ interface Props {
   stepsBeforePaddingGrows: number,
   onBrushedPoints?: (points: any[]) => any,
   onBrushedRegion?: (extent: number[][]) => any,
-  onNewPointsInSelection?: (currentPoints: any[], allPoints?: any[]) => any
+  onNewPointsInSelection: (currentPoints: any[], allPoints?: any[]) => any,
+  onNewNonSteeredPointsInSelection: (currentPoints: any[], allPoints?: any[]) => any,
 }
 
 const DEFAULT_POINT_RADIUS = 2;
@@ -148,14 +149,14 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     }
   }
 
-  private getCurrentlyBrushedPoints() {
+  private getCurrentlyBrushedPoints(useNonSteeringData: boolean = false) {
     const extent = this.selection;
-    const currentlyBrushedPoints: any[] = this.getPointsInRegion(extent);
+    const currentlyBrushedPoints: any[] = this.getPointsInRegion(extent, useNonSteeringData);
 
     return currentlyBrushedPoints;
   }
 
-  private getNewPointsInCurrentSelection(newPoints: any[]) {
+  private getNewPointsInCurrentSelection(newPoints: any[], useNonSteeringData: boolean = false) {
     if (this.selection === null || this.selection.length === 0) {
       return [];
     }
@@ -167,11 +168,11 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     const dimX = this.props.dimensionX;
     const dimY = this.props.dimensionY;
 
-    let bounds = this.getPaddedBrushBounds();
+    let bounds = this.getPaddedBrushBounds() || [];
     if (bounds === null) {
       return [];
     }
-    if (this.props.trainingState === "usingTree") {
+    if (this.props.trainingState === "usingTree" || useNonSteeringData) {
       bounds = this.selection;
       if (bounds === null) {
         bounds = [[0, 0], [0, 0]];
@@ -179,12 +180,10 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     }
 
     const [[minX, minY], [maxX, maxY]] = bounds;
+    bounds = [[minX, maxY], [maxX, minY]];
 
     newPoints.forEach(datum => {
-      const x = datum[dimX];
-      const y = datum[dimY];
-
-      if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+      if (this.isNodeInBounds(datum, bounds)) {
         pointsInSelection.push(datum);
       }
     });
@@ -196,8 +195,13 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     const newPointsInSelection = this.getNewPointsInCurrentSelection(newPoints);
     const allPointsInSelection = this.getCurrentlyBrushedPoints();
 
+    const newNonSteeredPoints = this.getLatestChunk(true);
+    const newNonSteeredPointsInSelection = this.getNewPointsInCurrentSelection(newNonSteeredPoints, true);
+    const allNonSteeredPointsInSelection = this.getCurrentlyBrushedPoints(true)
+
     if (newPointsInSelection.length > 0 && !!this.props.onNewPointsInSelection) {
       this.props.onNewPointsInSelection(newPointsInSelection, allPointsInSelection);
+      this.props.onNewNonSteeredPointsInSelection(newNonSteeredPointsInSelection, allNonSteeredPointsInSelection);
     }
   }
 
@@ -597,7 +601,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     }
 
     const chunk = this.getLatestChunk(useNonSteeringData);
-    const pointsInSelection = this.getNewPointsInCurrentSelection(chunk);
+    const pointsInSelection = this.getNewPointsInCurrentSelection(chunk, useNonSteeringData);
     const dimX = this.props.dimensionX;
     const dimY = this.props.dimensionY;
 

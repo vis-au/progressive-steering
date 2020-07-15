@@ -18,6 +18,7 @@ class DataAdapter {
   private _onMetricChangedCallbacks: any[] = [];
   private _scenarioPresets: ScenarioPreset[] = [];
   private _allItemsInSelection: any[] = [];
+  private _allNonSteeredItemsInSelection: any[] = [];
   private _trainingStateHistory: TrainingState[] = [];
 
   private dimensionFilters: Map<string, [number, number]> = new Map();
@@ -191,6 +192,10 @@ class DataAdapter {
     this._allItemsInSelection = allSelectedItems;
   }
 
+  public updateAllSelectedNonSteeredItems(allSelectedNonSteeredItems: any[]) {
+    this._allNonSteeredItemsInSelection = allSelectedNonSteeredItems;
+  }
+
   public selectRegion(region: number[][]) {
     const [[xMin, xMax], [yMin, yMax]] = region;
     sendUserSelectionBounds(xMin, xMax, yMin, yMax);
@@ -279,6 +284,10 @@ class DataAdapter {
 
   public get allItemsInSelection(): any[] {
     return this._allItemsInSelection;
+  }
+
+  public get allNonSteeredItemsInSelection(): any[] {
+    return this._allNonSteeredItemsInSelection;
   }
 
   public set scenarioPresets(presets: ScenarioPreset[]) {
