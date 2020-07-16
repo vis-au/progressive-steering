@@ -74,7 +74,6 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
     const nonSteeredBins: number[][] = this.getBinnedData(false);
 
     const differenceBins: number[][] = [];
-    console.log("ooph", nonSteeredBins);
 
     steeredBins.forEach((row, y) => {
       const rowDiff: number[] = [];
