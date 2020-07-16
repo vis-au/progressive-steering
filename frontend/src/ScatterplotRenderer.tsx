@@ -640,9 +640,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
           dimensionY={ this.props.dimensionY }
           scaleX={ this.scaleX }
           scaleY={ this.scaleY }
-          data={ this.props.data }
-          highlightLastChunk={ this.props.highlightLastChunk }
-          chunkSize={ this.props.chunkSize }
+          steeredData={ this.quadtree.data() }
+          nonSteeredData={ this.nonSteeringQuadtree.data() }
         />
       );
     } else {
