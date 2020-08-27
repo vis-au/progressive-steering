@@ -6,13 +6,15 @@ Created on Mon Mar 16 17:41:31 2020
 @author: beppes
 """
 
-import mysql.connector
+
 import math
 import platform
 import sys
 import steering_module as sm
 import eel
 import evaluationMetrics as mm
+
+
 
 
 #simple sync with Steering module
@@ -55,6 +57,36 @@ global mydb
 DIZ_plotted={}
 
 global x  #debug
+
+def dbConnect(h,u,p,d):
+    global mydb
+    mydb = mysql.connector.connect(
+       host=h,
+       user=u,
+       passwd=p,
+       database=d
+     )
+    return mydb
+
+def boxData(testCase): # Computes thetotal number of tuples in the box using both integer (tuples) and float (tuplesF) X values
+    mydb=dbConnect("localhost",'root', USER_PW,'airbnb')
+    mycursor = mydb.cursor()
+    global userRange
+    mycursor = mydb.cursor() 
+    qq = str("SELECT * FROM listings WHERE price>="+str(userRange[0])+" and price <=" +str(userRange[1])+" and abovemF<="+str(testCase['boxMaxRange'])+
+             " and abovemF>="+str(testCase['boxMinRange']) +" and distance>="+str(testCase['boxMinDistance'])+" and distance<="+str(testCase['boxMaxDistance']))
+    mycursor.execute(qq)
+    myresult = mycursor.fetchall()
+    tuplesF=len(myresult)
+    
+    qq = str("SELECT * FROM listings WHERE price>="+str(userRange[0])+" and price <=" +str(userRange[1])+" and abovem<="+str(testCase['boxMaxRange'])+
+             " and abovem>="+str(testCase['boxMinRange']) +" and distance>="+str(testCase['boxMinDistance'])+" and distance<="+str(testCase['boxMaxDistance']))
+    mycursor.execute(qq)
+    myresult = mycursor.fetchall()
+    tuples=len(myresult)    
+    mydb.close()
+    return tuples,tuplesF
+    
 
 def aboveMinimum(bbId,actualPrice,lat,long,more,myresult): #,chunkSize)
     '''
@@ -143,7 +175,7 @@ def testGenerator(tuplesOnly=False,userPref=c):
     global treeReady
     mydb=dbConnect("localhost",'root', USER_PW,'airbnb')
     mycursor = mydb.cursor()
-    query="Select * from listings WHERE "+str(c['range'][0])+"<=price AND "+str(c['range'][1])+">=price "# WHERE distance<25 and distance>4 AND price>=30 AND price<=80 AND abovem>=0"
+    query="Select * from listings WHERE "+str(c['range'][0])+"<=price AND "+str(c['range'][1])+">=price "
     mycursor.execute(query)
     myresult = mycursor.fetchall()
     GT={}
@@ -151,6 +183,9 @@ def testGenerator(tuplesOnly=False,userPref=c):
         GT[x[0]]=0
 
     testCases=eval(open("testCases.txt",encoding="UTF8").read())   
+    
+    testCases=[{'boxMinRange': 18.243314313223365, 'boxMaxRange': 20.06614785165546, 'boxMinDistance': 3.407266746723863, 
+                'boxMaxDistance': 5.035010716235203, 'tuples': 1164, 'tuplesF': 547}]
     
     
     '''          
@@ -185,8 +220,8 @@ def testGenerator(tuplesOnly=False,userPref=c):
         boxMaxDistance=tc['boxMaxDistance']
         tuples=tc['tuples']
         
-        for minimumBoxItems in [20,40,60,80]:
-            for chunkSize in [50,100]: 
+        for minimumBoxItems in [50]:#[20,40,60,80]:
+            for chunkSize in [100]:#[50,100]: 
                 treeReady=False
                 for k in GT:
                     GT[k]=0
@@ -286,15 +321,6 @@ def distance(lat1, long1, lat2, long2, sleep=0.001):
     #time.sleep(sleep)
     return int(arc * 6371*1000)/1000
 
-def dbConnect(h,u,p,d):
-    global mydb
-    mydb = mysql.connector.connect(
-       host=h,
-       user=u,
-       passwd=p,
-       database=d
-     )
-    return mydb
 
 
 
@@ -523,7 +549,13 @@ def loadConfig():
     print('floatSaving:',floatSaving)
     print("testCases loaded")
     for i in range(len(testCases)):
+        t=boxData(testCases[i])
+        testCases[i]['tuples']=t[0]
+        testCases[i]['tuplesF']=t[1]
         print(i+1,testCases[i]) 
+    f=open("testCases.txt",'w',encoding="UTF8") 
+    print(str(testCases).replace('{','\n{'),file=f)
+    f.close()
     
 
 '''
@@ -548,9 +580,11 @@ dp=eval(open('log_1_100_100_DIZ_Plotted_usingTree.txt','r',encoding="UTF8").read
 
 
 
-
 #############################################################################
 loadConfig()
+if len(testCases[0])>0:
+    print(boxData(testCases[0]))
+
 
 #enrich_DB()
 log,logM,GT,IN_TEST,OUT_TEST=testGenerator(True,c)
