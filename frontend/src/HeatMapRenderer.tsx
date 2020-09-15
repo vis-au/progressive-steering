@@ -90,16 +90,6 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
     return differenceBins;
   }
 
-  private getDifferenceColor(d: number, negativeScale: d3.ScaleSequential<string>, positiveScale: d3.ScaleSequential<string>) {
-    if (d > 0) {
-      return positiveScale(d);
-    } else if (d < 0) {
-      return negativeScale(d);
-    }
-
-    return "#fff";
-  }
-
   private updateCells() {
     if (this.props.dimensionX === null || this.props.dimensionY === null) {
       return;
@@ -117,13 +107,9 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
     const positionX = d3.scaleLinear().domain([0, BINS_X]).range([0, this.props.width]);
     const positionY = d3.scaleLinear().domain([0, BINS_Y]).range([0, this.props.height]);
 
-    const scaleNegativeValuesColor = d3.scaleSequential(d3.interpolateOranges)
+    const scaleColor = d3.scaleDiverging(d3.interpolateRdBu)
       .clamp(true)
-      .domain([0, -100]);
-
-    const scalePositiveValuesColor = d3.scaleSequential(d3.interpolateBlues)
-      .clamp(true)
-      .domain([0, 100]);
+      .domain([d3.max(binsFlat) || 0, 0, d3.min(binsFlat) || 0]);
 
     svg.selectAll("rect.density").data(binsFlat).join("rect")
       .attr("class", "density")
@@ -131,7 +117,7 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
       .attr("y", (d, i) => positionY(Math.floor((i) / BINS_X)))
       .attr("width", this.props.width / BINS_X)
       .attr("height", this.props.height / BINS_Y)
-      .attr("fill", d => this.getDifferenceColor(d, scaleNegativeValuesColor, scalePositiveValuesColor))
+      .attr("fill", d => scaleColor(d))
       .attr("fill-opacity", 0.3)
       .attr("stroke", "white");
 
