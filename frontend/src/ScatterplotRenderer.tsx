@@ -150,7 +150,12 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   }
 
   private getCurrentlyBrushedPoints(useNonSteeringData: boolean = false) {
-    const extent = this.selection;
+    const extent = this.state.brushedRegions[this.state.brushedRegions.length - 1];
+
+    if (!extent) {
+      return [];
+    }
+
     const currentlyBrushedPoints: any[] = this.getPointsInRegion(extent, useNonSteeringData);
 
     return currentlyBrushedPoints;
