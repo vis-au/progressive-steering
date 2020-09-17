@@ -16,7 +16,7 @@ interface Props {
 interface State {
 }
 
-const BINS_X = 10;
+const BINS_X = 15;
 const BINS_Y = 10;
 
 export default class HeatMapRenderer extends React.Component<Props, State> {
@@ -109,7 +109,7 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
 
     const scaleColor = d3.scaleDiverging(d3.interpolateRdBu)
       .clamp(true)
-      .domain([d3.max(binsFlat) || 0, 0, d3.min(binsFlat) || 0]);
+      .domain([100, 0, -100]);
 
     svg.selectAll("rect.density").data(binsFlat).join("rect")
       .attr("class", "density")
@@ -123,8 +123,8 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
 
     svg.selectAll("text.density").data(binsFlat).join("text")
       .attr("class", "density")
-      .attr("x", (d, i) => positionX(i % BINS_Y))
-      .attr("y", (d, i) => positionY(Math.floor((i) / BINS_Y)))
+      .attr("x", (d, i) => positionX(i % BINS_X))
+      .attr("y", (d, i) => positionY(Math.floor((i) / BINS_X)))
       .attr("font-size", 8)
       .attr("dy", 8)
       .text(d => d);

@@ -522,6 +522,17 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     : this.props.width;
   }
 
+  private updateQuadtrees() {
+    if (!this.receivedNewData()) {
+      return;
+    }
+    const steeredChunk = this.getLatestChunk(false);
+    this.quadtree.addAll(steeredChunk);
+    this.updateNewPointsInCurrentSelection(steeredChunk);
+    const nonSteeredChunk = this.getLatestChunk(true);
+    this.nonSteeringQuadtree.addAll(nonSteeredChunk);
+  }
+
   private renderPoints(useNonSteeringData: boolean = false) {
     if (this.canvas === null || this.nonSteeringCanvas === null) {
       return;
@@ -558,13 +569,6 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       context.fill();
       context.closePath();
     });
-
-    if (useNonSteeringData) {
-      this.nonSteeringQuadtree.addAll(chunk);
-    } else {
-      this.quadtree.addAll(chunk);
-      this.updateNewPointsInCurrentSelection(chunk);
-    }
   }
 
   private renderNonSteeringPoints() {
@@ -658,7 +662,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.updateScales();
     this.updateAxes();
     this.updatePoints();
-    this.renderDensityPlots();
+    this.updateQuadtrees();
+    // this.renderDensityPlots();
     this.renderPresetSelection();
     this.updatePaddedBrushSize();
 
