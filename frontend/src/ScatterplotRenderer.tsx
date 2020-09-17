@@ -643,7 +643,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     if (this.props.showHeatMap) {
       return (
         <HeatMapRenderer
-          width={ canvasWidth }
+          canvasWidth={ canvasWidth }
           height={ this.props.height }
           dimensionX={ this.props.dimensionX }
           dimensionY={ this.props.dimensionY }
@@ -651,6 +651,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
           scaleY={ this.scaleY }
           steeredData={ this.quadtree.data() }
           nonSteeredData={ this.nonSteeringQuadtree.data() }
+          showNonSteeredCanvas={ this.props.showNonSteeringData }
+          showDelta={ true }
         />
       );
     } else {

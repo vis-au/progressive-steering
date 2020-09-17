@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 import './HeatMapRenderer.css';
 
 interface Props {
-  width: number,
+  canvasWidth: number,
   height: number,
   dimensionX: string | null,
   dimensionY: string | null,
@@ -12,6 +12,8 @@ interface Props {
   scaleY: d3.ScaleLinear<number, number>,
   steeredData: any[],
   nonSteeredData: any[],
+  showNonSteeredCanvas: boolean,
+  showDelta: boolean
 }
 interface State {
 }
@@ -90,7 +92,7 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
     return differenceBins;
   }
 
-  private updateCells() {
+  private updateCells(useNonSteeringCanvas: boolean = false) {
     if (this.props.dimensionX === null || this.props.dimensionY === null) {
       return;
     }
@@ -98,24 +100,31 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
     this.binScaleX.domain(this.props.scaleX.range() as [number, number]);
     this.binScaleY.domain(this.props.scaleY.range() as [number, number]);
 
-    const svg = d3.select("svg.heat-map");
+    const svg = useNonSteeringCanvas
+      ? d3.select("svg.heat-map-canvas.non-steering")
+      : d3.select("svg.heat-map-canvas.steering");
+
     svg.selectAll("*").remove();
 
     const bins = this.getDifferenceBins();
     const binsFlat = bins.flat();
 
-    const positionX = d3.scaleLinear().domain([0, BINS_X]).range([0, this.props.width]);
+    const positionX = d3.scaleLinear().domain([0, BINS_X]).range([0, this.props.canvasWidth]);
     const positionY = d3.scaleLinear().domain([0, BINS_Y]).range([0, this.props.height]);
 
     const scaleColor = d3.scaleDiverging(d3.interpolateRdBu)
       .clamp(true)
       .domain([100, 0, -100]);
 
+    if (useNonSteeringCanvas) {
+      scaleColor.domain([-100, 0, 100]);
+    }
+
     svg.selectAll("rect.density").data(binsFlat).join("rect")
       .attr("class", "density")
       .attr("x", (d, i) => positionX(i % BINS_X))
       .attr("y", (d, i) => positionY(Math.floor((i) / BINS_X)))
-      .attr("width", this.props.width / BINS_X)
+      .attr("width", this.props.canvasWidth / BINS_X)
       .attr("height", this.props.height / BINS_Y)
       .attr("fill", d => scaleColor(d))
       .attr("fill-opacity", 0.3)
@@ -131,14 +140,21 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
   }
 
   public render() {
+    const isNonSteeringCanvasHidden = this.props.showNonSteeredCanvas ? "" : "hidden";
+
     return (
       <div className="heatMapRenderer">
-        <svg className="heat-map" width={ this.props.width } height={ this.props.height }></svg>
+        <svg className="heat-map-canvas steering" width={ this.props.canvasWidth } height={ this.props.height }></svg>
+        <svg className={`heat-map-canvas non-steering ${isNonSteeringCanvasHidden}`} width={ this.props.canvasWidth } height={ this.props.height }></svg>
       </div>
     );
   }
 
   public componentDidUpdate() {
     this.updateCells();
+
+    if (this.props.showNonSteeredCanvas) {
+      this.updateCells(true);
+    }
   }
 }
