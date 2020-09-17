@@ -23,6 +23,7 @@ interface Props {
   presetSelection: ScenarioPreset | null,
   showNonSteeringData: boolean,
   showHeatMap: boolean,
+  useDeltaHeatMap: boolean,
   highlightLastChunk?: boolean,
   chunkSize?: number,
   stepsBeforePaddingGrows: number,
@@ -652,7 +653,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
           steeredData={ this.quadtree.data() }
           nonSteeredData={ this.nonSteeringQuadtree.data() }
           showNonSteeredCanvas={ this.props.showNonSteeringData }
-          showDelta={ true }
+          useDeltaHeatMap={ this.props.useDeltaHeatMap }
         />
       );
     } else {

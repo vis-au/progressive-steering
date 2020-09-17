@@ -13,6 +13,7 @@ interface State {
   selectedPoints: any[],
   highlightLatestPoints: boolean,
   showHeatMap: boolean,
+  useDeltaHeatMap: boolean,
   showSideBySideView: boolean,
   selectedScenarioPreset: ScenarioPreset | null,
   stepsBeforePaddingGrows: number
@@ -49,6 +50,7 @@ export class App extends Component<{}, State> {
       selectedPoints: [],
       highlightLatestPoints: true,
       showHeatMap: false,
+      useDeltaHeatMap: true,
       showSideBySideView: false,
       selectedScenarioPreset: null,
       stepsBeforePaddingGrows: STEPS_BEFORE_PADDING_GROWS
@@ -105,6 +107,10 @@ export class App extends Component<{}, State> {
 
   private onShowHeatMapChanged() {
     this.setState({ showHeatMap: !this.state.showHeatMap });
+  }
+
+  private onUseDeltaHeatMapChanged() {
+    this.setState({ useDeltaHeatMap: !this.state.useDeltaHeatMap });
   }
 
   private onShowSideBySideViewChanged() {
@@ -281,6 +287,21 @@ export class App extends Component<{}, State> {
     );
   }
 
+  private renderUseDeltaHeatMapToggle() {
+    return (
+      <div className="use-delta-heatmap-toggle">
+        <label htmlFor="use-delta-heatmap-toggle">delta heatmap</label>
+        <input
+          disabled={ !this.state.showHeatMap }
+          type="checkbox"
+          name="use-delta-heatmap-toggle"
+          id="use-delta-heatmap-toggle"
+          checked={ this.state.useDeltaHeatMap  }
+          onChange={ this.onUseDeltaHeatMapChanged.bind(this) }/>
+      </div>
+    );
+  }
+
   private renderShowSideBySideViewToggle() {
     return (
       <div className="show-sidebyside-toggle">
@@ -350,6 +371,7 @@ export class App extends Component<{}, State> {
             filters={ this.dataAdapter.getAllFilters() }
             highlightLastChunk={ this.state.highlightLatestPoints }
             showHeatMap={ this.state.showHeatMap }
+            useDeltaHeatMap={ this.state.useDeltaHeatMap }
             showNonSteeringData={ this.state.showSideBySideView }
             presetSelection={ this.state.selectedScenarioPreset }
             stepsBeforePaddingGrows={ this.state.stepsBeforePaddingGrows }
@@ -373,6 +395,7 @@ export class App extends Component<{}, State> {
           { this.renderEvaluationMetrics() }
           { this.renderHighlightLatestPointsToggle() }
           { this.renderShowHeatMapToggle() }
+          { this.renderUseDeltaHeatMapToggle() }
           { this.renderShowSideBySideViewToggle() }
           { this.renderPaddingStepsInput() }
           </div>

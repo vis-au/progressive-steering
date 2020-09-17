@@ -13,13 +13,15 @@ interface Props {
   steeredData: any[],
   nonSteeredData: any[],
   showNonSteeredCanvas: boolean,
-  showDelta: boolean
+  useDeltaHeatMap: boolean
 }
 interface State {
 }
 
 const BINS_X = 15;
 const BINS_Y = 10;
+const DEFAULT_DIVERGING_COLOR_SCHEME = d3.interpolateRdBu;
+const DEFAULT_SEQUENTIAL_COLOR_SCHEME = d3.interpolateYlOrRd;
 
 export default class HeatMapRenderer extends React.Component<Props, State> {
   private binScaleX: d3.ScaleQuantize<number> = d3.scaleQuantize();
@@ -70,7 +72,7 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
     return bins;
   }
 
-  private getDifferenceBins() {
+  private getDifferenceBins(useNonSteeredData: boolean = false) {
     // steeredbins and nonsteeredbins are expected to have the same "resolution"
     const steeredBins: number[][] = this.getBinnedData(true);
     const nonSteeredBins: number[][] = this.getBinnedData(false);
@@ -82,7 +84,15 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
 
       row.forEach((steeredValue, x) => {
         const nonSteeredValue = nonSteeredBins[y][x];
-        const diff = steeredValue - nonSteeredValue;
+
+        let diff = useNonSteeredData ? nonSteeredValue : steeredValue;
+
+        if (this.props.useDeltaHeatMap) {
+          diff = useNonSteeredData
+            ? nonSteeredValue - steeredValue
+            : steeredValue - nonSteeredValue;
+        }
+
         rowDiff.push(diff);
       });
 
@@ -106,18 +116,20 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
 
     svg.selectAll("*").remove();
 
-    const bins = this.getDifferenceBins();
+    const bins = this.getDifferenceBins(useNonSteeringCanvas);
     const binsFlat = bins.flat();
 
     const positionX = d3.scaleLinear().domain([0, BINS_X]).range([0, this.props.canvasWidth]);
     const positionY = d3.scaleLinear().domain([0, BINS_Y]).range([0, this.props.height]);
 
-    const scaleColor = d3.scaleDiverging(d3.interpolateRdBu)
-      .clamp(true)
-      .domain([100, 0, -100]);
+    let scaleColor: d3.ScaleDiverging<string> | d3.ScaleSequential<string> = d3.scaleSequential(DEFAULT_SEQUENTIAL_COLOR_SCHEME)
+    .clamp(true)
+    .domain([0, 200]);
 
-    if (useNonSteeringCanvas) {
-      scaleColor.domain([-100, 0, 100]);
+    if (this.props.useDeltaHeatMap) {
+      scaleColor = d3.scaleDiverging(DEFAULT_DIVERGING_COLOR_SCHEME)
+        .clamp(true)
+        .domain([100, 0, -100]);
     }
 
     svg.selectAll("rect.density").data(binsFlat).join("rect")
