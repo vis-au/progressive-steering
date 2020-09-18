@@ -37,7 +37,7 @@ const DEFAULT_POINT_RADIUS = 2;
 const DEFAULT_POINT_COLOR = "rgba(70, 130, 180, 0.3)";
 const NON_STEERING_POINT_COLOR = "rgba(30, 30, 30, 0.3)";
 const DEFAULT_POINT_STROKE_WIDTH = 0;
-const DEFAULT_POINT_HIGHLIGHTED_STROKE_WIDTH = 5;
+// const DEFAULT_POINT_HIGHLIGHTED_STROKE_WIDTH = 5;
 const DEFAULT_KERNEL_STD = 25;
 const DEFAULT_DENSITY_LEVELS = 10;
 const MIN_SELECTION_THRESHOLD = 0;
@@ -171,8 +171,6 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     }
 
     const pointsInSelection: any[] = [];
-    const dimX = this.props.dimensionX;
-    const dimY = this.props.dimensionY;
 
     let bounds = this.getPaddedBrushBounds() || [];
     if (bounds === null) {
@@ -250,7 +248,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
           if (nodeIsInBounds) {
             pointsInRegion.push(node.data);
           }
-        } while (node = node.next);
+        } while ((node = node.next) !== undefined);
       }
 
       const nodeOverlapsRegion = (

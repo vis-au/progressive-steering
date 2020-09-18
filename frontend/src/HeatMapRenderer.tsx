@@ -43,9 +43,9 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
     const bins: number[][] = [];
 
     // initialize every cell of the matrix with 0
-    d3.range(0, BINS_Y).map(y => {
+    d3.range(0, BINS_Y).forEach(y => {
       const nextBin: number[] = [];
-      d3.range(0, BINS_X).map(x => {
+      d3.range(0, BINS_X).forEach(x => {
         nextBin.push(0);
       });
       bins.push(nextBin);
