@@ -148,6 +148,9 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     if (this.brushScaleFactor > MAX_BRUSH_SCALE_FACTOR) {
       this.brushScaleFactor = MAX_BRUSH_SCALE_FACTOR;
     }
+    if (this.quadtree.size() === 0) {
+      this.brushScaleFactor = 1;
+    }
   }
 
   private getCurrentlyBrushedPoints(useNonSteeringData: boolean = false) {
@@ -201,7 +204,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
     const newNonSteeredPoints = this.getLatestChunk(true);
     const newNonSteeredPointsInSelection = this.getNewPointsInCurrentSelection(newNonSteeredPoints, true);
-    const allNonSteeredPointsInSelection = this.getCurrentlyBrushedPoints(true)
+    const allNonSteeredPointsInSelection = this.getCurrentlyBrushedPoints(true);
 
     if (newPointsInSelection.length > 0 && !!this.props.onNewPointsInSelection) {
       this.props.onNewPointsInSelection(newPointsInSelection, allPointsInSelection);
@@ -440,15 +443,18 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       return null;
     }
 
+    const x = this.scaleX;
+    const y = this.scaleY;
+
     const [[x0, y0], [x1, y1]] = bounds;
-    const paddedBrushWidth = Math.abs(x0 - x1);
-    const paddedBrushHeight = Math.abs(y0 - y1);
+    const paddedBrushWidth = Math.abs(x(x0) - x(x1));
+    const paddedBrushHeight = Math.abs(y(y0) - y(y1));
 
     return (
       <rect
         className="padded-brush"
-        x={ x0 }
-        y={ y0 }
+        x={ x(x0) }
+        y={ y(y1) }
         width={ paddedBrushWidth }
         height={ paddedBrushHeight }
       />
