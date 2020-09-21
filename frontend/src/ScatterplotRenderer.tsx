@@ -2,9 +2,9 @@ import React from 'react';
 import * as d3 from 'd3';
 
 import { ScenarioPreset, TrainingState } from './EelBridge';
+import HeatMapRenderer from './HeatMapRenderer';
 
 import "./ScatterplotRenderer.css";
-import HeatMapRenderer from './HeatMapRenderer';
 
 interface State {
   brushedRegions: number[][][]

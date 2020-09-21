@@ -8,6 +8,7 @@ import DoubleSlider from './DoubleSlider';
 import EvaluationMetric from './EvaluationMetric';
 import { DEFAULT_EVALUATION_METRICS } from './EelBackendDummy';
 import './App.css';
+import StarCoordinateRenderer from './StarCoordinateRenderer';
 
 interface State {
   selectedPoints: any[],
@@ -16,7 +17,8 @@ interface State {
   useDeltaHeatMap: boolean,
   showSideBySideView: boolean,
   selectedScenarioPreset: ScenarioPreset | null,
-  stepsBeforePaddingGrows: number
+  stepsBeforePaddingGrows: number,
+  useStarCoordinates: boolean
 }
 
 const X_AXIS_SELECTOR = "x-dimension";
@@ -53,7 +55,8 @@ export class App extends Component<{}, State> {
       useDeltaHeatMap: true,
       showSideBySideView: false,
       selectedScenarioPreset: null,
-      stepsBeforePaddingGrows: STEPS_BEFORE_PADDING_GROWS
+      stepsBeforePaddingGrows: STEPS_BEFORE_PADDING_GROWS,
+      useStarCoordinates: false
     };
   }
 
@@ -117,6 +120,11 @@ export class App extends Component<{}, State> {
     this.setState({ showSideBySideView: !this.state.showSideBySideView });
   }
 
+  private onUseStarCoordinatesChanged() {
+    this.setState({ useStarCoordinates: !this.state.useStarCoordinates });
+    this.forceUpdate();
+  }
+
   private onPaddingStepsChanged(event: React.ChangeEvent<HTMLInputElement>) {
     this.setState({ stepsBeforePaddingGrows: +event.target.value });
   }
@@ -163,8 +171,8 @@ export class App extends Component<{}, State> {
   private renderXYDimensionSelection() {
     return (
       <div className="dimension-selection">
-        { this.renderDimensionSelection(X_AXIS_SELECTOR, "X Axis", this.dataAdapter.xDimension || "") }
-        { this.renderDimensionSelection(Y_AXIS_SELECTOR, "Y Axis", this.dataAdapter.yDimension || "") }
+        { this.renderDimensionSelection(X_AXIS_SELECTOR, "x: ", this.dataAdapter.xDimension || "") }
+        { this.renderDimensionSelection(Y_AXIS_SELECTOR, "y: ", this.dataAdapter.yDimension || "") }
       </div>
     );
   }
@@ -316,6 +324,20 @@ export class App extends Component<{}, State> {
     );
   }
 
+  private renderUseStarCoordinatesToggle() {
+    return (
+      <div className="use-star-coordinates-toggle">
+        <label htmlFor="use-star-coordinates-toggle">use sc</label>
+        <input
+          type="checkbox"
+          name="use-star-coordinates-toggle"
+          id="use-star-coordinates-toggle"
+          checked={ this.state.useStarCoordinates  }
+          onChange={ this.onUseStarCoordinatesChanged.bind(this) }/>
+      </div>
+    );
+  }
+
   private renderPaddingStepsInput() {
     return (
       <div className="selection-padding-input">
@@ -341,10 +363,59 @@ export class App extends Component<{}, State> {
     );
   }
 
-  public render() {
+  private renderRenderer() {
     const dimensionX = this.dataAdapter.xDimension;
     const dimensionY = this.dataAdapter.yDimension;
 
+    const width = window.innerWidth - 1;
+    const height = window.innerHeight - 85;
+
+    if (this.state.useStarCoordinates) {
+      const extents = this.dataAdapter.dimensions.map(dim => {
+        return this.dataAdapter.getDomain(dim);
+      });
+
+      return (
+        <StarCoordinateRenderer
+          width={ width }
+          height={ height }
+          data={ this.dataAdapter.data }
+          dimensions={ this.dataAdapter.dimensions }
+          extents={ extents }
+          highlightLastChunk={ this.state.highlightLatestPoints }
+          chunkSize={ this.dataAdapter.chunkSize }
+          onBrushedRegion={ this.onBrushedRegion.bind(this) }
+        />
+      );
+    }
+
+    return (
+      <ScatterplotRenderer
+        width={ width }
+        height={ height }
+        extentX={ this.dataAdapter.getDomain(dimensionX) }
+        extentY={ this.dataAdapter.getDomain(dimensionY) }
+        dimensionX={ dimensionX }
+        dimensionY={ dimensionY }
+        data={ this.dataAdapter.data }
+        nonSteeringData={ this.dataAdapter.nonSteeringData }
+        chunkSize={ this.dataAdapter.chunkSize }
+        trainingState={ this.dataAdapter.trainingState }
+        highlightLastChunk={ this.state.highlightLatestPoints }
+        showHeatMap={ this.state.showHeatMap }
+        useDeltaHeatMap={ this.state.useDeltaHeatMap }
+        showNonSteeringData={ this.state.showSideBySideView }
+        presetSelection={ this.state.selectedScenarioPreset }
+        stepsBeforePaddingGrows={ this.state.stepsBeforePaddingGrows }
+        onBrushedPoints={ this.onBrushedPoints.bind(this) }
+        onBrushedRegion={ this.onBrushedRegion.bind(this) }
+        onNewPointsInSelection={ this.onNewPointsInSelection.bind(this) }
+        onNewNonSteeredPointsInSelection={ this.onNewNonSteeredPointsInSelection.bind(this) }
+      />
+    );
+  }
+
+  public render() {
     const width = window.innerWidth - 1;
     const height = window.innerHeight - 85;
 
@@ -357,29 +428,7 @@ export class App extends Component<{}, State> {
         </div>
 
         <div className="mainView" style={ {minHeight: height} }>
-          <ScatterplotRenderer
-            width={ width }
-            height={ height }
-            extentX={ this.dataAdapter.getDomain(dimensionX) }
-            extentY={ this.dataAdapter.getDomain(dimensionY) }
-            dimensionX={ dimensionX }
-            dimensionY={ dimensionY }
-            data={ this.dataAdapter.data }
-            nonSteeringData={ this.dataAdapter.nonSteeringData }
-            chunkSize={ this.dataAdapter.chunkSize }
-            trainingState={ this.dataAdapter.trainingState }
-            filters={ this.dataAdapter.getAllFilters() }
-            highlightLastChunk={ this.state.highlightLatestPoints }
-            showHeatMap={ this.state.showHeatMap }
-            useDeltaHeatMap={ this.state.useDeltaHeatMap }
-            showNonSteeringData={ this.state.showSideBySideView }
-            presetSelection={ this.state.selectedScenarioPreset }
-            stepsBeforePaddingGrows={ this.state.stepsBeforePaddingGrows }
-            onBrushedPoints={ this.onBrushedPoints.bind(this) }
-            onBrushedRegion={ this.onBrushedRegion.bind(this) }
-            onNewPointsInSelection={ this.onNewPointsInSelection.bind(this) }
-            onNewNonSteeredPointsInSelection={ this.onNewNonSteeredPointsInSelection.bind(this) }
-          />
+          { this.renderRenderer() }
           <MapViewerRenderer
             width={ width * 0.45 }
             height={ height - 1 }
@@ -397,6 +446,7 @@ export class App extends Component<{}, State> {
           { this.renderShowHeatMapToggle() }
           { this.renderUseDeltaHeatMapToggle() }
           { this.renderShowSideBySideViewToggle() }
+          { this.renderUseStarCoordinatesToggle() }
           { this.renderPaddingStepsInput() }
           </div>
 
