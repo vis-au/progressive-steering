@@ -234,7 +234,7 @@ export class App extends Component<{}, State> {
   }
 
   private renderProgressionControls() {
-    const text = this.dataAdapter.progressionState === 'paused' ? 'RESTART' : 'PAUSE';
+    const text = this.dataAdapter.progressionState === 'paused' ? 'RESUME' : 'PAUSE';
     const onClickState: ProgressionState = this.dataAdapter.progressionState === 'paused' ? 'running' : 'paused';
 
     return (
