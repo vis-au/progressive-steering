@@ -19,7 +19,6 @@ interface Props {
   data: any[],
   nonSteeringData: any[],
   trainingState: TrainingState,
-  filters: Map<string, number[]>,
   presetSelection: ScenarioPreset | null,
   showNonSteeringData: boolean,
   showHeatMap: boolean,
