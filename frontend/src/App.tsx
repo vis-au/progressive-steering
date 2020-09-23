@@ -382,6 +382,7 @@ export class App extends Component<{}, State> {
           width={ width }
           height={ height }
           data={ this.dataAdapter.data }
+          nonSteeringData={ this.dataAdapter.nonSteeringData }
           showNonSteeringData={ this.state.showSideBySideView }
           dimensions={ DUMMY_DIMENSIONS }
           showHeatMap={ this.state.showHeatMap }

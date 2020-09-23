@@ -11,7 +11,7 @@ interface Props {
   dimensions: string[],
   extents: [number, number][],
   data: any[],
-  // nonSteeringData: any[],
+  nonSteeringData: any[],
   showNonSteeringData: boolean,
   showHeatMap: boolean,
   useDeltaHeatMap: boolean,
@@ -78,8 +78,13 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
       .range([-this.plotSize / 2, this.plotSize / 2]);
   }
 
-  private getLatestChunk() {
+  private getLatestChunk(useNonSteeringData: boolean = false) {
     let itemCount = this.props.data.length;
+
+    if (useNonSteeringData) {
+      itemCount = this.props.nonSteeringData.length;
+      return this.props.nonSteeringData.slice(itemCount - (this.props.chunkSize || itemCount), itemCount);
+    }
 
     // if chunksize property is not defined, return the full dataset
     return this.props.data.slice(itemCount - (this.props.chunkSize || itemCount), itemCount);
@@ -107,14 +112,14 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
     });
   }
 
-  private getDataInPolarCoordinates() {
+  private getDataInPolarCoordinates(useNonSteeringData: boolean) {
     if (this.scales.length === 0) {
       this.updateScales();
     }
 
     const radians = 2 * Math.PI / this.props.dimensions.length;
     const polarCoordinates: PolarCoordinate[][] = [];
-    const chunk = this.getLatestChunk();
+    const chunk = this.getLatestChunk(useNonSteeringData);
 
     chunk.forEach(datum => {
       const polarCoordinate: PolarCoordinate[] = [];
@@ -164,7 +169,7 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
   }
 
   private getStarCoordinatesForData(useNonSteeringData: boolean) {
-    const polarCoordinates: PolarCoordinate[][] = this.getDataInPolarCoordinates();
+    const polarCoordinates: PolarCoordinate[][] = this.getDataInPolarCoordinates(useNonSteeringData);
     const cartesianCoordinates: CartesianCoordinate[][] = this.getCartesianCoordinatesFromPolarCoordinates(polarCoordinates);
 
     const centerOffsetX = this.scaleX.invert(this.plotSize / 2 + this.state.margin);
