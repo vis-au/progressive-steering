@@ -1,17 +1,17 @@
 import * as React from 'react';
 import * as d3 from 'd3';
 
+import { ScaledCartesianCoordinate } from './PointTypes';
+
 import './HeatMapRenderer.css';
 
 interface Props {
   canvasWidth: number,
   height: number,
-  dimensionX: string | null,
-  dimensionY: string | null,
   scaleX: d3.ScaleLinear<number, number>,
   scaleY: d3.ScaleLinear<number, number>,
-  steeredData: any[],
-  nonSteeredData: any[],
+  steeredData: ScaledCartesianCoordinate[],
+  nonSteeredData: ScaledCartesianCoordinate[],
   showNonSteeredCanvas: boolean,
   useDeltaHeatMap: boolean
 }
@@ -51,20 +51,13 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
       bins.push(nextBin);
     });
 
-    const scaleX = this.props.scaleX;
-    const scaleY = this.props.scaleY;
-
     const data = useSteeredData
       ? this.props.steeredData
       : this.props.nonSteeredData;
 
-    data.forEach((d: any) => {
-      if (this.props.dimensionX === null || this.props.dimensionY === null) {
-        return;
-      }
-
-      const x = this.binScaleX(scaleX(d[this.props.dimensionX]));
-      const y = this.binScaleY(scaleY(d[this.props.dimensionY]));
+    data.forEach((d: ScaledCartesianCoordinate) => {
+      const x = this.binScaleX(d.px);
+      const y = this.binScaleY(d.py);
 
       bins[y][x] += 1;
     });
@@ -103,10 +96,6 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
   }
 
   private updateCells(useNonSteeringCanvas: boolean = false) {
-    if (this.props.dimensionX === null || this.props.dimensionY === null) {
-      return;
-    }
-
     this.binScaleX.domain(this.props.scaleX.range() as [number, number]);
     this.binScaleY.domain(this.props.scaleY.range() as [number, number]);
 
@@ -136,8 +125,8 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
       .attr("class", "density")
       .attr("x", (d, i) => positionX(i % BINS_X))
       .attr("y", (d, i) => positionY(Math.floor((i) / BINS_X)))
-      .attr("width", this.props.canvasWidth / BINS_X)
-      .attr("height", this.props.height / BINS_Y)
+      .attr("width", this.props.canvasWidth / BINS_X - 2)
+      .attr("height", this.props.height / BINS_Y - 2)
       .attr("fill", d => scaleColor(d))
       .attr("fill-opacity", 0.3)
       .attr("stroke", "white");

@@ -5,6 +5,7 @@ import { ScenarioPreset, TrainingState } from './EelBridge';
 import HeatMapRenderer from './HeatMapRenderer';
 
 import "./ScatterplotRenderer.css";
+import { ScaledCartesianCoordinate } from './PointTypes';
 
 interface State {
   brushedRegions: number[][][]
@@ -58,6 +59,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   private quadtree: d3.Quadtree<[number, number]>;
   private nonSteeringQuadtree: d3.Quadtree<[number, number]>;
   private densityContourGenerator: d3.ContourDensity<[number, number]>;
+  private steeringScreenPositions: ScaledCartesianCoordinate[];
+  private nonSteeringScreenPositions: ScaledCartesianCoordinate[];
 
   private lastChunk: any[] = [];
   private lastDrawnPreset: number[][] = [];
@@ -77,6 +80,9 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.nonSteeringCanvas = null;
     this.nonSteeringSVG = null;
     this.selection = null;
+
+    this.steeringScreenPositions = [];
+    this.nonSteeringScreenPositions = [];
 
     this.quadtree = d3.quadtree()
       .extent([[0, 0], [this.props.width, this.props.height]])
@@ -537,23 +543,41 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.nonSteeringQuadtree.addAll(nonSteeredChunk);
   }
 
-  private renderPoints(useNonSteeringData: boolean = false) {
-    if (this.canvas === null || this.nonSteeringCanvas === null) {
-      return;
-    }
+  private getScaledCoordinatesForData(useNonSteeringData: boolean) {
     if (this.props.dimensionX === null || this.props.dimensionY === null) {
-      return;
+      return [];
     }
-    if (!this.receivedNewData()) {
-      return;
-    }
-
-    const dimX = this.props.dimensionX;
-    const dimY = this.props.dimensionY;
-    let context: any = (this.canvas.node() as any).getContext("2d");
 
     const chunk = this.getLatestChunk(useNonSteeringData);
+    const dimX = this.props.dimensionX;
+    const dimY = this.props.dimensionY;
 
+    const scaledCoordinates: ScaledCartesianCoordinate[] = [];
+
+    chunk.forEach(datum => {
+      const px = this.scaleX(datum[dimX]);
+      const py = this.scaleY(datum[dimY]);
+
+      scaledCoordinates.push({ px, py });
+    });
+
+    return scaledCoordinates;
+  }
+
+  private renderPoints(useNonSteeringData: boolean = false): ScaledCartesianCoordinate[] {
+    if (this.canvas === null || this.nonSteeringCanvas === null) {
+      return [];
+    }
+    if (this.props.dimensionX === null || this.props.dimensionY === null) {
+      return [];
+    }
+    if (!this.receivedNewData()) {
+      return [];
+    }
+
+    const scaledChunk = this.getScaledCoordinatesForData(useNonSteeringData);
+
+    let context: any = (this.canvas.node() as any).getContext("2d");
     context.fillStyle = DEFAULT_POINT_COLOR;
     context.strokeStyle = DEFAULT_POINT_COLOR;
     context.lineWidth = DEFAULT_POINT_STROKE_WIDTH;
@@ -564,25 +588,28 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       context.strokeStyle = NON_STEERING_POINT_COLOR;
     }
 
-    chunk.forEach(datum => {
-      const px = this.scaleX(datum[dimX]);
-      const py = this.scaleY(datum[dimY]);
-
+    scaledChunk.forEach(datum => {
       context.beginPath();
-      context.arc(px, py, DEFAULT_POINT_RADIUS, 0, 2 * Math.PI, true);
+      context.arc(datum.px, datum.py, DEFAULT_POINT_RADIUS, 0, 2 * Math.PI, true);
       context.fill();
       context.closePath();
     });
+
+    return scaledChunk;
   }
 
   private renderNonSteeringPoints() {
-    this.renderPoints(true);
+    const scaledChunk = this.renderPoints(true);
     this.renderInsideOutsidePoints(true);
+
+    this.nonSteeringScreenPositions.push(...scaledChunk);
   }
 
   private renderSteeringPoints() {
-    this.renderPoints(false);
+    const scaledChunk = this.renderPoints(false);
     this.renderInsideOutsidePoints(false);
+
+    this.steeringScreenPositions.push(...scaledChunk);
   }
 
   private updatePoints() {
@@ -649,12 +676,10 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
         <HeatMapRenderer
           canvasWidth={ canvasWidth }
           height={ this.props.height }
-          dimensionX={ this.props.dimensionX }
-          dimensionY={ this.props.dimensionY }
           scaleX={ this.scaleX }
           scaleY={ this.scaleY }
-          steeredData={ this.quadtree.data() }
-          nonSteeredData={ this.nonSteeringQuadtree.data() }
+          steeredData={ this.steeringScreenPositions }
+          nonSteeredData={ this.nonSteeringScreenPositions }
           showNonSteeredCanvas={ this.props.showNonSteeringData }
           useDeltaHeatMap={ this.props.useDeltaHeatMap }
         />
