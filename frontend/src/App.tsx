@@ -370,8 +370,10 @@ export class App extends Component<{}, State> {
     const width = window.innerWidth - 1;
     const height = window.innerHeight - 85;
 
+    const DUMMY_DIMENSIONS = ["Saving opportunity", "price", "Distance"];
+
     if (this.state.useStarCoordinates) {
-      const extents = this.dataAdapter.dimensions.map(dim => {
+      const extents = DUMMY_DIMENSIONS.map(dim => {
         return this.dataAdapter.getDomain(dim);
       });
 
@@ -380,7 +382,10 @@ export class App extends Component<{}, State> {
           width={ width }
           height={ height }
           data={ this.dataAdapter.data }
-          dimensions={ this.dataAdapter.dimensions }
+          showNonSteeringData={ this.state.showSideBySideView }
+          dimensions={ DUMMY_DIMENSIONS }
+          showHeatMap={ this.state.showHeatMap }
+          useDeltaHeatMap={ this.state.useDeltaHeatMap }
           extents={ extents }
           highlightLastChunk={ this.state.highlightLatestPoints }
           chunkSize={ this.dataAdapter.chunkSize }

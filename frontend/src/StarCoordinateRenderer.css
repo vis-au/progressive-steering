@@ -1,12 +1,13 @@
 div.starCoordinatesRenderer {
   font-family: 'Roboto', sans-serif;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
 }
 canvas.starCoordinateCanvas,
 svg.starCoordinateAxesCanvas {
   position: absolute;
   left: 0;
+}
+canvas.nonSteeringStarCoordinateCanvas,
+svg.nonSteeringStarCoordinateAxesCanvas {
+  position: absolute;
+  right: 0;
 }

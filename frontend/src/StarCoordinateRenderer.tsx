@@ -2,7 +2,8 @@ import * as React from 'react';
 import * as d3 from 'd3';
 
 import './StarCoordinateRenderer.css';
-import { debug } from 'console';
+import HeatMapRenderer from './HeatMapRenderer';
+import { CartesianCoordinate, PolarCoordinate, ScaledCartesianCoordinate } from './PointTypes';
 
 interface Props {
   width: number,
@@ -11,9 +12,9 @@ interface Props {
   extents: [number, number][],
   data: any[],
   // nonSteeringData: any[],
-  // showNonSteeringData: boolean,
-  // showHeatMap: boolean,
-  // useDeltaHeatMap: boolean,
+  showNonSteeringData: boolean,
+  showHeatMap: boolean,
+  useDeltaHeatMap: boolean,
   highlightLastChunk?: boolean,
   chunkSize?: number,
   // stepsBeforePaddingGrows: number,
@@ -26,22 +27,26 @@ interface State {
   margin: number
 }
 
-type CartesianCoordinate = {x: number, y: number};
-type PolarCoordinate = {r: number, theta: number};
-
 const DEFAULT_POINT_RADIUS = 2;
 const DEFAULT_POINT_COLOR = "rgba(70, 130, 180, 0.3)";
+const NON_STEERING_POINT_COLOR = "rgba(30, 30, 30, 0.3)";
 const DEFAULT_POINT_STROKE_WIDTH = 0;
 
 
 export default class StarCoordinateRenderer extends React.Component<Props, State> {
 
-  private svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any> | null;
+  private axesSvg: d3.Selection<d3.BaseType, unknown, HTMLElement, any> | null;
+  private nonSteeringAxesSvg: d3.Selection<d3.BaseType, unknown, HTMLElement, any> | null;
   private canvas: d3.Selection<d3.BaseType, unknown, HTMLElement, any> | null;
+  private nonSteeringCanvas: d3.Selection<d3.BaseType, unknown, HTMLElement, any> | null;
   private scales: d3.ScaleLinear<number, number>[] = [];
 
   private scaleX: d3.ScaleLinear<number, number>;
   private scaleY: d3.ScaleLinear<number, number>;
+
+  private lastChunk: any[] = [];
+  private steeringScreenPositions: ScaledCartesianCoordinate[];
+  private nonSteeringScreenPositions: ScaledCartesianCoordinate[];
 
   private plotSize: number;
 
@@ -50,11 +55,16 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
 
     this.scales = [];
 
-    this.svg = null;
+    this.axesSvg = null;
     this.canvas = null;
+    this.nonSteeringCanvas = null;
+    this.nonSteeringAxesSvg = null;
+
+    this.steeringScreenPositions = [];
+    this.nonSteeringScreenPositions = [];
 
     this.state = {
-      margin: 150
+      margin: 50
     };
 
     this.plotSize = this.props.height - this.state.margin * 2;
@@ -75,8 +85,23 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
     return this.props.data.slice(itemCount - (this.props.chunkSize || itemCount), itemCount);
   }
 
+  private getCanvasWidth() {
+    return this.props.showNonSteeringData
+      ? this.props.width / 2 - 1
+      : this.props.width;
+  }
+
+  private receivedNewData() {
+    const chunk = this.getLatestChunk()
+
+    if (chunk[0] !== undefined && chunk[0] === this.lastChunk[0]) {
+      return false;
+    }
+
+    return true;
+  }
+
   private updateScales() {
-    debugger
     this.scales = this.props.extents.map(extent => {
       return d3.scaleLinear().domain(extent).range([0, 1]).clamp(true);
     });
@@ -138,14 +163,17 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
     return cartesianCoordinates;
   }
 
-  private getStarCoordinatesForData() {
+  private getStarCoordinatesForData(useNonSteeringData: boolean) {
     const polarCoordinates: PolarCoordinate[][] = this.getDataInPolarCoordinates();
     const cartesianCoordinates: CartesianCoordinate[][] = this.getCartesianCoordinatesFromPolarCoordinates(polarCoordinates);
 
+    const centerOffsetX = this.scaleX.invert(this.plotSize / 2 + this.state.margin);
+    const centerOffsetY = this.scaleY.invert(this.plotSize / 2 + this.state.margin);
+
     const starCoordinates: CartesianCoordinate[] = [];
     cartesianCoordinates.forEach(cartesianCoordinate => {
-      const x = cartesianCoordinate.reduce((sum, newValue) => sum + newValue.x, 0);
-      const y = cartesianCoordinate.reduce((sum, newValue) => sum + newValue.y, 0);
+      const x = cartesianCoordinate.reduce((sum, newValue) => sum + newValue.x, centerOffsetX);
+      const y = cartesianCoordinate.reduce((sum, newValue) => sum + newValue.y, centerOffsetY);
 
       starCoordinates.push({ x, y });
     });
@@ -153,54 +181,55 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
     return starCoordinates;
   }
 
-  private renderPoints() {
-    if (this.svg === null) {
-      return;
+  private getScaledCartesianCoordinatesForData(useNonSteeringData: boolean) {
+    const starCoordinates = this.getStarCoordinatesForData(useNonSteeringData);
+
+    const scaledStarCoordinates: ScaledCartesianCoordinate[] = [];
+    starCoordinates.forEach(datum => {
+      const px = this.scaleX(datum.x);
+      const py = this.scaleY(datum.y);
+
+      scaledStarCoordinates.push({ px, py });
+    });
+
+    return scaledStarCoordinates;
+  }
+
+  private renderPoints(useNonSteeringData: boolean = false) {
+    if (this.axesSvg === null) {
+      return [];
+    } else if (this.nonSteeringCanvas === null) {
+      return [];
     } else if (this.canvas === null) {
-      return;
+      return [];
+    } else if (!this.receivedNewData()) {
+      return [];
     }
 
-    const starCoordinates = this.getStarCoordinatesForData();
+    const scaledCartesianCoordinates = this.getScaledCartesianCoordinatesForData(useNonSteeringData);
 
-    // const container = this.svg.select("g.container");
-
-    // const points = container.append("g")
-    //   .attr("class", "points")
-    //   .attr("transform", `translate(${this.plotSize/2}, ${this.plotSize/2})`);
-
-    // render points using svg
-    // points.selectAll("circle.point").data(starCoordinates).enter().append("circle")
-    //   .attr("class", "point")
-    //   .attr("r", 5)
-    //   .attr("fill-opacity", 0.3)
-    //   .attr("cx", d => this.scaleX(d.x))
-    //   .attr("cy", d => this.scaleY(d.y));
-
-    const centerOffsetX = this.plotSize / 2 + this.state.margin;
-    const centerOffsetY = this.plotSize / 2 + this.state.margin;
-
-    const context: any = (this.canvas.node() as any).getContext("2d");
-
+    let context: any = (this.canvas.node() as any).getContext("2d");
     context.fillStyle = DEFAULT_POINT_COLOR;
     context.strokeStyle = DEFAULT_POINT_COLOR;
     context.lineWidth = DEFAULT_POINT_STROKE_WIDTH;
 
-    starCoordinates.forEach(datum => {
-      const px = this.scaleX(datum.x) + centerOffsetX;
-      const py = this.scaleY(datum.y) + centerOffsetY;
+    if (useNonSteeringData) {
+      context = (this.nonSteeringCanvas.node() as any).getContext("2d");
+      context.fillStyle = NON_STEERING_POINT_COLOR;
+      context.strokeStyle = NON_STEERING_POINT_COLOR;
+    }
 
+    scaledCartesianCoordinates.forEach((datum: ScaledCartesianCoordinate) => {
       context.beginPath();
-      context.arc(px, py, DEFAULT_POINT_RADIUS, 0, 2 * Math.PI, true);
+      context.arc(datum.px, datum.py, DEFAULT_POINT_RADIUS, 0, 2 * Math.PI, true);
       context.fill();
       context.closePath();
     });
+
+    return scaledCartesianCoordinates;
   }
 
-  private renderAxes() {
-    if (this.svg === null) {
-      return;
-    }
-
+  private getAxesDotPositions() {
     const radians = 2 * Math.PI / this.props.dimensions.length;
 
     const axesDotsPolar: PolarCoordinate[] = [];
@@ -219,11 +248,27 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
       axesDotsCartesian.push({ x, y });
     });
 
-    const container = this.svg.select("g.container");
+    return axesDotsCartesian;
+  }
+
+  private renderAxes(useNonSteeringData: boolean = false) {
+    if (this.axesSvg === null) {
+      return;
+    } else if (this.nonSteeringAxesSvg === null) {
+      return;
+    }
+
+    const axesDotsCartesian = this.getAxesDotPositions();
+
+    let container = this.axesSvg.select("g.container");
+
+    if (useNonSteeringData) {
+      container = this.nonSteeringAxesSvg.select("g.container");
+    }
 
     const axes = container.append("g").attr("class", "axes");
 
-    // enclosing circle
+    // enclosing background circle
     axes.append("circle")
       .attr("class", "outline")
       .attr("r", this.plotSize / 2)
@@ -257,32 +302,71 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
       .text((d, i) => this.props.dimensions[i]);
   }
 
+  private renderSteeringPoints() {
+    const scaledChunk = this.renderPoints(false);
+
+    this.steeringScreenPositions.push(...scaledChunk);
+  }
+
+  private renderNonSteeringPoints() {
+    const scaledChunk = this.renderPoints(true);
+
+    this.nonSteeringScreenPositions.push(...scaledChunk);
+  }
+
+  private updatePoints() {
+    this.renderSteeringPoints();
+    this.renderNonSteeringPoints();
+  }
+
   public render() {
-    this.renderPoints();
+    this.updatePoints();
+
+    const canvasWidth = this.getCanvasWidth();
+    const isNonSteeringCanvasVisible = this.props.showNonSteeringData ? 'visible' : 'hidden';
+
+    this.lastChunk = this.getLatestChunk();
 
     return (
-      <div className="starCoordinatesRenderer" style={ { width: this.props.width }}>
-        <canvas className="starCoordinateCanvas" width={ this.props.width / 2 } height={ this.props.height } />
-        <svg className="starCoordinateAxesCanvas" width={ this.props.width / 2 } height={ this.props.height }/>
+      <div className="starCoordinatesRenderer">
+        <div className="left" style={ { width: canvasWidth }}>
+          <canvas className="starCoordinateCanvas" width={ canvasWidth } height={ this.props.height } />
+          <svg className="starCoordinateAxesCanvas" width={ canvasWidth } height={ this.props.height }/>
+        </div>
+        <div className={`right ${isNonSteeringCanvasVisible}`} style={ { width: canvasWidth }}>
+          <canvas className="nonSteeringStarCoordinateCanvas" width={ canvasWidth } height={ this.props.height } />
+          <svg className="nonSteeringStarCoordinateAxesCanvas" width={ canvasWidth } height={ this.props.height }/>
+        </div>
       </div>
     );
   }
 
   public componentDidMount() {
     this.canvas = d3.select("canvas.starCoordinateCanvas");
-    this.svg = d3.select("svg.starCoordinateAxesCanvas");
+    this.nonSteeringCanvas = d3.select("canvas.nonSteeringStarCoordinateCanvas");
+    this.axesSvg = d3.select("svg.starCoordinateAxesCanvas");
+    this.nonSteeringAxesSvg = d3.select("svg.nonSteeringStarCoordinateAxesCanvas");
 
-    this.svg.append("g")
+    this.axesSvg.append("g")
       .attr("class", "container")
       .attr("transform", `translate(${this.state.margin}, ${this.state.margin})`);
+
+    this.nonSteeringAxesSvg.append("g")
+      .attr("class", "container")
+      .attr("transform", `translate(${this.state.margin}, ${this.state.margin})`);
+
+    this.updateScales();
+    this.renderAxes(true);
+    this.renderAxes(false);
 
     this.props.onBrushedRegion([[0, 0], [0, 0]]);
   }
 
   public componentDidUpdate(oldProps: Props) {
-    if (oldProps.dimensions.length === 0 && this.props.dimensions.length > 0) {
-      this.updateScales();
-      this.renderAxes();
-    }
+    // commented out, because dummy_dimensions are used to provide the data, and the db-server also encodes the
+    // if (oldProps.dimensions.length === 0 && this.props.dimensions.length > 0) {
+    //   this.updateScales();
+    //   this.renderAxes();
+    // }
   }
 }
