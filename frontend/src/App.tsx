@@ -7,8 +7,9 @@ import MapViewerRenderer, { POI } from './MapViewer';
 import DoubleSlider from './DoubleSlider';
 import EvaluationMetric from './EvaluationMetric';
 import { DEFAULT_EVALUATION_METRICS } from './EelBackendDummy';
-import './App.css';
 import StarCoordinateRenderer from './StarCoordinateRenderer';
+import DotRenderer from './DotRenderer';
+import './App.css';
 
 interface State {
   selectedPoints: any[],
