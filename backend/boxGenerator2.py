@@ -75,7 +75,7 @@ for i in range(0,boxnumber):
             diz_cases[testcaseID]=1
             t=boxData(eval("{'boxMinRange':"+str(xpos)+", 'boxMaxRange':"+str(xpos+width)+",'boxMinDistance':"+str(ypos)+", 'boxMaxDistance':"+str(ypos+height)+"}"))
             file.write("{'boxMinRange':"+str(xpos)+", 'boxMaxRange':"+str(xpos+width)+",'boxMinDistance':"+str(ypos)+", 'boxMaxDistance':"+str(ypos+height)+", 'tuples':"+str(t[0])+", 'tuplesF':"+str(t[1])+"}")                       
-            file.write("\n")
+            file.write(",\n")
             break 
 
 file.write("]")

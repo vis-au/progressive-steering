@@ -190,8 +190,7 @@ def testGenerator(tuplesOnly=False,userPref=c):
     
     testCases=[{'boxMinRange':9.66549631057861, 'boxMaxRange':10.525554901832592,'boxMinDistance':9.816079017004032, 'boxMaxDistance':11.386189204997185, 'tuples':0, 'tuplesF':0}]
 
-    
-    
+      
         
     testCases=[{'boxMinRange':15, 'boxMaxRange':30,'boxMinDistance':3, 'boxMaxDistance':12, 'tuples':5972},           #4742 abovemF float savings   
            {'boxMinRange':25, 'boxMaxRange':30,'boxMinDistance':0, 'boxMaxDistance':4,  'tuples':3320},
@@ -224,8 +223,8 @@ def testGenerator(tuplesOnly=False,userPref=c):
         boxMaxDistance=tc['boxMaxDistance']
         tuples=tc['tuples']
         
-        for minimumBoxItems in [50]:#[20,40,60,80]:
-            for chunkSize in [100]:#[50,100]: 
+        for minimumBoxItems in [20,40,60,80]:
+            for chunkSize in [50,100,150]: 
                 treeReady=False
                 for k in GT:
                     GT[k]=0
@@ -543,12 +542,12 @@ def distances():
             mind=DIZ_plotted[k]['dist2user']
     return mind,maxd    
 
-def loadConfig():
+def loadConfig(fileName):
     global floatSaving
     global testCases
     s=eval(open("DB_server_config.txt",encoding="UTF8").read())
     floatSaving=s['floatSaving']
-    testCases=eval(open("testCases.txt",encoding="UTF8").read()) 
+    testCases=eval(open(fileName,encoding="UTF8").read()) 
     print("Configuration loaded")
     print('floatSaving:',floatSaving)
     print("testCases loaded")
@@ -585,10 +584,10 @@ dp=eval(open('log_1_100_100_DIZ_Plotted_usingTree.txt','r',encoding="UTF8").read
 
 
 #############################################################################
-loadConfig()
+loadConfig("autoTestCases.txt")
 
 
-testCases=[{'boxMinRange':9.66549631057861, 'boxMaxRange':10.525554901832592,'boxMinDistance':9.816079017004032, 'boxMaxDistance':11.386189204997185, 'tuples':0, 'tuplesF':0}]
+#testCases=[{'boxMinRange':9.66549631057861, 'boxMaxRange':10.525554901832592,'boxMinDistance':9.816079017004032, 'boxMaxDistance':11.386189204997185, 'tuples':0, 'tuplesF':0}]
 
 
 if len(testCases[0])>0:
