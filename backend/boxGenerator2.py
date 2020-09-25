@@ -66,7 +66,10 @@ for i in range(0,boxnumber):
             height=rd.uniform(0.1,y_limit[1])
             if (height <= y_limit[1] - ypos):
                 break
-
+        t=boxData(eval("{'boxMinRange':"+str(xpos)+", 'boxMaxRange':"+str(xpos+width)+",'boxMinDistance':"+str(ypos)+", 'boxMaxDistance':"+str(ypos+height)+"}"))
+        if t[1]==0 or t[1]==0: #smarter filter needed 
+            print("skipping test case :",eval("{'boxMinRange':"+str(xpos)+", 'boxMaxRange':"+str(xpos+width)+",'boxMinDistance':"+str(ypos)+", 'boxMaxDistance':"+str(ypos+height)+"}"),t)
+            break
         testcaseID=str(xpos)+str(ypos)+str(width)+str(height)
         if testcaseID not in diz_cases.keys():
             diz_cases[testcaseID]=1
