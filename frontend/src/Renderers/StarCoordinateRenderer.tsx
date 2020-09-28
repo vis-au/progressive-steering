@@ -25,7 +25,8 @@ interface Props {
   // onNewNonSteeredPointsInSelection: (currentPoints: any[], allPoints?: any[]) => any,
 }
 interface State {
-  margin: number
+  margin: number,
+  selectedPoint: ScaledCartesianCoordinate | null;
 }
 
 const DEFAULT_POINT_RADIUS = 2;
@@ -65,7 +66,8 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
     this.nonSteeringScreenPositions = [];
 
     this.state = {
-      margin: 50
+      margin: 50,
+      selectedPoint: null
     };
 
     this.plotSize = this.props.height - this.state.margin * 2;
@@ -208,6 +210,14 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
     return scaledStarCoordinates;
   }
 
+  private showDetails(d: ScaledCartesianCoordinate) {
+    this.setState({ selectedPoint: d });
+  }
+
+  private hideDetails() {
+    this.setState({ selectedPoint: null });
+  }
+
   private renderPoints(useNonSteeringData: boolean = false) {
     if (this.axesSvg === null) {
       return [];
@@ -268,7 +278,9 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
         .classed("steered", !useNonSteeringData)
         .attr("cx", d => d.px)
         .attr("cy", d => d.py)
-        .attr("r", DEFAULT_POINT_RADIUS);
+        .attr("r", DEFAULT_POINT_RADIUS)
+        .on("mouseover", this.showDetails.bind(this))
+        .on("mouseleave", this.hideDetails.bind(this));
 
     points.transition().duration(250).attr("r", DEFAULT_POINT_RADIUS * 2);
   }
@@ -392,6 +404,29 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
     this.renderNonSteeringPoints();
   }
 
+  private renderDetailsPanel() {
+    if (this.state.selectedPoint === null) {
+      return null;
+    }
+
+    const datum: any = {};
+    this.props.dimensions.forEach((dim: string, i: number) => {
+      if (this.state.selectedPoint === null) {
+        return;
+      }
+
+      datum[dim] = this.scales[i](this.state.selectedPoint.values[dim]);
+    });
+
+    return (
+      <div className="detailsPanel" style={ { left: 10, top: 75 } }>
+        <pre>
+          { JSON.stringify(datum, null, 2) }
+        </pre>
+      </div>
+    );
+  }
+
   public render() {
     this.updatePoints();
 
@@ -403,6 +438,7 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
     return (
       <div className="starCoordinatesRenderer">
         { this.renderHeatmap(this.props.width / 2 - 1) }
+        { this.renderDetailsPanel() }
         <div className="left" style={ { width: canvasWidth }}>
           <canvas className="starCoordinateCanvas" width={ canvasWidth } height={ this.props.height } />
           <svg className="starCoordinateAxesCanvas" width={ canvasWidth } height={ this.props.height }/>

@@ -32,3 +32,10 @@ svg.recentNonSteeredStarPointsCanvas circle.recent-point {
 svg.recentNonSteeredStarPointsCanvas circle.recent-point.inside-selection {
   fill: #555;
 }
+
+div.detailsPanel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: #fff;
+}
