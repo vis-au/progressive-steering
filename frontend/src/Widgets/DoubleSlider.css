@@ -7,6 +7,10 @@
 
 .double-slider-container label {
   margin-right: 1rem;
+  max-width: 6rem;
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 g.histogram rect.bin {

@@ -24,6 +24,8 @@
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  max-width: 60%;
+  overflow-x: hidden;
 }
 .header .dimension-sliders .double-slider-container {
   margin: 0 1rem;

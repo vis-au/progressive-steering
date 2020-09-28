@@ -175,6 +175,10 @@ export class App extends Component<{}, State> {
   }
 
   private renderXYDimensionSelection() {
+    if (this.state.useStarCoordinates) {
+      return null;
+    }
+
     return (
       <div className="dimension-selection">
         { this.renderDimensionSelection(X_AXIS_SELECTOR, "x: ", this.dataAdapter.xDimension || "") }
@@ -203,9 +207,13 @@ export class App extends Component<{}, State> {
   }
 
   private renderDimensionSliders() {
+    const dims = this.state.useStarCoordinates
+      ? DUMMY_DIMENSIONS
+      : DUMMY_DIMENSIONS.slice(0,4);
+
     return (
       <div className="dimension-sliders">
-        { this.dataAdapter.dimensions.map(this.renderDimensionSlider.bind(this)) }
+        { dims.map(this.renderDimensionSlider.bind(this)) }
       </div>
     );
   }
@@ -462,8 +470,8 @@ export class App extends Component<{}, State> {
 
           <div className="right">
             <ProgressBar
-              label="items processed"
-              width={ 300 }
+              label="Progress"
+              width={ 200 }
               max={ this.dataAdapter.getTotalDataSize() }
               current={ this.dataAdapter.data.length }
             />
