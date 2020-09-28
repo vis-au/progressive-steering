@@ -133,7 +133,7 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
         const theta = i * radians;
 
         if (datum[dim] === undefined) {
-          polarCoordinate.push({ theta, r: 0 });
+          polarCoordinate.push({ theta, r: 0, values: datum });
           return;
         }
 
@@ -143,7 +143,7 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
           r = 0;
         }
 
-        const newPoint = { theta, r };
+        const newPoint: PolarCoordinate = { theta, r, values: datum };
         polarCoordinate.push(newPoint);
       });
 
@@ -164,7 +164,8 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
         const x = position.r * Math.cos(position.theta);
         const y = position.r * Math.sin(position.theta);
 
-        cartesianCoordinate.push({x, y, ...position });
+        const newPoint: CartesianCoordinate = { x, y, values: position.values };
+        cartesianCoordinate.push(newPoint);
       });
 
       cartesianCoordinates.push(cartesianCoordinate);
@@ -184,8 +185,9 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
     cartesianCoordinates.forEach(cartesianCoordinate => {
       const x = cartesianCoordinate.reduce((sum, newValue) => sum + newValue.x, centerOffsetX);
       const y = cartesianCoordinate.reduce((sum, newValue) => sum + newValue.y, centerOffsetY);
+      const newPoint = { x, y, values: cartesianCoordinate[0].values };
 
-      starCoordinates.push({ x, y });
+      starCoordinates.push(newPoint);
     });
 
     return starCoordinates;
@@ -199,7 +201,8 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
       const px = this.scaleX(datum.x);
       const py = this.scaleY(datum.y);
 
-      scaledStarCoordinates.push({ px, py });
+      const newPoint = { px, py, values: datum.values }
+      scaledStarCoordinates.push(newPoint);
     });
 
     return scaledStarCoordinates;

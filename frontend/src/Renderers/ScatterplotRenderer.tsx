@@ -558,7 +558,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       const px = this.scaleX(datum[dimX]);
       const py = this.scaleY(datum[dimY]);
 
-      scaledCoordinates.push({ px, py });
+      scaledCoordinates.push({ px, py, values: datum });
     });
 
     return scaledCoordinates;
