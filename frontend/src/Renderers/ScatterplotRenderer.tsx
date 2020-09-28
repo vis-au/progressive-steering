@@ -600,14 +600,14 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
   private renderNonSteeringPoints() {
     const scaledChunk = this.renderPoints(true);
-    this.renderInsideOutsidePoints(true);
+    this.renderInsideOutsidePoints(scaledChunk, true);
 
     this.nonSteeringScreenPositions.push(...scaledChunk);
   }
 
   private renderSteeringPoints() {
     const scaledChunk = this.renderPoints(false);
-    this.renderInsideOutsidePoints(false);
+    this.renderInsideOutsidePoints(scaledChunk, false);
 
     this.steeringScreenPositions.push(...scaledChunk);
   }
@@ -620,10 +620,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     }
   }
 
-  private renderInsideOutsidePoints(useNonSteeringData: boolean) {
-    if (this.props.dimensionX === null || this.props.dimensionY === null) {
-      return;
-    }
+  private renderInsideOutsidePoints(chunk: ScaledCartesianCoordinate[], useNonSteeringData: boolean) {
 
     // no need to update if the chunk has not changed
     if (!this.receivedNewData()) {
@@ -640,18 +637,15 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       return;
     }
 
-    const chunk = this.getLatestChunk(useNonSteeringData);
     const pointsInSelection = this.getNewPointsInCurrentSelection(chunk, useNonSteeringData);
-    const dimX = this.props.dimensionX;
-    const dimY = this.props.dimensionY;
 
     const points = canvas.selectAll("circle.recent-point").data(chunk)
       .join("circle")
         .attr("class", "recent-point")
         .classed("inside-selection", d => pointsInSelection.indexOf(d) > -1)
         .classed("steered", !useNonSteeringData)
-        .attr("cx", d => this.scaleX(d[dimX]))
-        .attr("cy", d => this.scaleY(d[dimY]))
+        .attr("cx", d => d.px)
+        .attr("cy", d => d.py)
         .attr("r", DEFAULT_POINT_RADIUS);
 
     points.transition().duration(250).attr("r", DEFAULT_POINT_RADIUS * 2);
