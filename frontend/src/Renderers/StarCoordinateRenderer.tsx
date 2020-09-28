@@ -1,9 +1,10 @@
 import * as React from 'react';
 import * as d3 from 'd3';
 
-import './StarCoordinateRenderer.css';
 import HeatMapRenderer from './HeatMapRenderer';
-import { CartesianCoordinate, PolarCoordinate, ScaledCartesianCoordinate } from './PointTypes';
+import { CartesianCoordinate, PolarCoordinate, ScaledCartesianCoordinate } from '../PointTypes';
+
+import './StarCoordinateRenderer.css';
 
 interface Props {
   width: number,

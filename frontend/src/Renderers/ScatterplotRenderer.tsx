@@ -1,11 +1,10 @@
 import React from 'react';
 import * as d3 from 'd3';
 
-import { ScenarioPreset, TrainingState } from './EelBridge';
 import HeatMapRenderer from './HeatMapRenderer';
-import { ScaledCartesianCoordinate } from './PointTypes';
+import { ScenarioPreset, TrainingState } from '../Data/EelBridge';
+import { ScaledCartesianCoordinate } from '../PointTypes';
 
-import "./DotRenderer.css";
 import "./ScatterplotRenderer.css";
 
 interface State {
@@ -45,11 +44,11 @@ const MIN_SELECTION_THRESHOLD = 0;
 const MAX_BRUSH_SCALE_FACTOR = 2;
 const SELECTION_INCREMENT = 0.05;
 
-export default class DotRenderer extends React.Component<Props, State> {
+export default class ScatterplotRenderer extends React.Component<Props, State> {
   private brush: any;
   private selection: any;
 
-  private axesSvg: d3.Selection<d3.BaseType, unknown, HTMLElement, any> | null;
+  private svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any> | null;
   private nonSteeringSVG: d3.Selection<d3.BaseType, unknown, HTMLElement, any> | null;
   private canvas: d3.Selection<d3.BaseType, unknown, HTMLElement, any> | null;
   private nonSteeringCanvas: d3.Selection<d3.BaseType, unknown, HTMLElement, any> | null;
@@ -76,7 +75,7 @@ export default class DotRenderer extends React.Component<Props, State> {
       .on("brush", this.onBrush.bind(this))
       .on("end", this.onBrushEnd.bind(this));
 
-    this.axesSvg = null;
+    this.svg = null;
     this.canvas = null;
     this.nonSteeringCanvas = null;
     this.nonSteeringSVG = null;
@@ -121,7 +120,7 @@ export default class DotRenderer extends React.Component<Props, State> {
   }
 
   private updateScales() {
-    if (this.axesSvg === null) {
+    if (this.svg === null) {
       return;
     }
 
@@ -130,7 +129,7 @@ export default class DotRenderer extends React.Component<Props, State> {
   }
 
   private updatePaddedBrushSize() {
-    if (this.axesSvg === null) {
+    if (this.svg === null) {
       return;
     } else if (!this.receivedNewData()) {
       return;
@@ -345,7 +344,7 @@ export default class DotRenderer extends React.Component<Props, State> {
   }
 
   private renderPresetSelection() {
-    if (this.axesSvg === null) {
+    if (this.svg === null) {
       return;
     }
     if (!this.props.presetSelection) {
@@ -363,7 +362,7 @@ export default class DotRenderer extends React.Component<Props, State> {
       return;
     }
 
-    this.axesSvg.select("g.brush")
+    this.svg.select("g.brush")
       .call(this.brush.move, preset);
 
     this.lastDrawnPreset = preset;
@@ -468,13 +467,13 @@ export default class DotRenderer extends React.Component<Props, State> {
   }
 
   private renderAxes(useNonSteeringData: boolean = false) {
-    if (this.axesSvg === null || this.nonSteeringSVG === null) {
+    if (this.svg === null || this.nonSteeringSVG === null) {
       return;
     }
 
     const svg = useNonSteeringData
       ? this.nonSteeringSVG
-      : this.axesSvg;
+      : this.svg;
 
     const xAxis = d3.axisTop(this.scaleX);
     const yAxis = d3.axisRight(this.scaleY);
@@ -658,6 +657,19 @@ export default class DotRenderer extends React.Component<Props, State> {
     points.transition().duration(250).attr("r", DEFAULT_POINT_RADIUS * 2);
   }
 
+  private renderDensityPlots() {
+    const pointsInBrushedRegions = this.state.brushedRegions
+      .map(d => this.getPointsInRegion(d))
+      .flat();
+
+    const canvas = d3.select("svg.densityCanvas");
+
+    canvas.selectAll("path.density-region").data(this.densityContourGenerator(pointsInBrushedRegions))
+      .join("path")
+        .attr("class", "density-region")
+        .attr("d", d3.geoPath());
+  }
+
   private renderHeatMap(canvasWidth: number) {
     if (this.props.showHeatMap) {
       return (
@@ -677,29 +689,12 @@ export default class DotRenderer extends React.Component<Props, State> {
     }
   }
 
-  private updateLeftPlot() {
-    // this.props.updateLeftPlot();
-  }
-
-  private updateRightPlot() {
-    // this.props.updateRightPlot();
-  }
-
-  private updateView() {
-    this.updateLeftPlot();
-
-    if (this.props.showNonSteeringData) {
-      this.updateRightPlot();
-    }
-  }
-
   public render() {
-    // this.updateScales();
-    // this.updateAxes();
-    // this.updatePoints();
-    // this.updateQuadtrees();
-    this.updateView();
-
+    this.updateScales();
+    this.updateAxes();
+    this.updatePoints();
+    this.updateQuadtrees();
+    // this.renderDensityPlots();
     this.renderPresetSelection();
     this.updatePaddedBrushSize();
 
@@ -733,12 +728,12 @@ export default class DotRenderer extends React.Component<Props, State> {
   }
 
   public componentDidMount() {
-    this.axesSvg = d3.select("svg.axisCanvas");
+    this.svg = d3.select("svg.axisCanvas");
     this.canvas = d3.select("canvas.scatterplotCanvas");
     this.nonSteeringCanvas = d3.select("canvas.nonSteeringCanvas");
     this.nonSteeringSVG = d3.select("svg.nonSteeringAxesCanvas");
 
-    this.axesSvg.append("g")
+    this.svg.append("g")
       .attr("class", "brush")
       .call(this.brush)
       //on a 1440 x900 pixel screen, Chrome full screen, only address bar visible
@@ -748,7 +743,7 @@ export default class DotRenderer extends React.Component<Props, State> {
       //.call(this.brush.move, [[920, 680], [1088, 1030]])   //32..37 0..5
       // .call(this.brush.move, [[100, 100], [200, 200]])
 
-    this.axesSvg.select("g.brush").append("text")
+    this.svg.select("g.brush").append("text")
       .attr("fill", "black")
       .attr("transform", "translate(0, 10)")
       .text("xdimension: 123, ydimension: 456");
@@ -756,7 +751,7 @@ export default class DotRenderer extends React.Component<Props, State> {
 
   public componentDidUpdate(prevProps: Props) {
     if (prevProps.showNonSteeringData !== this.props.showNonSteeringData) {
-      if (this.axesSvg === null) {
+      if (this.svg === null) {
         return;
       }
 
@@ -764,8 +759,8 @@ export default class DotRenderer extends React.Component<Props, State> {
 
       this.scaleX.range([0, canvasWidth]);
 
-      this.axesSvg.selectAll("g.brush").remove();
-      this.axesSvg.append("g")
+      this.svg.selectAll("g.brush").remove();
+      this.svg.append("g")
         .attr("class", "brush")
         .call(this.brush);
     }

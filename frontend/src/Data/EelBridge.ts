@@ -42,11 +42,12 @@ function serializeChunk(chunk: any) {
   const ids = Object.keys(chunk);
 
   ids.forEach(id => {
-    const datum: any = {};
+    // const datum: any = {};
 
-    DEFAULT_DIMENSIONS.forEach((dimension, i) => {
-      datum[dimension] = chunk[id].values[i];
-    });
+    // DEFAULT_DIMENSIONS.forEach((dimension, i) => {
+    //   datum[dimension] = chunk[id].values[i];
+    // });
+    const datum = { ...chunk[id].values };
 
     datum["Saving opportunity"] = chunk[id].aboveM.saving;
     datum["Distance"] = chunk[id].dist2user;

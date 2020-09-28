@@ -1,14 +1,15 @@
 import React, { Component } from 'react';
-import { eel, ScenarioPreset, ProgressionState } from './EelBridge';
-import { getEelDataAdapter, EelDataAdapter, getPOIs } from './DataAdapter';
-import ScatterplotRenderer from './ScatterplotRenderer';
-import ProgressBar from './ProgressBar';
-import MapViewerRenderer, { POI } from './MapViewer';
-import DoubleSlider from './DoubleSlider';
-import EvaluationMetric from './EvaluationMetric';
-import { DEFAULT_EVALUATION_METRICS } from './EelBackendDummy';
-import StarCoordinateRenderer from './StarCoordinateRenderer';
-import DotRenderer from './DotRenderer';
+
+import { eel, ScenarioPreset, ProgressionState } from './Data/EelBridge';
+import { DEFAULT_EVALUATION_METRICS } from './Data/EelBackendDummy';
+import { getEelDataAdapter, EelDataAdapter, getPOIs } from './Data/DataAdapter';
+import ScatterplotRenderer from './Renderers/ScatterplotRenderer';
+import StarCoordinateRenderer from './Renderers/StarCoordinateRenderer';
+import ProgressBar from './Widgets/ProgressBar';
+import MapViewerRenderer, { POI } from './Widgets/MapViewer';
+import DoubleSlider from './Widgets/DoubleSlider';
+import EvaluationMetric from './Widgets/EvaluationMetric';
+
 import './App.css';
 
 interface State {
@@ -19,12 +20,15 @@ interface State {
   showSideBySideView: boolean,
   selectedScenarioPreset: ScenarioPreset | null,
   stepsBeforePaddingGrows: number,
-  useStarCoordinates: boolean
+  useStarCoordinates: boolean,
+  includeDimensions: string[]
 }
 
 const X_AXIS_SELECTOR = "x-dimension";
 const Y_AXIS_SELECTOR = "y-dimension";
 const STEPS_BEFORE_PADDING_GROWS = 1;
+
+const DUMMY_DIMENSIONS = ["Saving opportunity", "cleaning_fee", "price", "accommodates", "Distance"];
 
 export class App extends Component<{}, State> {
   private dataAdapter: EelDataAdapter;
@@ -57,7 +61,8 @@ export class App extends Component<{}, State> {
       showSideBySideView: false,
       selectedScenarioPreset: null,
       stepsBeforePaddingGrows: STEPS_BEFORE_PADDING_GROWS,
-      useStarCoordinates: false
+      useStarCoordinates: false,
+      includeDimensions: []
     };
   }
 
@@ -370,8 +375,6 @@ export class App extends Component<{}, State> {
 
     const width = window.innerWidth - 1;
     const height = window.innerHeight - 85;
-
-    const DUMMY_DIMENSIONS = ["Saving opportunity", "price", "Distance"];
 
     if (this.state.useStarCoordinates) {
       const extents = DUMMY_DIMENSIONS.map(dim => {

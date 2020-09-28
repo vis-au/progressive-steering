@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as d3 from 'd3';
 
-import { TrainingState } from './EelBridge';
+import { TrainingState } from '../Data/EelBridge';
 
 import "./EvaluationMetric.css";
 
