@@ -15,7 +15,7 @@ global totalChunkNumber
 global totalInb  #number of points plotted in the user box till the actual chunk
 global userSelectionUpdated #new box
 global lastSelectedItems
-global X1,X2,Y1,Y2
+global X1, X2, Y1, Y2
 lastSelectedItems=[]
 
 global floatSaving
@@ -26,9 +26,9 @@ totalChunkNumber=0
 totalInb=0
 treeReady=False
 chunkSize=100
-modifier='True'
-queryAtt='*'
-USER_PW = 'password' # configure according to MySQL setup
+modifier="True"
+queryAtt="*"
+USER_PW = "password" # configure according to MySQL setup
 
 # enum of states for progression
 PROGRESSTION_STATES = {
@@ -50,7 +50,7 @@ global userMaxDistance
 userLat=48.85565
 userLon=2.365492
 userRange= [60, 90]
-c={'lat': 48.85565,'lon': 2.365492,'range': [60, 90],'day': '2020-04-31','MaxDistance':10+1} #user data for test
+c={"lat": 48.85565, "lon": 2.365492, "range": [60, 90], "day": "2020-04-31", "MaxDistance":10+1} #user data for test
 
 global mydb
 global DIZ_plotted #all plotted points
@@ -64,9 +64,9 @@ class FrontEndListener(Thread):
       self.name = name
    def run(self):
       while True:
-          print ("Thread '" + self.name + "' avviato")
+          print ("Thread "" + self.name + "" avviato")
           #time.sleep(self.durata)
-          print ("Thread '" + self.name + "' terminato")
+          print ("Thread "" + self.name + "" terminato")
 #------------Listener thread: will listen and execute the methods coming from frontend-------
 
 
@@ -74,11 +74,11 @@ class FrontEndListener(Thread):
 
 def sendChunk(chunk):
     eel.send_data_chunk(chunk)
-    #print('----------------------',len(chunk),chunk)
-    
+    #print("----------------------", len(chunk), chunk)
+
 def sendRandomChunk(chunk):
     eel.send_random_data_chunk(chunk)
-    #print('----------------------',len(chunk),chunk)
+    #print("----------------------", len(chunk), chunk)
 
 def distance(lat1, long1, lat2, long2):
     degrees_to_radians = math.pi/180.0
@@ -91,7 +91,7 @@ def distance(lat1, long1, lat2, long2):
     arc = math.acos( cos )
     return int(arc * 6371*1000)/1000
 
-def dbConnect(h,u,p,d):
+def dbConnect(h, u, p, d):
     global mydb
     mydb = mysql.connector.connect(
        host=h,
@@ -101,41 +101,41 @@ def dbConnect(h,u,p,d):
      )
     return mydb
 
-def aboveMinimum(bbId,actualPrice,lat,long,more,x45,x46): # the search is bound to a
+def aboveMinimum(bbId, actualPrice, lat, long, more, x45, x46): # the search is bound to a
     global floatSaving
     if floatSaving:
-        return {"neighborhood_min":5,"saving":x46,"alternativeId":100,"extraSteps":0.1,'vicini':100} #from Ground True abovemF
+        return {"neighborhood_min":5, "saving": x46, "alternativeId":100, "extraSteps":0.1, "vicini":100} #from Ground True abovemF
     else:
-        return {"neighborhood_min":5,"saving":x45,"alternativeId":100,"extraSteps":0.1,'vicini':100} #from Ground True abovem
+        return {"neighborhood_min":5, "saving": x45, "alternativeId":100, "extraSteps":0.1, "vicini":100} #from Ground True abovem
 
     mycursor = mydb.cursor()
-    qq=buildQuery(userLat,userLon,userRange,userDay,queryAtt,'True',chunkSize)
-    qq = "SELECT * FROM listings WHERE price>0 and price <="+str(userRange[1])+ " LIMIT 0,"+str(chunkSize)
+    qq=buildQuery(userLat, userLon, userRange, userDay, queryAtt, "True", chunkSize)
+    qq = "SELECT * FROM listings WHERE price>0 and price <="+str(userRange[1])+ " LIMIT 0, "+str(chunkSize)
     mycursor.execute(qq)
     myresult = mycursor.fetchall()
     minimo=actualPrice
     minimoX=(bbId,0)
     vicini=0
     for x in myresult:
-        if 0 < distance(userLat,userLon,x[10],x[11])-distance(userLat,userLon,lat,long)<=more:
+        if 0 < distance(userLat, userLon, x[10], x[11])-distance(userLat, userLon, lat, long)<=more:
             vicini+=1
-            minimo=min(minimo,x[16])
-            minimoX=(x[0],distance(userLat,userLon,x[10],x[11])-distance(userLat,userLon,lat,long))
-    return {"neighborhood_min":minimo,"saving":actualPrice-minimo,"alternativeId":minimoX[0],"extraSteps":minimoX[1],'vicini':vicini}
+            minimo=min(minimo, x[16])
+            minimoX=(x[0], distance(userLat, userLon, x[10], x[11])-distance(userLat, userLon, lat, long))
+    return {"neighborhood_min": minimo, "saving": actualPrice-minimo, "alternativeId": minimoX[0], "extraSteps": minimoX[1], "vicini": vicini}
 
-def buildQuery(userLat,userLon,userRange,userDay,att,modifier,chunkSize):
+def buildQuery(userLat, userLon, userRange, userDay, att, modifier, chunkSize):
     global LIMIT
     SELECT = "SELECT "+att+"  "
     FROM   = "FROM listings "
     WHERE  = "WHERE price >="+str(userRange[0])+" AND price <="+str(userRange[1])+"  AND listings.id NOT IN (SELECT id from plotted ) "
-    return SELECT+' '+FROM+' '+ WHERE + ' AND '+modifier+' LIMIT 0,'+str(chunkSize)
+    return SELECT+" "+FROM+" "+ WHERE + " AND "+modifier+" LIMIT 0, "+str(chunkSize)
 
 global actualChunk   #debug
 actualChunk={}
 global actualChunkRandom  #debug
 actualChunkRandom={}
 
-def feedTuples(query,chunkSize,minimumBoxItems=50):
+def feedTuples(query, chunkSize, minimumBoxItems=50):
     global modifier
     global DIZ_plotted
     global treeReady #it is used to interrupt the main chunking cycle
@@ -152,7 +152,7 @@ def feedTuples(query,chunkSize,minimumBoxItems=50):
 ######################## WAIT selection loop
 
 
-    def processResult(chunks,myresult,mycursor,state):
+    def processResult(chunks, myresult, mycursor, state):
          global modifier
          global DIZ_plotted
          global treeReady #it is used to interrupt the main chunking cycle
@@ -165,64 +165,119 @@ def feedTuples(query,chunkSize,minimumBoxItems=50):
          chunks+=1
          actualChunk={}
          for x in myresult:
-             #print('X40s****',x[40:],aboveMinimum(x[0],x[16],userLat,userLon,0.5),x[45])
-             mycursor.execute('INSERT INTO plotted (id) VALUES (' +str(x[0])+')')
+             #print("X40s****", x[40:], aboveMinimum(x[0], x[16], userLat, userLon,0.5), x[45])
+             mycursor.execute("INSERT INTO plotted (id) VALUES (" +str(x[0])+")")
              mydb.commit()
-             DIZ_plotted[x[0]]={'host_id':x[0],'state':state, 'zipcode':x[7], 'latitude':x[10],'longitude':x[11],'accommodates':x[12],'bathrooms':x[13],
-                                'bedrooms':x[14],'beds':x[15],'price':x[16],'cleaning_fee':x[18],'minimum_nights':x[21],'maximum_nights':x[22],
-                                'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.3,x[45],x[46]),
-                                'chunk':chunks,'inside':0}
-             actualChunk[x[0]]={'chunk':chunks,'state':state,'values':x, 'dist2user':distance(userLat,userLon,x[10],x[11]), 
-                                'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.3,x[45],x[46])}
+
+             DIZ_plotted[x[0]]={
+                "host_id": x[0],
+                "state": state,
+                "zipcode": x[7],
+                "latitude": x[10],
+                "longitude": x[11],
+                "accommodates": x[12],
+                "bathrooms": x[13],
+                "bedrooms": x[14],
+                "beds": x[15],
+                "price": x[16],
+                "cleaning_fee": x[18],
+                "minimum_nights": x[21],
+                "maximum_nights": x[22],
+                "dist2user": distance(userLat, userLon, x[10], x[11]),
+                "aboveM": aboveMinimum(x[0], x[16], userLat, userLon,0.3, x[45], x[46]),
+                "chunk": chunks,
+                "inside":0
+            }
+
+             actualChunk[x[0]]={
+                "chunk": chunks,
+                "state": state,
+                "values": DIZ_plotted[x[0]],
+                "dist2user": distance(userLat, userLon, x[10], x[11]),
+                "aboveM": aboveMinimum(x[0], x[16], userLat, userLon,0.3, x[45], x[46])
+            }
 
              eel.sleep(0.001)
+
          sendChunk(actualChunk)
          eel.sleep(0.04)
          inb=0
+
          for k in DIZ_plotted:
-             if DIZ_plotted [k]['inside']==1 and DIZ_plotted [k]['chunk']==chunks:
+             if DIZ_plotted [k]["inside"]==1 and DIZ_plotted [k]["chunk"]==chunks:
                  inb+=1
+
          totalInb+=inb
          #totalInb+=len(lastSelectedItems)
-         print('chunk:', chunks ,state,'Items in box:',totalInb, 'Precision:',inb/chunkSize, inb,distances())
-         eel.send_evaluation_metric({"name":"precision","value":inb/chunkSize})
-         eel.send_evaluation_metric({"name":"recall","value":totalInb})
+         print("chunk: ", chunks, state, "Items in box: ", totalInb, "Precision: ", inb/chunkSize, inb, distances())
+
+         eel.send_evaluation_metric({"name": "precision", "value": inb/chunkSize})
+         eel.send_evaluation_metric({"name": "recall", "value": totalInb})
+
          mycursor.execute(query)
          myresult = mycursor.fetchall()
          #pmodifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
-         #print('----------------------------potential modifier at chunk:',chunks,pmodifier)
-         return chunks,myresult,mycursor
-     
-    def processRandomResult(chunksRandom,myresultRandom,state):
+         #print("----------------------------potential modifier at chunk: ", chunks, pmodifier)
+         return chunks, myresult, mycursor
+
+    def processRandomResult(chunksRandom, myresultRandom, state):
          global actualChunkRandom
          global rightID
-         state='random_('+state+')'
+
+         state="random_("+state+")"
+
          actualChunkRandom={}
+
          for x in myresultRandom[chunksRandom*chunkSize:(chunksRandom+1)*chunkSize]:
-             actualChunkRandom[x[0]]={'chunk':chunks,'state':state,'values':x, 'dist2user':distance(userLat,userLon,x[10],x[11]), 'aboveM':aboveMinimum(x[0],x[16],userLat,userLon,0.3,x[45],x[46])}
-             eel.sleep(0.001)
+            actualChunkRandom[x[0]]={
+                "chunk": chunks,
+                "state": state,
+                "values": {
+                    "host_id": x[0],
+                    "state": state,
+                    "zipcode": x[7],
+                    "latitude": x[10],
+                    "longitude": x[11],
+                    "accommodates": x[12],
+                    "bathrooms": x[13],
+                    "bedrooms": x[14],
+                    "beds": x[15],
+                    "price": x[16],
+                    "cleaning_fee": x[18],
+                    "minimum_nights": x[21],
+                    "maximum_nights": x[22],
+                    "dist2user": distance(userLat, userLon, x[10], x[11]),
+                    "aboveM": aboveMinimum(x[0], x[16], userLat, userLon,0.3, x[45], x[46]),
+                    "chunk": chunks,
+                    "inside":0
+                },
+                "dist2user": distance(userLat, userLon, x[10], x[11]),
+                "aboveM": aboveMinimum(x[0], x[16], userLat, userLon, 0.3, x[45], x[46])
+            }
+            eel.sleep(0.001)
+
          sendRandomChunk(actualChunkRandom)
          #rightID=rightID.union(set(actualChunkRandom.keys()))
          eel.sleep(0.04)
-     
+
 
     while not userSelectionUpdated: #waiting for the first box
         eel.sleep(1)
     userSelectionUpdated=False
     # init database
-    mydb=dbConnect("localhost",'root', USER_PW,'airbnb')
+    mydb=dbConnect("localhost", "root", USER_PW, "airbnb")
     mycursor = mydb.cursor()
-    mycursor.execute('DELETE FROM plotted')
+    mycursor.execute("DELETE FROM plotted")
     mydb.commit()
     chunks=0
     mycursor.execute(query)
     myresult = mycursor.fetchall()
     if doubleSending: #compute the whole results
-        queryA=query.replace('AND True LIMIT 0,100','')
-        queryA=query[0:query.find('LIMIT')]
+        queryA=query.replace("AND True LIMIT 0,100", "")
+        queryA=query[0: query.find("LIMIT")]
         mycursor.execute(queryA)
         myresultRandom = mycursor.fetchall()
-        #print('query:',queryA,len(myresultA)) 
+        #print("query: ", queryA, len(myresultA))
 
 
     global leftID
@@ -230,84 +285,84 @@ def feedTuples(query,chunkSize,minimumBoxItems=50):
     leftID=set({})
     rightID=set({})
 ####################### COLLECTING DATA NO TREE °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
-    print('Entering LOOP1 - Query:',query,modifier)
-    print('c',c)
+    print("Entering LOOP1 - Query: ", query, modifier)
+    print("c", c)
     print(query)
     totalInb=0
-    state='collectingData' #'usingTree' 'flushing' 'empty'
+    state="collectingData" #"usingTree" "flushing" "empty"
     while len(myresult)>0 and (not treeReady or totalInb<minimumBoxItems or len(modifier)<=3):
         if progression_state == PROGRESSTION_STATES["paused"]:
             print("paused ...")
             eel.sleep(1)
         else:
-            chunks,myresult,mycursor=processResult(chunks,myresult,mycursor,state)
+            chunks, myresult, mycursor=processResult(chunks, myresult, mycursor, state)
             if doubleSending:
-                processRandomResult(chunks,myresultRandom,state)
-    print('uscito loop 1')#' treeready=',treeReady,'modifier=',modifier)
+                processRandomResult(chunks, myresultRandom, state)
+    print("uscito loop 1")#" treeready=", treeReady, "modifier=", modifier)
     totalChunkNumber=chunks
 ########################## USING TREE ∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞∞
-    state='usingTree'
-    #print(len(myresult)>0 and (not treeReady or totalInb<minimumBoxItems or len(modifier)<=3),totalInb)
-    #print(len(myresult)>0,treeReady,totalInb<minimumBoxItems, len(modifier)<=3)
+    state="usingTree"
+    #print(len(myresult)>0 and (not treeReady or totalInb<minimumBoxItems or len(modifier)<=3), totalInb)
+    #print(len(myresult)>0, treeReady, totalInb<minimumBoxItems, len(modifier)<=3)
     #pippo
-    query=buildQuery(userLat,userLon,userRange,userDay,queryAtt,modifier,chunkSize)
+    query=buildQuery(userLat, userLon, userRange, userDay, queryAtt, modifier, chunkSize)
     mycursor.execute(query)
     myresult = mycursor.fetchall()
-    print('Entering LOOP2 - Query:',query,len(myresult))
+    print("Entering LOOP2 - Query: ", query, len(myresult))
     while len(myresult)>0:
         if progression_state == PROGRESSTION_STATES["paused"]:
             print("paused ...")
             eel.sleep(1)
         else:
-            chunks,myresult,mycursor=processResult(chunks,myresult,mycursor,state)
+            chunks, myresult, mycursor=processResult(chunks, myresult, mycursor, state)
             if doubleSending:
-                processRandomResult(chunks,myresultRandom,state)
-    print('uscito loop 2 treeready=',treeReady,'modifier=',modifier)
+                processRandomResult(chunks, myresultRandom, state)
+    print("uscito loop 2 treeready=", treeReady, "modifier=", modifier)
     totalChunkNumber=chunks
 ######################### FLUSHING °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
-    state='flushing'
-    modifier='True'
-    query=buildQuery(userLat,userLon,userRange,userDay,queryAtt,modifier,chunkSize)
+    state="flushing"
+    modifier="True"
+    query=buildQuery(userLat, userLon, userRange, userDay, queryAtt, modifier, chunkSize)
     mycursor.execute(query)
     myresult = mycursor.fetchall()
-    #print('Entering LOOP3 - Query:',query,'Precision:',getPrecision(DIZ_plotted)/chunks)
+    #print("Entering LOOP3 - Query: ", query, "Precision: ", getPrecision(DIZ_plotted)/chunks)
     while len(myresult)>0:
         if progression_state == PROGRESSTION_STATES["paused"]:
             print("paused ...")
             eel.sleep(1)
         else:
-            chunks,myresult,mycursor=processResult(chunks,myresult,mycursor,state)
+            chunks, myresult, mycursor=processResult(chunks, myresult, mycursor, state)
             if doubleSending:
-                processRandomResult(chunks,myresultRandom,state)
-    print('uscito loop 3 treeready=')#,treeReady,'modifier=',modifier)
+                processRandomResult(chunks, myresultRandom, state)
+    print("uscito loop 3 treeready=")#, treeReady, "modifier=", modifier)
     totalChunkNumber=chunks
 #######################################################################################
 global testCases
-'''
-testCases=[{'boxMinRange':15, 'boxMaxRange':30,'boxMinDistance':3, 'boxMaxDistance':12, 'tuples':5972},              #4742 per float            
-           {'boxMinRange':25, 'boxMaxRange':30,'boxMinDistance':0, 'boxMaxDistance':4,  'tuples':3320},
-           {'boxMinRange':29, 'boxMaxRange':30,'boxMinDistance':1, 'boxMaxDistance':2,  'tuples':696},
-           {'boxMinRange':10, 'boxMaxRange':20,'boxMinDistance':0, 'boxMaxDistance':3,  'tuples':4580},
-           {'boxMinRange':1.2,   'boxMaxRange':50.15,'boxMinDistance':3.16, 'boxMaxDistance':3.9,  'tuples':2934},
-           {'boxMinRange':37.69, 'boxMaxRange':38.38,'boxMinDistance':1.78, 'boxMaxDistance':2.71, 'tuples':0},
-           {'boxMinRange':11.37, 'boxMaxRange':22.57,'boxMinDistance':5.71, 'boxMaxDistance':6.19, 'tuples':262}]
+"""
+testCases=[{"boxMinRange":15, "boxMaxRange":30, "boxMinDistance":3, "boxMaxDistance":12, "tuples":5972},              #4742 per float
+           {"boxMinRange":25, "boxMaxRange":30, "boxMinDistance":0, "boxMaxDistance":4,  "tuples":3320},
+           {"boxMinRange":29, "boxMaxRange":30, "boxMinDistance":1, "boxMaxDistance":2,  "tuples":696},
+           {"boxMinRange":10, "boxMaxRange":20, "boxMinDistance":0, "boxMaxDistance":3,  "tuples":4580},
+           {"boxMinRange":1.2,   "boxMaxRange":50.15, "boxMinDistance":3.16, "boxMaxDistance":3.9,  "tuples":2934},
+           {"boxMinRange":37.69, "boxMaxRange":38.38, "boxMinDistance":1.78, "boxMaxDistance":2.71, "tuples":0},
+           {"boxMinRange":11.37, "boxMaxRange":22.57, "boxMinDistance":5.71, "boxMaxDistance":6.19, "tuples":262}]
 
-testCases=eval(open("testCases.txt",encoding="UTF8").read()) 
-'''
+testCases=eval(open("testCases.txt", encoding="UTF8").read())
+"""
 
 @eel.expose
 def start():
-    sql=buildQuery(userLat,userLon,userRange,userDay,queryAtt,modifier,chunkSize)
-    eel.spawn(feedTuples(sql,chunkSize))
+    sql=buildQuery(userLat, userLon, userRange, userDay, queryAtt, modifier, chunkSize)
+    eel.spawn(feedTuples(sql, chunkSize))
 
 
-    
+
 
 def encodeTestCases(testCases):
     r={}
     for i in range(len(testCases)):
-        r['testcase'+str(i+1)]={'name':'case'+str(i+1)+'_'+str(testCases[i]['boxMinRange'])+'_'+str(testCases[i]['boxMaxRange'])+'_'+str(testCases[i]['boxMinDistance'])+'_'+str(testCases[i]['boxMaxDistance']),
-          'x_bounds':[testCases[i]['boxMinRange'],testCases[i]['boxMaxRange']],'y_bounds':[testCases[i]['boxMinDistance'],testCases[i]['boxMaxDistance']]}
+        r["testcase"+str(i+1)]={"name": "case"+str(i+1)+"_"+str(testCases[i]["boxMinRange"])+"_"+str(testCases[i]["boxMaxRange"])+"_"+str(testCases[i]["boxMinDistance"])+"_"+str(testCases[i]["boxMaxDistance"]),
+          "x_bounds":[testCases[i]["boxMinRange"], testCases[i]["boxMaxRange"]], "y_bounds":[testCases[i]["boxMinDistance"], testCases[i]["boxMaxDistance"]]}
     return r
 
 
@@ -315,10 +370,10 @@ def encodeTestCases(testCases):
 @eel.expose
 def get_use_cases():
     return encodeTestCases(testCases)
-    return {'testcase1':{'name':'case1_15_40_3_12','x_bounds' : [15,16], 'y_bounds':[3,12]},  #15, 40
-            'testcase2':{'name':'case2_35_40_0_4','x_bounds' : [35,40],  'y_bounds':[0,4]},
-            'testcase3':{'name':'case3_29_37_1_2','x_bounds' : [29,37],  'y_bounds':[1,2]},
-            'testcase4':{'name':'case4_32_37_0_5','x_bounds' : [32-0.1,37+0.1],  'y_bounds':[0,5]}
+    return {"testcase1":{"name": "case1_15_40_3_12", "x_bounds" : [15,16], "y_bounds":[3,12]},  #15, 40
+            "testcase2":{"name": "case2_35_40_0_4", "x_bounds" : [35,40],  "y_bounds":[0,4]},
+            "testcase3":{"name": "case3_29_37_1_2", "x_bounds" : [29,37],  "y_bounds":[1,2]},
+            "testcase4":{"name": "case4_32_37_0_5", "x_bounds" : [32-0.1,37+0.1],  "y_bounds":[0,5]}
             }
 
 @eel.expose
@@ -328,32 +383,40 @@ def send_to_backend_userData(x):
   global userRange
   global userDay
   global userMaxDistance
-  c={'lat': 48.85565,'lon': 2.365492,'range': [60, 90],'day': '2020-04-31','MaxDistance':10+1}
-  print("received user selection",c)
+  c={"lat": 48.85565, "lon": 2.365492, "range": [60, 90], "day": "2020-04-31", "MaxDistance":10+1}
+  print("received user selection", c)
 
-  userLat=x['lat']
-  userLon=x['lon']
-  userRange=x['moneyRange']
-  userDay=x['day']
-  userMaxDistance=x['userMaxDistance']
+  userLat=x["lat"]
+  userLon=x["lon"]
+  userRange=x["moneyRange"]
+  userDay=x["day"]
+  userMaxDistance=x["userMaxDistance"]
 
-  userLat=c['lat']
-  userLon=c['lon']
-  userRange=c['range']
-  userDay=c['day']
-  userMaxDistance=c['MaxDistance']
+  userLat=c["lat"]
+  userLon=c["lon"]
+  userRange=c["range"]
+  userDay=c["day"]
+  userMaxDistance=c["MaxDistance"]
 
   # send parameters to frontend before sending data
   eel.send_city("Paris")
   eel.set_x_name("Saving opportunity")
   eel.set_y_name("Distance")
   eel.send_dimension_total_extent({"name": "Saving opportunity", "min": -1, "max": 2+userRange[1]-userRange[0]})
-  eel.send_dimension_total_extent({"name": "Distance", "min": 0, "max": 13})
+  eel.send_dimension_total_extent({"name": "Distance", "min": 0, "max": 10})
+  eel.send_dimension_total_extent({"name": "price", "min": 50, "max": 95})
+  eel.send_dimension_total_extent({"name": "cleaning_fee", "min": 0, "max": 325})
+  eel.send_dimension_total_extent({"name": "bedrooms", "min": 0, "max": 4})
+  eel.send_dimension_total_extent({"name": "bathrooms", "min": 0, "max": 4})
+  eel.send_dimension_total_extent({"name": "beds", "min": 0, "max": 5})
+  eel.send_dimension_total_extent({"name": "accommodates", "min": 0, "max": 5})
+  eel.send_dimension_total_extent({"name": "longitude", "min": 2.2, "max": 2.5})
+  eel.send_dimension_total_extent({"name": "latitude", "min": 48.8, "max": 49})
 
   #eel.set_min_selection_size({"name": "Saving opportunity", "min": 0, "max": x["moneyRange"][1]-["moneyRange"][0]})
 
-  sql=buildQuery(userLat,userLon,userRange,userDay,queryAtt,modifier,chunkSize)
-  eel.spawn(feedTuples(sql,chunkSize))
+  sql=buildQuery(userLat, userLon, userRange, userDay, queryAtt, modifier, chunkSize)
+  eel.spawn(feedTuples(sql, chunkSize))
   #eel.spawn(my_other_thread())
   #feedTuples(sql,10)
 
@@ -365,26 +428,25 @@ def send_user_selection(selected_items):
     global modifier
     global treeReady
     global IN
-    
+
     for e in selected_items.copy():
-        if DIZ_plotted[e]['dist2user']>=Y1 and DIZ_plotted[e]['dist2user']<=Y2 and DIZ_plotted[e]['aboveM']['saving']>=X1 and DIZ_plotted[e]['aboveM']['saving']<=X2:
+        if DIZ_plotted[e]["dist2user"]>=Y1 and DIZ_plotted[e]["dist2user"]<=Y2 and DIZ_plotted[e]["aboveM"]["saving"]>=X1 and DIZ_plotted[e]["aboveM"]["saving"]<=X2:
             pass
         else:
             selected_items.remove(e)
-            
+
     if len(selected_items)==0:
-        #print('Ignoring empty selection')
         return(0)
         lastSelectedItems=[]
 
 
     lastSelectedItems=selected_items.copy()
-    print("new",len(selected_items),"items received...",selected_items)
+    print("new", len(selected_items), "items received...", selected_items)
     for k in selected_items:
-        #print('k=',k)
-        DIZ_plotted[k]['inside']=1
+        #print("k=", k)
+        DIZ_plotted[k]["inside"]=1
     IN.extend(selected_items)
-    #print("new selected items received",selected_items)
+    #print("new selected items received", selected_items)
 
 
     eel.sleep(0.01)
@@ -393,31 +455,31 @@ def send_user_selection(selected_items):
         modifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
         if len(modifier)>3:
             treeReady=True
-            #print('New modifier:',modifier)
+            #print("New modifier: ", modifier)
         else:
-            #print('Wrong empty modifier:',modifier)
-            modifier='True'
+            #print("Wrong empty modifier: ", modifier)
+            modifier="True"
     return modifier
 
 @eel.expose
 def send_selection_bounds(x_bounds, y_bounds):
-    global X1,X2,Y1,Y2
+    global X1, X2, Y1, Y2
     global totalInb
     global DIZ_plotted
     global userSelectionUpdated
     global lastSelectedItems
 
-    print("new selected region received bounds",x_bounds, y_bounds)
-    X1=x_bounds['xMin']
-    X2=y_bounds['yMin']
-    Y1=y_bounds['yMax']
-    Y2=x_bounds['xMax']
+    print("new selected region received bounds", x_bounds, y_bounds)
+    X1=x_bounds["xMin"]
+    X2=y_bounds["yMin"]
+    Y1=y_bounds["yMax"]
+    Y2=x_bounds["xMax"]
 
     totalInb=0
     for k in DIZ_plotted:
-        DIZ_plotted[k]['inside']=0
+        DIZ_plotted[k]["inside"]=0
         if k in lastSelectedItems:
-            DIZ_plotted[k]['inside']=1
+            DIZ_plotted[k]["inside"]=1
             totalInb+=1
 
     userSelectionUpdated=True
@@ -427,7 +489,7 @@ def send_selection_bounds(x_bounds, y_bounds):
 def send_selection_bounds_values(x_bounds_val, y_bounds_val):
     global totalInb
     global DIZ_plotted
-    print("new selected region received_pixel",x_bounds_val, y_bounds_val)
+    print("new selected region received_pixel", x_bounds_val, y_bounds_val)
     return x_bounds_val, y_bounds_val
 
 @eel.expose
@@ -450,42 +512,42 @@ def send_progression_state(state):
     print("new progression state", progression_state)
 
 def boxData(testCase):
-    mydb=dbConnect("localhost",'root', USER_PW,'airbnb')
+    mydb=dbConnect("localhost", "root", USER_PW, "airbnb")
     mycursor = mydb.cursor()
     global userRange
-    mycursor = mydb.cursor() 
-    qq = str("SELECT * FROM listings WHERE price>="+str(userRange[0])+" and price <=" +str(userRange[1])+" and abovemF<="+str(testCase['boxMaxRange'])+
-             " and abovemF>="+str(testCase['boxMinRange']) +" and distance>="+str(testCase['boxMinDistance'])+" and distance<="+str(testCase['boxMaxDistance']))
+    mycursor = mydb.cursor()
+    qq = str("SELECT * FROM listings WHERE price>="+str(userRange[0])+" and price <=" +str(userRange[1])+" and abovemF<="+str(testCase["boxMaxRange"])+
+             " and abovemF>="+str(testCase["boxMinRange"]) +" and distance>="+str(testCase["boxMinDistance"])+" and distance<="+str(testCase["boxMaxDistance"]))
     mycursor.execute(qq)
     myresult = mycursor.fetchall()
     tuplesF=len(myresult)
-    
-    qq = str("SELECT * FROM listings WHERE price>="+str(userRange[0])+" and price <=" +str(userRange[1])+" and abovem<="+str(testCase['boxMaxRange'])+
-             " and abovem>="+str(testCase['boxMinRange']) +" and distance>="+str(testCase['boxMinDistance'])+" and distance<="+str(testCase['boxMaxDistance']))
+
+    qq = str("SELECT * FROM listings WHERE price>="+str(userRange[0])+" and price <=" +str(userRange[1])+" and abovem<="+str(testCase["boxMaxRange"])+
+             " and abovem>="+str(testCase["boxMinRange"]) +" and distance>="+str(testCase["boxMinDistance"])+" and distance<="+str(testCase["boxMaxDistance"]))
     mycursor.execute(qq)
     myresult = mycursor.fetchall()
-    tuples=len(myresult)    
+    tuples=len(myresult)
     mydb.close()
-    return tuples,tuplesF
+    return tuples, tuplesF
 
 def loadConfig():
     global floatSaving
     global testCases
-    s=eval(open("DB_server_config.txt",encoding="UTF8").read())
-    floatSaving=s['floatSaving']
-    testCases=eval(open("testCases.txt",encoding="UTF8").read()) 
+    s=eval(open("DB_server_config.txt", encoding="UTF8").read())
+    floatSaving=s["floatSaving"]
+    testCases=eval(open("testCases.txt", encoding="UTF8").read())
     print("Configuration loaded")
-    print('floatSaving:',floatSaving)
+    print("floatSaving: ", floatSaving)
     print("testCases loaded")
     for i in range(len(testCases)):
         t=boxData(testCases[i])
-        testCases[i]['tuples']=t[0]
-        testCases[i]['tuplesF']=t[1]
-        print(i+1,testCases[i]) 
-    f=open("testCases.txt",'w',encoding="UTF8") 
-    print(str(testCases).replace('{','\n{'),file=f)
+        testCases[i]["tuples"]=t[0]
+        testCases[i]["tuplesF"]=t[1]
+        print(i+1, testCases[i])
+    f=open("testCases.txt", "w", encoding="UTF8")
+    print(str(testCases).replace("{", "\n{"), file=f)
     f.close()
-    
+
 
 
 def start_eel(develop):
@@ -494,38 +556,38 @@ def start_eel(develop):
     print(develop)
 
     if develop:
-        directory = '../frontend/src'
+        directory = "../frontend/src"
         app = None
-        page = {'port': 3000}
+        page = {"port": 3000}
     else:
-        directory = 'build'
-        app = 'chrome-app'
-        page = 'index.html'
+        directory = "build"
+        app = "chrome-app"
+        page = "index.html"
 
 
-    eel.init(directory, ['.tsx', '.ts', '.jsx', '.js', '.html'])
+    eel.init(directory, [".tsx", ".ts", ".jsx", ".js", ".html"])
 
-    print('Backend launched successfully. Waiting for requests ...')
+    print("Backend launched successfully. Waiting for requests ...")
 
-    # These will be queued until the first connection is made, but won't be repeated on a page reload
-    #eel.say_hello_js('Python World!')   # Call a JavaScript function (must be after `eel.init()`)
+    # These will be queued until the first connection is made, but won"t be repeated on a page reload
+    #eel.say_hello_js("Python World!")   # Call a JavaScript function (must be after `eel.init()`)
 
     eel_kwargs = dict(
-        host='localhost',
+        host="localhost",
         port=8080,
         size=(1280, 800),
     )
     try:
         eel.start(page, mode=None, **eel_kwargs)
     except EnvironmentError:
-        # If Chrome isn't found, fallback to Microsoft Edge on Win10 or greater
-        if sys.platform in ['win32', 'win64'] and int(platform.release()) >= 10:
-            eel.start(page, mode='edge', **eel_kwargs)
+        # If Chrome isn"t found, fallback to Microsoft Edge on Win10 or greater
+        if sys.platform in ["win32", "win64"] and int(platform.release()) >= 10:
+            eel.start(page, mode="edge", **eel_kwargs)
         else:
             raise
 
     #while True:
-    #    print("I'm a main loop")
+    #    print("I"m a main loop")
     #    eel.sleep(1.0)
 def obtainTuples(arrayID):
     result=[]
@@ -541,7 +603,7 @@ def my_other_thread():
 def insideUserBox():
     tot=0
     for k in DIZ_plotted:
-        if DIZ_plotted[k]['inside']==1:
+        if DIZ_plotted[k]["inside"]==1:
             tot+=1
     return tot
 
@@ -550,16 +612,16 @@ def distances():
     mind=100
     maxd=0
     for k in DIZ_plotted:
-        if DIZ_plotted[k]['dist2user']>maxd and DIZ_plotted[k]['inside']==1:
-            maxd=DIZ_plotted[k]['dist2user']
-        if DIZ_plotted[k]['dist2user']<mind and DIZ_plotted[k]['inside']==1:
-            mind=DIZ_plotted[k]['dist2user']
-    return mind,maxd
+        if DIZ_plotted[k]["dist2user"]>maxd and DIZ_plotted[k]["inside"]==1:
+            maxd=DIZ_plotted[k]["dist2user"]
+        if DIZ_plotted[k]["dist2user"]<mind and DIZ_plotted[k]["inside"]==1:
+            mind=DIZ_plotted[k]["dist2user"]
+    return mind, maxd
 
 def numberOfPlottedPoints(chunks):
     inb=0
     for k in DIZ_plotted:
-        if DIZ_plotted [k]['inside']==1 and DIZ_plotted [k]['chunk']==chunks:
+        if DIZ_plotted [k]["inside"]==1 and DIZ_plotted [k]["chunk"]==chunks:
             inb+=1
     return inb
 
@@ -568,13 +630,13 @@ def history():
     for chunks in range(1, totalChunkNumber):
         inb=0
         for k in DIZ_plotted:
-            if DIZ_plotted [k]['inside']==1 and DIZ_plotted [k]['chunk']==chunks:
+            if DIZ_plotted [k]["inside"]==1 and DIZ_plotted [k]["chunk"]==chunks:
                 inb+=1
         totalInbox+=inb
-        print('Chunk: ',chunks ,'Items in box:',totalInbox, 'Precision:',inb/chunkSize, totalInbox)
+        print("Chunk: ", chunks, "Items in box: ", totalInbox, "Precision: ", inb/chunkSize, totalInbox)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
     loadConfig()
 
