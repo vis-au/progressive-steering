@@ -97,6 +97,10 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
       : this.props.width;
   }
 
+  private getNewPointsInCurrentSelection(newPoints: any[], useNonSteeringData: boolean = false): any[] {
+    return [];
+  }
+
   private receivedNewData() {
     const chunk = this.getLatestChunk()
 
@@ -235,6 +239,37 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
     return scaledCartesianCoordinates;
   }
 
+  private renderInsideOutsidePoints(chunk: ScaledCartesianCoordinate[], useNonSteeringData: boolean) {
+
+    // no need to update if the chunk has not changed
+    if (!this.receivedNewData()) {
+      return;
+    }
+
+    const canvas = useNonSteeringData
+      ? d3.select("svg.recentNonSteeredStarPointsCanvas")
+      : d3.select("svg.recentStarPointsCanvas");
+
+    canvas.selectAll("circle.recent-point").remove();
+
+    if (!this.props.highlightLastChunk) {
+      return;
+    }
+
+    const pointsInSelection = this.getNewPointsInCurrentSelection(chunk, useNonSteeringData);
+
+    const points = canvas.selectAll("circle.recent-point").data(chunk)
+      .join("circle")
+        .attr("class", "recent-point")
+        .classed("inside-selection", d => pointsInSelection.indexOf(d) > -1)
+        .classed("steered", !useNonSteeringData)
+        .attr("cx", d => d.px)
+        .attr("cy", d => d.py)
+        .attr("r", DEFAULT_POINT_RADIUS);
+
+    points.transition().duration(250).attr("r", DEFAULT_POINT_RADIUS * 2);
+  }
+
   private getAxesDotPositions() {
     const radians = 2 * Math.PI / this.props.dimensions.length;
 
@@ -310,12 +345,14 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
 
   private renderSteeringPoints() {
     const scaledChunk = this.renderPoints(false);
+    this.renderInsideOutsidePoints(scaledChunk, false);
 
     this.steeringScreenPositions.push(...scaledChunk);
   }
 
   private renderNonSteeringPoints() {
     const scaledChunk = this.renderPoints(true);
+    this.renderInsideOutsidePoints(scaledChunk, true);
 
     this.nonSteeringScreenPositions.push(...scaledChunk);
   }
@@ -366,10 +403,12 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
         <div className="left" style={ { width: canvasWidth }}>
           <canvas className="starCoordinateCanvas" width={ canvasWidth } height={ this.props.height } />
           <svg className="starCoordinateAxesCanvas" width={ canvasWidth } height={ this.props.height }/>
+          <svg className="recentStarPointsCanvas" width={ canvasWidth } height={ this.props.height } />
         </div>
         <div className={`right ${isNonSteeringCanvasVisible}`} style={ { width: canvasWidth }}>
           <canvas className="nonSteeringStarCoordinateCanvas" width={ canvasWidth } height={ this.props.height } />
           <svg className="nonSteeringStarCoordinateAxesCanvas" width={ canvasWidth } height={ this.props.height }/>
+          <svg className="recentNonSteeredStarPointsCanvas" width={ canvasWidth } height={ this.props.height } />
         </div>
       </div>
     );

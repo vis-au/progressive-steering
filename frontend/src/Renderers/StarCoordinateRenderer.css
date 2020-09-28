@@ -2,12 +2,33 @@ div.starCoordinatesRenderer {
   font-family: 'Roboto', sans-serif;
 }
 canvas.starCoordinateCanvas,
-svg.starCoordinateAxesCanvas {
+svg.starCoordinateAxesCanvas,
+svg.recentStarPointsCanvas {
   position: absolute;
   left: 0;
 }
 canvas.nonSteeringStarCoordinateCanvas,
-svg.nonSteeringStarCoordinateAxesCanvas {
+svg.nonSteeringStarCoordinateAxesCanvas,
+svg.recentNonSteeredStarPointsCanvas {
   position: absolute;
   right: 0;
+}
+
+svg.recentStarPointsCanvas circle.recent-point {
+  fill: white;
+  stroke: steelblue;
+  stroke-width: 2px;
+}
+svg.recentStarPointsCanvas circle.recent-point.inside-selection {
+  fill: steelblue;
+}
+
+svg.recentNonSteeredStarPointsCanvas circle.recent-point {
+  fill: white;
+  stroke: #555;
+  stroke-width: 2px;
+}
+
+svg.recentNonSteeredStarPointsCanvas circle.recent-point.inside-selection {
+  fill: #555;
 }
