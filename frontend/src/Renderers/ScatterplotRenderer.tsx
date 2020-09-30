@@ -637,12 +637,12 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       return;
     }
 
-    const pointsInSelection = this.getNewPointsInCurrentSelection(chunk, useNonSteeringData);
+    const pointsInSelection = this.getNewPointsInCurrentSelection(chunk.map(d => d.values), useNonSteeringData);
 
     const points = canvas.selectAll("circle.recent-point").data(chunk)
       .join("circle")
         .attr("class", "recent-point")
-        .classed("inside-selection", d => pointsInSelection.indexOf(d) > -1)
+        .classed("inside-selection", d => pointsInSelection.indexOf(d.values) > -1)
         .classed("steered", !useNonSteeringData)
         .attr("cx", d => d.px)
         .attr("cy", d => d.py)
