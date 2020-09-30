@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Scatterplot d3v4</title>
+	<style type="text/css">
+		body{
+			margin: 0;
+			font-family: arial, sans;
+		}
+		
+		#scatterplot{
+			width: 64%;
+			min-width: 64%;
+			float: left;
+			height: 400px;
+			min-height: 400px;
+		}
+
+		.label{
+			font-size: 15px;
+		}
+
+		.legend text,
+		.axis text {
+			font-size: 13px;
+			fill: #333;
+		}
+
+		.axis path,
+		.axis line{
+			fill: none;
+			stroke-width: 1px;
+			stroke: #777;
+		}
+
+		.circle{
+			fill-opacity: 0.65;
+		}
+
+		.bubble{
+			opacity: 1;
+			transition: opacity 0.3s;
+		}
+
+		.bubble:hover text{
+			opacity: 1;
+		}
+
+		.bubble:hover circle{
+			fill-opacity: 1;
+		}
+
+		.legend rect{
+			fill-opacity: 0.75;
+		}
+
+		.legeng:hover rect{
+			fill-opacity:1;
+		}
+		
+		div.tooltip {
+  			position: absolute;
+  			text-align: center;
+  			width: 375px;
+  			height: 100px;
+  			padding: 2px;
+  			font: 12px sans-serif;
+  			background: lightsteelblue;
+  			border: 0px;
+  			border-radius: 8px;
+		}
+		
+		#box-menu{
+			margin-top:2%;
+			width: 36%;
+			min-width: 36%;
+			height: 400px;
+			min-height: 400px;
+			float: left;
+			background: yellow;
+		}
+		
+		#box-representation{
+			width: 64%;
+			min-width: 64%;
+			height: 300px;
+			min-height: 300px;
+			float: left;
+		}
+		
+		
+	</style>
+	<script type="text/javascript" src="d3/d3.min.js"></script>
+</head>
+<body>
+<div id="scatterplot">
+</div>
+<div id="box-menu">
+</div>
+<div id="box-representation">
+</div>
+<script type="text/javascript">
+	var margin = {top: 30, right: 50, bottom: 40, left:40};
+	var width = 930 - margin.left - margin.right;
+	var height = 400 - margin.top - margin.bottom;
+
+	var div = d3.select("#scatterplot").append("div")
+    			.attr("class", "tooltip")
+    			.style("opacity", 0);
+
+	var svg = d3.select('#scatterplot')
+		.append('svg')
+		.attr('width', width + margin.left + margin.right)
+		.attr('height', height + margin.top + margin.bottom)
+	.append('g')
+		.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+
+	//global scales for drawboxes
+	var dbwidth = 930 - margin.left - margin.right;
+	var dbheight = 300 - margin.top - margin.bottom;
+	
+	
+	var xBoxScale = d3.scaleLinear()
+		.range([0, dbwidth]);
+
+	var yBoxScale = d3.scaleLinear()
+		.range([dbheight, 0]);
+		
+	var xBoxAxis = d3.axisBottom()
+		.scale(xBoxScale);
+
+	var yBoxAxis = d3.axisLeft()
+		.scale(yBoxScale);
+		
+	xBoxScale.domain([0,90]).nice();
+
+	yBoxScale.domain([0,12]).nice();
+
+	// The API for scales have changed in v4. There is a separate module d3-scale which can be used instead. The main change here is instead of d3.scale.linear, we have d3.scaleLinear.
+	var xScale = d3.scaleLinear()
+		.range([0, width]);
+
+	var yScale = d3.scaleLinear()
+		.range([height, 0]);
+
+	// square root scale.
+	var radius = d3.scaleSqrt()
+		.range([2,5]);
+
+	// the axes are much cleaner and easier now. No need to rotate and orient the axis, just call axisBottom, axisLeft etc.
+	var xAxis = d3.axisBottom()
+		.scale(xScale);
+
+	var yAxis = d3.axisLeft()
+		.scale(yScale);
+
+	// again scaleOrdinal
+	var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+	d3.csv('completeLog.csv').then(function(data){
+		console.log(data)
+		data.forEach(function(d){
+			 d["tree-iterations"] = +d["tree-iterations"];
+			 d.recall = +d.recall;
+			 d["average-precision"]= +d["average-precision"];
+			 d.Species = d.Type;
+		});
+
+		xScale.domain(d3.extent(data, function(d){
+			return d["tree-iterations"];
+		})).nice();
+
+		yScale.domain(d3.extent(data, function(d){
+			return d.recall;
+		})).nice();
+
+		radius.domain(d3.extent(data, function(d){
+			return d["average-precision"];
+		})).nice();
+		
+		d3.json('testcases.json').then(function(boxes){
+		
+		drawTableBoxes(boxes);
+		drawBoxes(boxes);
+		
+		console.log(boxes)
+
+		// adding axes is also simpler now, just translate x-axis to (0,height) and it's alread defined to be a bottom axis. 
+		svg.append('g')
+			.attr('transform', 'translate(0,' + height + ')')
+			.attr('class', 'x axis')
+			.call(xAxis);
+
+		// y-axis is translated to (0,0)
+		svg.append('g')
+			.attr('transform', 'translate(0,0)')
+			.attr('class', 'y axis')
+			.call(yAxis);
+
+
+		var bubble = svg.selectAll('.bubble')
+			.data(data)
+			.enter().append('circle')
+			.attr('class', 'bubble')
+			.attr('cx', function(d){return xScale(d["tree-iterations"]);})
+			.attr('cy', function(d){ return yScale(d.recall); })
+			.attr('r', function(d){ return radius(d["average-precision"]); })
+			.style('fill', function(d){ return color(d.Species); })
+			.on("mouseover", function(event, d) {
+       			div.transition()
+         			.duration(200)
+         			.style("opacity", .9);
+       			div .html(
+         			'<b>Name: </b>' + d.Name +"<br/>"+ // The first <a> tag
+         			'<b>Type: </b>' + d.Type +"<br/>"+ 
+         			'<b>Collecting Iterations: </b>' + d["collecting-iterations"] +"<br/>"+
+         			'<b>Tree Iterations: </b>' + d["tree-iterations"] +"<br/>"+
+         			'<b>Average Precision: </b>' + d["average-precision"] +"<br/>"+
+         			'<b>Recall: </b>' + d.recall +"<br/>") 
+         			.style("left", (event.pageX) + 20 + "px")             
+         			.style("top", (event.pageY - 28) + "px");
+       		})
+       		.on("mouseout", function(event, d){
+       			div.transition()
+         			.duration(200)
+         			.style("opacity", 0.0);
+       		
+       		})
+			
+
+		bubble.append('title')
+			.attr('x', function(d){ return radius(d["average-precision"]); })
+			.text(function(d){
+				return d.Species;
+			});
+
+		// adding label. For x-axis, it's at (10, 10), and for y-axis at (width, height-10).
+		svg.append('text')
+			.attr('x', 10)
+			.attr('y', 10)
+			.attr('class', 'label')
+			.text('Recall');
+
+
+		svg.append('text')
+			.attr('x', width)
+			.attr('y', height - 10)
+			.attr('text-anchor', 'end')
+			.attr('class', 'label')
+			.text('Tree Iterations');
+
+		// I feel I understand legends much better now.
+		// define a group element for each color i, and translate it to (0, i * 20). 
+		var legend = svg.selectAll('legend')
+			.data(color.domain())
+			.enter().append('g')
+			.attr('class', 'legend')
+			.attr('id',function(d){ return d; })
+			.attr('transform', function(d,i){ return 'translate(0,' + i * 20 + ')'; });
+
+		// give x value equal to the legend elements. 
+		// no need to define a function for fill, this is automatically fill by color.
+		legend.append('rect')
+			.attr('x', width)
+			.attr('width', 18)
+			.attr('height', 18)
+			.style('fill', color);
+
+		// add text to the legend elements.
+		// rects are defined at x value equal to width, we define text at width - 6, this will print name of the legends before the rects.
+		legend.append('text')
+			.attr('x', width - 6)
+			.attr('y', 9)
+			.attr('dy', '.35em')
+			.style('text-anchor', 'end')
+			.text(function(d){ return d; });
+
+
+		// d3 has a filter fnction similar to filter function in JS. Here it is used to filter d3 components.
+		legend.on('click', function(type){
+			var classe= d3.select(this).attr('id')
+			d3.selectAll('.bubble')
+				.style('opacity', 0.15)
+				.filter(function(d){
+					console.log(type)
+					return d.Species == classe;
+				})
+				.style('opacity', 1.0);
+		})
+
+		})
+	})
+
+function drawTableBoxes(bo){
+		 console.log(bo)
+		 
+		 var tabHeight= 30
+		 var tabWidth= 150
+		 
+		 var svgTab = d3.select('#box-menu')
+		.append('svg')
+		.attr('width', '100%')
+		.attr('height', '100%')
+		 
+		 
+		 
+		 var table = svgTab.selectAll('.tabs')
+			.data(bo)
+			.enter().append('g')
+			.append('text')
+			.attr('x', 20)
+			.attr('y', function(d,i){
+			if (i==0)
+				return 10
+			else
+				return i*(tabHeight+5)
+			})
+			.attr('dy', '.35em')
+			.style('text-anchor', 'start')
+			.text(function(d,i){ 
+			console.log(d)
+			text="box"+i+" xmin: "+d["boxMinRange"]+" xmax: "+d["boxMaxRange"]+ " ymin: "+d["boxMinDistance"]+ " ymax: "+d["boxMaxDistance"]+ "tuple: "+d["tuples"]+ " tuplesF: "+d["tuplesF"];
+			return text })
+			.on("click", function(event, d) {
+				console.log(d)
+				var sel=d["boxMinRange"]+"_"+d["boxMaxRange"]+"_"+d["boxMinDistance"]+"_"+d["boxMaxDistance"];
+				
+				d3.selectAll('.bubble')
+				.style('opacity', 0)
+				.filter(function(d){
+					return d.Name.includes(sel)
+				})
+				.style('opacity', 1.0)
+				
+				d3.select(this).style("background-color","red")
+				
+				d3.select('#gbox')
+				
+				/*  .append('circle')
+				  .attr('cx', function(){return xBoxScale(d["boxMinRange"]);})
+				.attr('cy', function(){ return yBoxScale(d["boxMaxDistance"]) })
+				.attr('r', 10)
+				.style('fill', function(d){ return 'red' })*/
+					  
+				  
+				  
+				  
+				  
+				  .append('rect')
+				  .attr('x', function(){
+				  
+				  		console.log(d["boxMinRange"])
+				  		//return 30
+				  		return xBoxScale(d["boxMinRange"]);})
+				  .attr('y', function(){ 
+				  		console.log(d["boxMaxDistance"])
+				  		//return 100
+						return yBoxScale(d["boxMaxDistance"]);
+					})
+				  .attr('width', function(){ 
+				  		console.log(+d["boxMaxRange"] - (d["boxMinRange"]))
+				  		//return 200
+				  		return xBoxScale(d["boxMaxRange"] - (d["boxMinRange"])) })
+				  .attr('height', function(){ 
+				  		console.log(+d["boxMaxDistance"]- (d["boxMinDistance"]))
+				  		//return 200
+				  		return yBoxScale(d["boxMinDistance"]) - yBoxScale(d["boxMaxDistance"]); })
+				  .style('fill', function(d){ return "none"; })
+				  .style('stroke','green')
+				  
+				
+			})
+			
+			/*.append('rect')
+			.attr('class', 'tabs')
+			.attr('x', function(d){return 0;})
+			.attr('y', function(d,i){ 
+				return i* (tabHeight+5)
+			})
+			.attr('width', function(d){ return '100%'; })
+			.attr('height', function(d){ return tabHeight; })
+			.style('fill', function(d){ return "green"; })*/
+}
+
+function drawBoxes(bo)
+{
+	var margin = {top: 30, right: 50, bottom: 40, left:40};
+	var svg = d3.select('#box-representation')
+		.append('svg')
+		.attr('id','boxdraw')
+		.attr('width', dbwidth + margin.left + margin.right)
+		.attr('height', dbheight + margin.top + margin.bottom)
+	.append('g')
+	.attr('id','gbox')
+		.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+		
+	// adding axes is also simpler now, just translate x-axis to (0,height) and it's alread defined to be a bottom axis. 
+		svg.append('g')
+			.attr('transform', 'translate(0,' + dbheight + ')')
+			.attr('class', 'x axis')
+			.call(xBoxAxis);
+
+		// y-axis is translated to (0,0)
+		svg.append('g')
+			.attr('transform', 'translate(0,0)')
+			.attr('class', 'y axis')
+			.call(yBoxAxis);
+
+
+		
+	
+}
+
+</script>
+	
+</body>
+</html>

@@ -13,7 +13,7 @@ import sys
 import steering_module as sm
 import eel
 import evaluationMetrics as mm
-
+import mysql.connector
 
 
 
@@ -22,6 +22,7 @@ global modifier
 global queryAtt
 global treeReady #it is used to interrupt the main chunking cycle
 global bBox
+global testCases
 
 global X
 global y
@@ -172,6 +173,7 @@ c={'lat': 48.85565,'lon': 2.365492,'range': [60, 90],'day': '2020-04-31','MaxDis
 
 
 def testGenerator(tuplesOnly=False,userPref=c):
+    global testCases
     global treeReady
     mydb=dbConnect("localhost",'root', USER_PW,'airbnb')
     mycursor = mydb.cursor()
@@ -181,14 +183,15 @@ def testGenerator(tuplesOnly=False,userPref=c):
     GT={}
     for x in myresult:
         GT[x[0]]=0
+        
+    '''    
 
     testCases=eval(open("testCases.txt",encoding="UTF8").read())   
     
-    testCases=[{'boxMinRange': 18.243314313223365, 'boxMaxRange': 20.06614785165546, 'boxMinDistance': 3.407266746723863, 
-                'boxMaxDistance': 5.035010716235203, 'tuples': 1164, 'tuplesF': 547}]
-    
-    
-    '''          
+    testCases=[{'boxMinRange':9.66549631057861, 'boxMaxRange':10.525554901832592,'boxMinDistance':9.816079017004032, 'boxMaxDistance':11.386189204997185, 'tuples':0, 'tuplesF':0}]
+
+      
+        
     testCases=[{'boxMinRange':15, 'boxMaxRange':30,'boxMinDistance':3, 'boxMaxDistance':12, 'tuples':5972},           #4742 abovemF float savings   
            {'boxMinRange':25, 'boxMaxRange':30,'boxMinDistance':0, 'boxMaxDistance':4,  'tuples':3320},
            {'boxMinRange':29, 'boxMaxRange':30,'boxMinDistance':1, 'boxMaxDistance':2,  'tuples':696},
@@ -220,8 +223,8 @@ def testGenerator(tuplesOnly=False,userPref=c):
         boxMaxDistance=tc['boxMaxDistance']
         tuples=tc['tuples']
         
-        for minimumBoxItems in [50]:#[20,40,60,80]:
-            for chunkSize in [100]:#[50,100]: 
+        for minimumBoxItems in [20,40,60,80]:
+            for chunkSize in [50,100,150]: 
                 treeReady=False
                 for k in GT:
                     GT[k]=0
@@ -539,12 +542,12 @@ def distances():
             mind=DIZ_plotted[k]['dist2user']
     return mind,maxd    
 
-def loadConfig():
+def loadConfig(fileName):
     global floatSaving
     global testCases
     s=eval(open("DB_server_config.txt",encoding="UTF8").read())
     floatSaving=s['floatSaving']
-    testCases=eval(open("testCases.txt",encoding="UTF8").read()) 
+    testCases=eval(open(fileName,encoding="UTF8").read()) 
     print("Configuration loaded")
     print('floatSaving:',floatSaving)
     print("testCases loaded")
@@ -581,10 +584,14 @@ dp=eval(open('log_1_100_100_DIZ_Plotted_usingTree.txt','r',encoding="UTF8").read
 
 
 #############################################################################
-loadConfig()
+loadConfig("autoTestCases.txt")
+
+
+#testCases=[{'boxMinRange':9.66549631057861, 'boxMaxRange':10.525554901832592,'boxMinDistance':9.816079017004032, 'boxMaxDistance':11.386189204997185, 'tuples':0, 'tuplesF':0}]
+
+
 if len(testCases[0])>0:
     print(boxData(testCases[0]))
-
 
 #enrich_DB()
 log,logM,GT,IN_TEST,OUT_TEST=testGenerator(True,c)
