@@ -1,0 +1,44 @@
+div.radVizRenderer {
+  font-family: 'Roboto', sans-serif;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+div#radVizCanvas,
+svg.radVizAxesCanvas,
+svg.recentRadVizCanvas {
+  position: absolute;
+  left: 0;
+}
+div#nonSteeringRadVizCanvas,
+svg.nonSteeringRadVizAxesCanvas,
+svg.recentNonSteeredRadVizCanvas {
+  position: absolute;
+  right: 0;
+}
+
+svg.recentRadVizCanvas circle.recent-point {
+  fill: white;
+  stroke: steelblue;
+  stroke-width: 2px;
+}
+svg.recentRadVizCanvas circle.recent-point.inside-selection {
+  fill: steelblue;
+}
+
+svg.recentNonSteeredRadVizCanvas circle.recent-point {
+  fill: white;
+  stroke: #555;
+  stroke-width: 2px;
+}
+
+svg.recentNonSteeredRadVizCanvas circle.recent-point.inside-selection {
+  fill: #555;
+}
+
+div.detailsPanel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: #fff;
+}
