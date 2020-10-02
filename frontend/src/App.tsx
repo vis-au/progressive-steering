@@ -11,6 +11,7 @@ import DoubleSlider from './Widgets/DoubleSlider';
 import EvaluationMetric from './Widgets/EvaluationMetric';
 
 import './App.css';
+import RadVizRenderer from './Renderers/RadVizRenderer';
 
 interface State {
   selectedPoints: any[],
@@ -21,6 +22,7 @@ interface State {
   selectedScenarioPreset: ScenarioPreset | null,
   stepsBeforePaddingGrows: number,
   useStarCoordinates: boolean,
+  useRadViz: boolean,
   includeDimensions: string[]
 }
 
@@ -62,6 +64,7 @@ export class App extends Component<{}, State> {
       selectedScenarioPreset: null,
       stepsBeforePaddingGrows: STEPS_BEFORE_PADDING_GROWS,
       useStarCoordinates: false,
+      useRadViz: false,
       includeDimensions: []
     };
   }
@@ -128,6 +131,11 @@ export class App extends Component<{}, State> {
 
   private onUseStarCoordinatesChanged() {
     this.setState({ useStarCoordinates: !this.state.useStarCoordinates });
+    this.forceUpdate();
+  }
+
+  private onUseRadvizChanged() {
+    this.setState({ useRadViz: !this.state.useRadViz });
     this.forceUpdate();
   }
 
@@ -341,13 +349,27 @@ export class App extends Component<{}, State> {
   private renderUseStarCoordinatesToggle() {
     return (
       <div className="use-star-coordinates-toggle">
-        <label htmlFor="use-star-coordinates-toggle">use sc</label>
+        <label htmlFor="use-star-coordinates-toggle">sc</label>
         <input
           type="checkbox"
           name="use-star-coordinates-toggle"
           id="use-star-coordinates-toggle"
           checked={ this.state.useStarCoordinates  }
           onChange={ this.onUseStarCoordinatesChanged.bind(this) }/>
+      </div>
+    );
+  }
+
+  private renderUseRadvizToggle() {
+    return (
+      <div className="use-radviz-toggle">
+        <label htmlFor="use-radviz-toggle">radviz</label>
+        <input
+          type="checkbox"
+          name="use-radviz-toggle"
+          id="use-radviz-toggle"
+          checked={ this.state.useRadViz  }
+          onChange={ this.onUseRadvizChanged.bind(this) }/>
       </div>
     );
   }
@@ -384,7 +406,24 @@ export class App extends Component<{}, State> {
     const width = window.innerWidth - 1;
     const height = window.innerHeight - 85;
 
-    if (this.state.useStarCoordinates) {
+    if (this.state.useRadViz) {
+      return (
+        <RadVizRenderer
+          width={ width }
+          height={ height }
+          data={ this.dataAdapter.data }
+          nonSteeringData={ this.dataAdapter.nonSteeringData }
+          showNonSteeringData={ this.state.showSideBySideView }
+          dimensions={ DUMMY_DIMENSIONS }
+          showHeatMap={ this.state.showHeatMap }
+          useDeltaHeatMap={ this.state.useDeltaHeatMap }
+          extents={ [] }
+          highlightLastChunk={ this.state.highlightLatestPoints }
+          chunkSize={ this.dataAdapter.chunkSize }
+          onBrushedRegion={ this.onBrushedRegion.bind(this) }
+        />
+      );
+    } else if (this.state.useStarCoordinates) {
       const extents = DUMMY_DIMENSIONS.map(dim => {
         return this.dataAdapter.getDomain(dim);
       });
@@ -465,6 +504,7 @@ export class App extends Component<{}, State> {
           { this.renderUseDeltaHeatMapToggle() }
           { this.renderShowSideBySideViewToggle() }
           { this.renderUseStarCoordinatesToggle() }
+          { this.renderUseRadvizToggle() }
           { this.renderPaddingStepsInput() }
           </div>
 
