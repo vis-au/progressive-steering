@@ -42,3 +42,15 @@ div.detailsPanel {
   top: 0;
   background: #fff;
 }
+
+svg.radVizAxesCanvas .selection {
+  stroke-width: 0.15px;
+  stroke: black;
+}
+
+div.detailsPanel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: #fff;
+}
