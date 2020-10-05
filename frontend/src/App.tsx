@@ -420,6 +420,7 @@ export class App extends Component<{}, State> {
           extents={ [] }
           highlightLastChunk={ this.state.highlightLatestPoints }
           chunkSize={ this.dataAdapter.chunkSize }
+          onBrushedPoints={ this.onBrushedPoints.bind(this) }
           onBrushedRegion={ this.onBrushedRegion.bind(this) }
         />
       );

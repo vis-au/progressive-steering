@@ -17,7 +17,8 @@ interface Props {
   useDeltaHeatMap: boolean,
   highlightLastChunk?: boolean,
   chunkSize?: number,
-  onBrushedRegion: (extent: number[][]) => any,
+  onBrushedPoints: (points: any[]) => any,
+  onBrushedRegion: (extent: number[][]) => any
 }
 interface State {
   margin: number,
@@ -172,6 +173,14 @@ export default class RadVizRenderer extends React.Component<Props, State> {
     const centerY = this.radVizGenerator.center().y;
 
     const selection = d3.event.selection;
+
+    if (selection === null) {
+      this.setState({
+        brushedPoints: []
+      });
+      return;
+    }
+
     selection[0][0] -= centerX;
     selection[0][1] -= centerY;
     selection[1][0] -= centerX;
@@ -187,6 +196,10 @@ export default class RadVizRenderer extends React.Component<Props, State> {
             && point.py > selection[0][1]
             && point.py < selection[1][1];
       });
+
+    const brushedData = brushedCoordinates.map(d => d.values.original);
+
+    this.props.onBrushedPoints(brushedData);
 
     this.setState({
       brushedPoints: brushedCoordinates
@@ -213,11 +226,10 @@ export default class RadVizRenderer extends React.Component<Props, State> {
       <div className="radVizRenderer">
         { this.renderDetailsPanel() }
         <div className="left">
-          <svg className="radVizAxesCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ this.props.height } height={ this.props.height }>
-            <g className="radviz-brush-overlay" />
-          </svg>
-          <svg className="recentStarPointsCanvas" width={ canvasWidth } height={ this.props.height } />
           <div id="radVizCanvas" style={ { width: canvasWidth, height: this.props.height } }/>
+          <svg className="radVizAxesCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ this.props.height } height={ this.props.height }>
+          <svg className="recentStarPointsCanvas" width={ canvasWidth } height={ this.props.height } />
+          </svg>
         </div>
         <div className={`right ${isNonSteeringCanvasVisible}`}>
           <div id="nonSteeringRadVizCanvas" style={ { width: canvasWidth, height: this.props.height } }/>
