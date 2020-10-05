@@ -1,0 +1,12 @@
+export const DEFAULT_POINT_RADIUS = 2;
+export const DEFAULT_POINT_COLOR = "rgba(70, 130, 180, 0.3)";
+export const NON_STEERING_POINT_COLOR = "rgba(30, 30, 30, 0.3)";
+export const DEFAULT_POINT_STROKE_WIDTH = 0;
+export const DEFAULT_POINT_HIGHLIGHTED_STROKE_WIDTH = 5;
+
+export const DEFAULT_KERNEL_STD = 25;
+export const DEFAULT_DENSITY_LEVELS = 10;
+
+export const MIN_SELECTION_THRESHOLD = 0;
+export const MAX_BRUSH_SCALE_FACTOR = 2;
+export const SELECTION_INCREMENT = 0.05;

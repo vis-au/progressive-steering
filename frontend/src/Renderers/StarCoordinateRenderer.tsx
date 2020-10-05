@@ -3,6 +3,7 @@ import * as d3 from 'd3';
 
 import HeatMapRenderer from './HeatMapRenderer';
 import { CartesianCoordinate, PolarCoordinate, ScaledCartesianCoordinate } from '../PointTypes';
+import { DEFAULT_POINT_COLOR, DEFAULT_POINT_RADIUS, DEFAULT_POINT_STROKE_WIDTH, NON_STEERING_POINT_COLOR } from './RendererDefaultParameters';
 
 import './StarCoordinateRenderer.css';
 
@@ -28,12 +29,6 @@ interface State {
   margin: number,
   selectedPoint: ScaledCartesianCoordinate | null;
 }
-
-const DEFAULT_POINT_RADIUS = 2;
-const DEFAULT_POINT_COLOR = "rgba(70, 130, 180, 0.3)";
-const NON_STEERING_POINT_COLOR = "rgba(30, 30, 30, 0.3)";
-const DEFAULT_POINT_STROKE_WIDTH = 0;
-
 
 export default class StarCoordinateRenderer extends React.Component<Props, State> {
 

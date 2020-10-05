@@ -4,6 +4,7 @@ import * as d3 from 'd3';
 import HeatMapRenderer from './HeatMapRenderer';
 import { ScenarioPreset, TrainingState } from '../Data/EelBridge';
 import { ScaledCartesianCoordinate } from '../PointTypes';
+import { DEFAULT_DENSITY_LEVELS, DEFAULT_KERNEL_STD, DEFAULT_POINT_COLOR, DEFAULT_POINT_RADIUS, DEFAULT_POINT_STROKE_WIDTH, MAX_BRUSH_SCALE_FACTOR, MIN_SELECTION_THRESHOLD, NON_STEERING_POINT_COLOR, SELECTION_INCREMENT } from './RendererDefaultParameters';
 
 import "./ScatterplotRenderer.css";
 
@@ -32,17 +33,6 @@ interface Props {
   onNewPointsInSelection: (currentPoints: any[], allPoints?: any[]) => any,
   onNewNonSteeredPointsInSelection: (currentPoints: any[], allPoints?: any[]) => any,
 }
-
-const DEFAULT_POINT_RADIUS = 2;
-const DEFAULT_POINT_COLOR = "rgba(70, 130, 180, 0.3)";
-const NON_STEERING_POINT_COLOR = "rgba(30, 30, 30, 0.3)";
-const DEFAULT_POINT_STROKE_WIDTH = 0;
-// const DEFAULT_POINT_HIGHLIGHTED_STROKE_WIDTH = 5;
-const DEFAULT_KERNEL_STD = 25;
-const DEFAULT_DENSITY_LEVELS = 10;
-const MIN_SELECTION_THRESHOLD = 0;
-const MAX_BRUSH_SCALE_FACTOR = 2;
-const SELECTION_INCREMENT = 0.05;
 
 export default class ScatterplotRenderer extends React.Component<Props, State> {
   private brush: any;
