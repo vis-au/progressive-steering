@@ -266,7 +266,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       this.props.onBrushedPoints(brushedPoints);
     }
     if (!!this.props.onBrushedRegion) {
-      // no region was added because brush is empty
+      // no region was added because brush is empty. Can happen when user clicks on scatter plot
+      // without selecting a region.
       if (this.state.brushedRegions.length === 0) {
         return;
       }
@@ -276,8 +277,12 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
   private addCurrentSelectionToBrushedRegions() {
     const brushedRegions = this.state.brushedRegions;
-    const [[x0, y1], [x1, y0]] = this.selection;
-    const selectionInDataSpace = [[x0, y0], [x1, y1]];
+    let selectionInDataSpace: number[][] = [[-Infinity, -Infinity], [-Infinity, -Infinity]];
+
+    if (d3.event.selection !== null) {
+      const [[x0, y1], [x1, y0]] = this.selection;
+      selectionInDataSpace = [[x0, y0], [x1, y1]];
+    }
 
     brushedRegions.push(selectionInDataSpace);
 
