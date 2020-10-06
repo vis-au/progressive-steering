@@ -15,9 +15,14 @@
 
 g.histogram rect.bin {
   fill: steelblue;
+  fill-opacity: 0.3;
+  transition: fill-opacity 0.25s;
+}
+g.histogram rect.bin.empty-selection {
+  fill-opacity: 1;
 }
 
 g.selectionOverlay rect.bin {
-  fill: white;
-  fill-opacity: 0.7;
+  fill: steelblue;
+  fill-opacity: 1;
 }

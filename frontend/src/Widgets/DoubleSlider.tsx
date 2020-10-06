@@ -100,6 +100,9 @@ export default class DoubleSlider extends React.Component<Props, State> {
     const histogram = svg.select("g.histogram");
 
     const numberOfBins = this.props.bins.length;
+    const numberOfSelectedBins = this.props.selectedBins === undefined
+      ? 1
+      : this.props.selectedBins.length;
     const binSize = this.props.width / numberOfBins;
     const maxValue = Math.max(...this.props.bins);
 
@@ -118,6 +121,7 @@ export default class DoubleSlider extends React.Component<Props, State> {
     histogram.selectAll("rect.bin").data(this.props.bins)
       .join("rect")
         .attr("class", "bin")
+        .classed("empty-selection", numberOfSelectedBins === 1)
         .attr("width", binSize)
         .attr("height", d => barScale(0) - barScale(d))
         .attr("x", (d, i) => binScale(i + 1.5))
