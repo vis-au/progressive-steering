@@ -13,6 +13,16 @@ import EvaluationMetric from './Widgets/EvaluationMetric';
 import './App.css';
 import RadVizRenderer from './Renderers/RadVizRenderer';
 
+const X_AXIS_SELECTOR = "x-dimension";
+const Y_AXIS_SELECTOR = "y-dimension";
+const STEPS_BEFORE_PADDING_GROWS = 1;
+
+const DUMMY_DIMENSIONS = ["Saving opportunity", "cleaning_fee", "price", "accommodates", "Distance"];
+
+type Renderer = "Scatter Plot" | "Star Coordinates" | "RadViz";
+const RENDERER_LABELS: Renderer[] = ["Scatter Plot", "Star Coordinates", "RadViz"];
+
+
 interface State {
   selectedPoints: any[],
   highlightLatestPoints: boolean,
@@ -21,16 +31,9 @@ interface State {
   showSideBySideView: boolean,
   selectedScenarioPreset: ScenarioPreset | null,
   stepsBeforePaddingGrows: number,
-  useStarCoordinates: boolean,
-  useRadViz: boolean,
+  activeRenderer: Renderer,
   includeDimensions: string[]
 }
-
-const X_AXIS_SELECTOR = "x-dimension";
-const Y_AXIS_SELECTOR = "y-dimension";
-const STEPS_BEFORE_PADDING_GROWS = 1;
-
-const DUMMY_DIMENSIONS = ["Saving opportunity", "cleaning_fee", "price", "accommodates", "Distance"];
 
 export class App extends Component<{}, State> {
   private dataAdapter: EelDataAdapter;
@@ -63,8 +66,7 @@ export class App extends Component<{}, State> {
       showSideBySideView: false,
       selectedScenarioPreset: null,
       stepsBeforePaddingGrows: STEPS_BEFORE_PADDING_GROWS,
-      useStarCoordinates: false,
-      useRadViz: false,
+      activeRenderer: "Scatter Plot",
       includeDimensions: []
     };
   }
@@ -129,16 +131,6 @@ export class App extends Component<{}, State> {
     this.setState({ showSideBySideView: !this.state.showSideBySideView });
   }
 
-  private onUseStarCoordinatesChanged() {
-    this.setState({ useStarCoordinates: !this.state.useStarCoordinates });
-    this.forceUpdate();
-  }
-
-  private onUseRadvizChanged() {
-    this.setState({ useRadViz: !this.state.useRadViz });
-    this.forceUpdate();
-  }
-
   private onPaddingStepsChanged(event: React.ChangeEvent<HTMLInputElement>) {
     this.setState({ stepsBeforePaddingGrows: +event.target.value });
   }
@@ -168,6 +160,13 @@ export class App extends Component<{}, State> {
     });
   }
 
+  private onRendererChanged(event: React.ChangeEvent<HTMLInputElement>) {
+    const renderer = event.target.value as Renderer;
+    this.setState({
+      activeRenderer: renderer
+    });
+  }
+
   private renderDimensionSelection(selector: string, label: string, activeValue: string) {
     const allDimensions = this.dataAdapter.dimensions;
 
@@ -183,7 +182,7 @@ export class App extends Component<{}, State> {
   }
 
   private renderXYDimensionSelection() {
-    if (this.state.useStarCoordinates) {
+    if (this.state.activeRenderer !== "Scatter Plot") {
       return null;
     }
 
@@ -215,9 +214,9 @@ export class App extends Component<{}, State> {
   }
 
   private renderDimensionSliders() {
-    const dims = this.state.useStarCoordinates
-      ? DUMMY_DIMENSIONS
-      : DUMMY_DIMENSIONS.slice(0,4);
+    const dims = this.state.activeRenderer === "Scatter Plot"
+      ? DUMMY_DIMENSIONS.slice(0,4)
+      : DUMMY_DIMENSIONS;
 
     return (
       <div className="dimension-sliders">
@@ -346,34 +345,6 @@ export class App extends Component<{}, State> {
     );
   }
 
-  private renderUseStarCoordinatesToggle() {
-    return (
-      <div className="use-star-coordinates-toggle">
-        <label htmlFor="use-star-coordinates-toggle">sc</label>
-        <input
-          type="checkbox"
-          name="use-star-coordinates-toggle"
-          id="use-star-coordinates-toggle"
-          checked={ this.state.useStarCoordinates  }
-          onChange={ this.onUseStarCoordinatesChanged.bind(this) }/>
-      </div>
-    );
-  }
-
-  private renderUseRadvizToggle() {
-    return (
-      <div className="use-radviz-toggle">
-        <label htmlFor="use-radviz-toggle">radviz</label>
-        <input
-          type="checkbox"
-          name="use-radviz-toggle"
-          id="use-radviz-toggle"
-          checked={ this.state.useRadViz  }
-          onChange={ this.onUseRadvizChanged.bind(this) }/>
-      </div>
-    );
-  }
-
   private renderPaddingStepsInput() {
     return (
       <div className="selection-padding-input">
@@ -399,6 +370,30 @@ export class App extends Component<{}, State> {
     );
   }
 
+  private renderRendererTab(renderer: Renderer) {
+    const isActive = this.state.activeRenderer === renderer ? "active" : "inactive";
+
+    return (
+      <div className={ `renderer-tab ${isActive}` } key={ renderer } title={ `use ${renderer} layout.` }>
+        <input
+          type="radio"
+          id={ `renderer-${renderer}` }
+          className="renderer-tab"
+          onChange={ this.onRendererChanged.bind(this)}
+          value={ renderer }/>
+        <label htmlFor={ `renderer-${renderer}` }>{ renderer }</label>
+      </div>
+    );
+  }
+
+  private renderRendererTabs() {
+    return (
+      <div className="renderer-tabs">
+        { RENDERER_LABELS.map(this.renderRendererTab.bind(this)) }
+      </div>
+    );
+  }
+
   private renderRenderer() {
     const dimensionX = this.dataAdapter.xDimension;
     const dimensionY = this.dataAdapter.yDimension;
@@ -406,7 +401,7 @@ export class App extends Component<{}, State> {
     const width = window.innerWidth - 1;
     const height = window.innerHeight - 85;
 
-    if (this.state.useRadViz) {
+    if (this.state.activeRenderer === "RadViz") {
       return (
         <RadVizRenderer
           width={ width }
@@ -415,8 +410,6 @@ export class App extends Component<{}, State> {
           nonSteeringData={ this.dataAdapter.nonSteeringData }
           showNonSteeringData={ this.state.showSideBySideView }
           dimensions={ DUMMY_DIMENSIONS }
-          showHeatMap={ this.state.showHeatMap }
-          useDeltaHeatMap={ this.state.useDeltaHeatMap }
           extents={ [] }
           highlightLastChunk={ this.state.highlightLatestPoints }
           chunkSize={ this.dataAdapter.chunkSize }
@@ -424,7 +417,7 @@ export class App extends Component<{}, State> {
           onBrushedRegion={ this.onBrushedRegion.bind(this) }
         />
       );
-    } else if (this.state.useStarCoordinates) {
+    } else if (this.state.activeRenderer === "Star Coordinates") {
       const extents = DUMMY_DIMENSIONS.map(dim => {
         return this.dataAdapter.getDomain(dim);
       });
@@ -437,11 +430,10 @@ export class App extends Component<{}, State> {
           nonSteeringData={ this.dataAdapter.nonSteeringData }
           showNonSteeringData={ this.state.showSideBySideView }
           dimensions={ DUMMY_DIMENSIONS }
-          showHeatMap={ this.state.showHeatMap }
-          useDeltaHeatMap={ this.state.useDeltaHeatMap }
           extents={ extents }
           highlightLastChunk={ this.state.highlightLatestPoints }
           chunkSize={ this.dataAdapter.chunkSize }
+          onBrushedPoints={ this.onBrushedPoints.bind(this) }
           onBrushedRegion={ this.onBrushedRegion.bind(this) }
         />
       );
@@ -487,6 +479,7 @@ export class App extends Component<{}, State> {
 
         <div className="mainView" style={ {minHeight: height} }>
           { this.renderRenderer() }
+          { this.renderRendererTabs() }
           <MapViewerRenderer
             width={ width * 0.45 }
             height={ height - 1 }
@@ -504,8 +497,6 @@ export class App extends Component<{}, State> {
           { this.renderShowHeatMapToggle() }
           { this.renderUseDeltaHeatMapToggle() }
           { this.renderShowSideBySideViewToggle() }
-          { this.renderUseStarCoordinatesToggle() }
-          { this.renderUseRadvizToggle() }
           { this.renderPaddingStepsInput() }
           </div>
 
