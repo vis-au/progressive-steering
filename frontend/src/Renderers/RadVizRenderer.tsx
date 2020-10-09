@@ -14,8 +14,6 @@ interface Props {
   data: any[],
   nonSteeringData: any[],
   showNonSteeringData: boolean,
-  showHeatMap: boolean,
-  useDeltaHeatMap: boolean,
   highlightLastChunk?: boolean,
   chunkSize?: number,
   onBrushedPoints: (points: any[]) => any,

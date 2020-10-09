@@ -1,7 +1,6 @@
 import * as React from 'react';
 import * as d3 from 'd3';
 
-import HeatMapRenderer from './HeatMapRenderer';
 import { CartesianCoordinate, PolarCoordinate, ScaledCartesianCoordinate } from '../PointTypes';
 import { DEFAULT_POINT_COLOR, DEFAULT_POINT_RADIUS, DEFAULT_POINT_STROKE_WIDTH, NON_STEERING_POINT_COLOR } from './RendererDefaultParameters';
 
@@ -15,8 +14,6 @@ interface Props {
   data: any[],
   nonSteeringData: any[],
   showNonSteeringData: boolean,
-  showHeatMap: boolean,
-  useDeltaHeatMap: boolean,
   highlightLastChunk?: boolean,
   chunkSize?: number,
   // stepsBeforePaddingGrows: number,
@@ -431,33 +428,6 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
     this.nonSteeringScreenPositions.push(...scaledChunk);
   }
 
-  private renderHeatmap(width: number) {
-    if (!this.props.showHeatMap) {
-      return;
-    }
-
-    const scaleX = d3.scaleLinear()
-      .domain(this.scaleX.domain())
-      .range([0, width]);
-
-    const scaleY = d3.scaleLinear()
-      .domain(this.scaleY.domain())
-      .range([0, width]);
-
-    return (
-      <HeatMapRenderer
-        canvasWidth={ width }
-        height={ this.props.height }
-        scaleX={ scaleX }
-        scaleY={ scaleY }
-        steeredData={ this.steeringScreenPositions }
-        nonSteeredData={ this.nonSteeringScreenPositions }
-        showNonSteeredCanvas={ this.props.showNonSteeringData }
-        useDeltaHeatMap={ this.props.useDeltaHeatMap }
-      />
-    );
-  }
-
   private updatePoints() {
     this.renderSteeringPoints();
     this.renderNonSteeringPoints();
@@ -496,7 +466,6 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
 
     return (
       <div className="starCoordinatesRenderer">
-        { this.renderHeatmap(this.props.width / 2 - 1) }
         { this.renderDetailsPanel() }
         <div className="left" style={ { width: canvasWidth }}>
           <canvas className="starCoordinateCanvas" width={ canvasWidth } height={ this.props.height } />
