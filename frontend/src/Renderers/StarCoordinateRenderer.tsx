@@ -20,13 +20,14 @@ interface Props {
   highlightLastChunk?: boolean,
   chunkSize?: number,
   // stepsBeforePaddingGrows: number,
-  // onBrushedPoints?: (points: any[]) => any,
+  onBrushedPoints?: (points: any[]) => any,
   onBrushedRegion: (extent: number[][]) => any,
   // onNewPointsInSelection: (currentPoints: any[], allPoints?: any[]) => any,
   // onNewNonSteeredPointsInSelection: (currentPoints: any[], allPoints?: any[]) => any,
 }
 interface State {
   margin: number,
+  brushedPoints: ScaledCartesianCoordinate[],
   selectedPoint: ScaledCartesianCoordinate | null;
 }
 
@@ -38,6 +39,9 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
   private nonSteeringCanvas: d3.Selection<d3.BaseType, unknown, HTMLElement, any> | null;
   private scales: d3.ScaleLinear<number, number>[] = [];
 
+  private brush: d3.BrushBehavior<any>;
+  private selection: any;
+
   private scaleX: d3.ScaleLinear<number, number>;
   private scaleY: d3.ScaleLinear<number, number>;
 
@@ -46,7 +50,6 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
   private nonSteeringScreenPositions: ScaledCartesianCoordinate[];
 
   private plotSize: number;
-
   constructor(props: Props) {
     super(props);
 
@@ -59,10 +62,17 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
 
     this.steeringScreenPositions = [];
     this.nonSteeringScreenPositions = [];
+    this.selection = null;
+
+    this.brush = d3.brush()
+      .on("start", null)
+      .on("brush", null)
+      .on("end", this.onBrushEnd.bind(this));
 
     this.state = {
       margin: 50,
-      selectedPoint: null
+      selectedPoint: null,
+      brushedPoints: []
     };
 
     this.plotSize = this.props.height - this.state.margin * 2;
@@ -94,8 +104,29 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
       : this.props.width;
   }
 
-  private getNewPointsInCurrentSelection(newPoints: any[], useNonSteeringData: boolean = false): any[] {
-    return [];
+  private isNodeInBounds(node: ScaledCartesianCoordinate, bounds: number[][]) {
+    return (
+      node.px >= bounds[0][0] &&
+      node.px < bounds[1][0] &&
+      node.py >= bounds[0][1] &&
+      node.py < bounds[1][1]
+    );
+  }
+
+  private getNewPointsInCurrentSelection(newPoints: ScaledCartesianCoordinate[], useNonSteeringData: boolean = false): any[] {
+    if (this.selection === null || this.selection.length === 0) {
+      return [];
+    }
+
+    const pointsInSelection: ScaledCartesianCoordinate[] = [];
+
+    newPoints.forEach(datum => {
+      if (this.isNodeInBounds(datum, this.selection)) {
+        pointsInSelection.push(datum);
+      }
+    });
+
+    return pointsInSelection;
   }
 
   private receivedNewData() {
@@ -106,6 +137,35 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
     }
 
     return true;
+  }
+
+  private onBrushEnd() {
+    if (this.canvas === null) {
+      return;
+    } else if (this.props.onBrushedPoints === undefined) {
+      return;
+    }
+
+    this.selection = d3.event.selection || null;
+
+    if (this.selection === null) {
+      this.setState({
+        brushedPoints: []
+      });
+      return;
+    }
+
+    const lastChunkIds = this.getLatestChunk().map(d => d.id);
+    const lastChunkPositions = this.steeringScreenPositions
+      .filter(d => lastChunkIds.indexOf(d.values.id) > -1);
+    const brushedCoordinates = this.getNewPointsInCurrentSelection(lastChunkPositions, false);
+
+    const brushedData = brushedCoordinates.map(d => d.values);
+    this.props.onBrushedPoints(brushedData);
+
+    this.setState({
+      brushedPoints: brushedCoordinates
+    });
   }
 
   private updateScales() {
@@ -264,7 +324,11 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
       return;
     }
 
-    const pointsInSelection = this.getNewPointsInCurrentSelection(chunk, useNonSteeringData);
+    const lastChunkIds = this.getLatestChunk().map(d => d.id);
+    const lastChunkPositions = chunk
+      .filter(d => lastChunkIds.indexOf(d.values.id) > -1);
+    const pointsInSelection = this.getNewPointsInCurrentSelection(lastChunkPositions, false);
+    // const pointsInSelection = this.getNewPointsInCurrentSelection(chunk, false);
 
     const points = canvas.selectAll("circle.recent-point").data(chunk)
       .join("circle")
@@ -436,8 +500,8 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
         { this.renderDetailsPanel() }
         <div className="left" style={ { width: canvasWidth }}>
           <canvas className="starCoordinateCanvas" width={ canvasWidth } height={ this.props.height } />
-          <svg className="starCoordinateAxesCanvas" width={ canvasWidth } height={ this.props.height }/>
           <svg className="recentStarPointsCanvas" width={ canvasWidth } height={ this.props.height } />
+          <svg className="starCoordinateAxesCanvas" width={ canvasWidth } height={ this.props.height }/>
         </div>
         <div className={`right ${isNonSteeringCanvasVisible}`} style={ { width: canvasWidth }}>
           <canvas className="nonSteeringStarCoordinateCanvas" width={ canvasWidth } height={ this.props.height } />
@@ -461,6 +525,8 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
     this.nonSteeringAxesSvg.append("g")
       .attr("class", "container")
       .attr("transform", `translate(${this.state.margin}, ${this.state.margin})`);
+
+    this.axesSvg.call(this.brush as any);
 
     this.updateScales();
     this.renderAxes(true);
