@@ -4,6 +4,7 @@ import * as d3 from 'd3';
 import { ScaledCartesianCoordinate } from '../PointTypes';
 
 import "./RadVizRenderer.css";
+import { DEFAULT_POINT_RADIUS } from './RendererDefaultParameters';
 
 interface Props {
   width: number,
@@ -22,7 +23,8 @@ interface Props {
 }
 interface State {
   margin: number,
-  brushedPoints: ScaledCartesianCoordinate[]
+  brushedPoints: ScaledCartesianCoordinate[],
+  selectedPoint: ScaledCartesianCoordinate | null
 }
 
 export default class RadVizRenderer extends React.Component<Props, State> {
@@ -58,7 +60,6 @@ export default class RadVizRenderer extends React.Component<Props, State> {
     this.nonSteeredRadVizGenerator.setRadiusPoints(0.25);
     this.nonSteeredRadVizGenerator.setQuality();
 
-
     this.brush = d3.brush()
       .on("start", null)
       .on("brush", null)
@@ -66,7 +67,8 @@ export default class RadVizRenderer extends React.Component<Props, State> {
 
     this.state = {
       margin: 50,
-      brushedPoints: []
+      brushedPoints: [],
+      selectedPoint: null
     };
   }
 
@@ -86,6 +88,18 @@ export default class RadVizRenderer extends React.Component<Props, State> {
 
     // if chunksize property is not defined, return the full dataset
     return this.props.data.slice(itemCount - (this.props.chunkSize || itemCount), itemCount);
+  }
+
+  private getNewPointsInCurrentSelection(newPoints: any[], useNonSteeringData: boolean = false): any[] {
+    return [];
+  }
+
+  private showDetails(d: ScaledCartesianCoordinate) {
+    this.setState({ selectedPoint: d });
+  }
+
+  private hideDetails() {
+    this.setState({ selectedPoint: null });
   }
 
   private receivedNewData() {
@@ -132,15 +146,68 @@ export default class RadVizRenderer extends React.Component<Props, State> {
     container.selectAll("*").remove();
     container.call(radVizGenerator as any);
 
-    return [];
+    const recentChunkIds = this.getLatestChunk().map(d => d.id);
+    const recentChunkRadViz = radVizGenerator.data().entries
+      .map(entry => {
+        return { px: scaleX(entry.x2), py: scaleY(entry.x1), values: entry };
+      })
+      .filter(d => recentChunkIds.indexOf(d.values.original.id) > -1);
+
+    return recentChunkRadViz;
+  }
+
+  private renderInsideOutsidePoints(chunk: ScaledCartesianCoordinate[], useNonSteeringData: boolean) {
+
+    // no need to update if the chunk has not changed
+    if (!this.receivedNewData()) {
+      return;
+    }
+
+    const canvas = useNonSteeringData
+      ? d3.select("svg.recentNonSteeredRadVizCanvas")
+      : d3.select("svg.recentRadVizCanvas");
+
+    canvas.selectAll("g.recent-points").remove();
+
+    if (!this.props.highlightLastChunk) {
+      return;
+    }
+
+    const center = this.radVizGenerator.center();
+    const container = canvas.append("g")
+      .attr("class", "recent-points")
+      .attr("transform", `translate(${center.x},${center.y})`);
+
+    const pointsInSelection = this.getNewPointsInCurrentSelection(chunk, useNonSteeringData);
+
+    const points = container.selectAll("circle.recent-point").data(chunk)
+      .join("circle")
+        .attr("class", "recent-point")
+        .classed("inside-selection", d => pointsInSelection.indexOf(d) > -1)
+        .classed("steered", !useNonSteeringData)
+        .attr("cx", d => d.px)
+        .attr("cy", d => d.py)
+        .attr("r", DEFAULT_POINT_RADIUS / 10)
+        .on("mouseover", this.showDetails.bind(this))
+        .on("mouseleave", this.hideDetails.bind(this))
+        .style("stroke-width", 1);
+
+    points.transition().duration(250)
+      .attr("r", DEFAULT_POINT_RADIUS / 10);
   }
 
   private renderSteeringPoints() {
-    this.steeringScreenPositions = this.renderPoints(false);
+    const scaledChunk = this.renderPoints(false);
+    this.renderInsideOutsidePoints(scaledChunk, false);
+
+    this.steeringScreenPositions.push(...scaledChunk);
   }
 
   private renderNonSteeringPoints() {
-    this.nonSteeringScreenPositions = this.renderPoints(true);
+    const scaledChunk = this.renderPoints(true);
+    this.renderInsideOutsidePoints(scaledChunk, true);
+
+    this.nonSteeringScreenPositions.push(...scaledChunk);
   }
 
   private updatePoints() {
@@ -206,14 +273,6 @@ export default class RadVizRenderer extends React.Component<Props, State> {
     });
   }
 
-  private addBrushBehavior() {
-    if (this.brushSvg === null) {
-      return;
-    }
-
-    this.brushSvg.call(this.brush as any);
-  }
-
   public render() {
     this.updatePoints();
 
@@ -227,14 +286,13 @@ export default class RadVizRenderer extends React.Component<Props, State> {
         { this.renderDetailsPanel() }
         <div className="left">
           <div id="radVizCanvas" style={ { width: canvasWidth, height: this.props.height } }/>
-          <svg className="radVizAxesCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ this.props.height } height={ this.props.height }>
-          <svg className="recentStarPointsCanvas" width={ canvasWidth } height={ this.props.height } />
-          </svg>
+          <svg className="recentRadVizCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ this.props.height } height={ this.props.height } />
+          <svg className="radVizAxesCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ this.props.height } height={ this.props.height } />
         </div>
         <div className={`right ${isNonSteeringCanvasVisible}`}>
           <div id="nonSteeringRadVizCanvas" style={ { width: canvasWidth, height: this.props.height } }/>
           <svg className="nonSteeringRadVizAxesCanvas" width={ canvasWidth } height={ this.props.height }/>
-          <svg className="recentNonSteeredStarPointsCanvas" width={ canvasWidth } height={ this.props.height } />
+          <svg className="recentNonSteeredRadVizsCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ this.props.height } height={ this.props.height }/>
         </div>
       </div>
     );
@@ -245,7 +303,7 @@ export default class RadVizRenderer extends React.Component<Props, State> {
     this.brushSvg = d3.select("svg.radVizAxesCanvas");
     this.nonSteeringCanvas = d3.select("div#nonSteeringRadVizCanvas");
 
-    this.addBrushBehavior();
+    this.brushSvg.call(this.brush as any);
 
     this.props.onBrushedRegion([[0, 0], [0, 0]]);
   }

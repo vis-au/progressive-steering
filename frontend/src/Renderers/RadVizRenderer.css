@@ -20,7 +20,6 @@ svg.recentNonSteeredRadVizCanvas {
 svg.recentRadVizCanvas circle.recent-point {
   fill: white;
   stroke: steelblue;
-  stroke-width: 2px;
 }
 svg.recentRadVizCanvas circle.recent-point.inside-selection {
   fill: steelblue;
