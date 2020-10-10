@@ -213,7 +213,7 @@ export class App extends Component<{}, State> {
           onBrushedRegion={ this.onBrushedRegion.bind(this) }
           onNewNonSteeredPointsInSelection={ this.onNewNonSteeredPointsInSelection.bind(this) }
           onNewPointsInSelection={ this.onNewPointsInSelection.bind(this) }
-          onRendererChanged={ this.onRendererChanged }
+          onRendererChanged={ this.onRendererChanged.bind(this) }
         />
 
         <Footer
