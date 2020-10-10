@@ -1,0 +1,1 @@
+export type Renderer = "Scatter Plot" | "Star Coordinates" | "RadViz";
