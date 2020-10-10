@@ -1,0 +1,26 @@
+.header {
+  box-shadow: 0 3px 10px #efefef;
+}
+
+.header .dimension-selection {
+  display: flex;
+  flex-direction: row;
+}
+.header .dimension-selection .selection {
+  margin-right: 1rem;
+}
+
+.header .dimension-sliders {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  max-width: 60%;
+  overflow-x: hidden;
+}
+.header .dimension-sliders .double-slider-container {
+  margin: 0 1rem;
+}
+
+.header #scenario-presets {
+  max-width: 200px;
+}
