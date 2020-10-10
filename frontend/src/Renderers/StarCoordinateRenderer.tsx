@@ -19,8 +19,8 @@ interface Props {
   // stepsBeforePaddingGrows: number,
   onBrushedPoints?: (points: any[]) => any,
   onBrushedRegion: (extent: number[][]) => any,
-  // onNewPointsInSelection: (currentPoints: any[], allPoints?: any[]) => any,
-  // onNewNonSteeredPointsInSelection: (currentPoints: any[], allPoints?: any[]) => any,
+  onNewPointsInSelection: (currentPoints: any[], allPoints?: any[]) => any,
+  onNewNonSteeredPointsInSelection: (currentPoints: any[], allPoints?: any[]) => any,
 }
 interface State {
   margin: number,

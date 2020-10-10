@@ -42,7 +42,9 @@ export default class MainView extends React.Component<Props, State> {
           type="radio"
           id={ `renderer-${renderer}` }
           className="renderer-tab"
+          radioGroup="renderer-tabs-123"
           onChange={ this.props.onRendererChanged }
+          checked={ this.props.activeRenderer === renderer }
           value={ renderer }/>
         <label htmlFor={ `renderer-${renderer}` }>{ renderer }</label>
       </div>
@@ -95,6 +97,8 @@ export default class MainView extends React.Component<Props, State> {
           chunkSize={ this.props.dataAdapter.chunkSize }
           onBrushedPoints={ this.props.onBrushedPoints }
           onBrushedRegion={ this.props.onBrushedRegion }
+          onNewPointsInSelection={ this.props.onNewPointsInSelection }
+          onNewNonSteeredPointsInSelection={ this.props.onNewNonSteeredPointsInSelection }
         />
       );
     }
