@@ -9,15 +9,17 @@ import ProgressBar from './Widgets/ProgressBar';
 import MapViewerRenderer, { POI } from './Widgets/MapViewer';
 import DoubleSlider from './Widgets/DoubleSlider';
 import EvaluationMetric from './Widgets/EvaluationMetric';
-
-import './App.css';
 import RadVizRenderer from './Renderers/RadVizRenderer';
 
-const X_AXIS_SELECTOR = "x-dimension";
-const Y_AXIS_SELECTOR = "y-dimension";
+import './App.css';
+
+
 const STEPS_BEFORE_PADDING_GROWS = 1;
 
-const DUMMY_DIMENSIONS = ["Saving opportunity", "cleaning_fee", "price", "accommodates", "Distance"];
+const DEFAULT_SELECTED_DIMENSIONS = ["Distance", "Saving opportunity"];
+const DEFAULT_UNSELECTED_DIMENSIONS = ["cleaning_fee", "price", "accommodates"];
+const DEFAULT_X_DIMENSION = "Saving opportunity";
+const DEFAULT_Y_DIMENSION = "Distance";
 
 type Renderer = "Scatter Plot" | "Star Coordinates" | "RadViz";
 const RENDERER_LABELS: Renderer[] = ["Scatter Plot", "Star Coordinates", "RadViz"];
@@ -32,6 +34,7 @@ interface State {
   selectedScenarioPreset: ScenarioPreset | null,
   stepsBeforePaddingGrows: number,
   activeRenderer: Renderer,
+  remainingDimensions: string[],
   includeDimensions: string[]
 }
 
@@ -46,6 +49,9 @@ export class App extends Component<{}, State> {
     this.dataAdapter.subscribeOnDataChanged(this.onNewDataReceived.bind(this));
     this.dataAdapter.subscribeOnFilterChanged(this.onFilterChanged.bind(this));
     this.dataAdapter.subscribeOnMetricChanged(this.onMetricChanged.bind(this));
+
+    this.dataAdapter.xDimension = DEFAULT_X_DIMENSION;
+    this.dataAdapter.yDimension = DEFAULT_Y_DIMENSION;
 
     // Place des Vosges, VIS deadline
     const dummyData = {
@@ -67,7 +73,8 @@ export class App extends Component<{}, State> {
       selectedScenarioPreset: null,
       stepsBeforePaddingGrows: STEPS_BEFORE_PADDING_GROWS,
       activeRenderer: "Scatter Plot",
-      includeDimensions: []
+      remainingDimensions: DEFAULT_UNSELECTED_DIMENSIONS,
+      includeDimensions: DEFAULT_SELECTED_DIMENSIONS
     };
   }
 
@@ -139,16 +146,11 @@ export class App extends Component<{}, State> {
     this.dataAdapter.progressionState = newState;
   }
 
-  private onDimensionForAxisSelected(axis: string, dimension: string) {
-    if (axis === X_AXIS_SELECTOR) {
-      this.dataAdapter.xDimension = dimension;
-    } else if (axis === Y_AXIS_SELECTOR) {
-      this.dataAdapter.yDimension = dimension;
-    } else {
-      return;
-    }
+  private onDimensionAdded(event: React.ChangeEvent<HTMLSelectElement>) {
+    const includeDimensions = this.state.includeDimensions;
+    includeDimensions.push(event.target.value);
 
-    this.forceUpdate();
+    this.setState({ includeDimensions });
   }
 
   private onScenarioPresetSelected(event: React.ChangeEvent<HTMLSelectElement>) {
@@ -167,30 +169,49 @@ export class App extends Component<{}, State> {
     });
   }
 
-  private renderDimensionSelection(selector: string, label: string, activeValue: string) {
-    const allDimensions = this.dataAdapter.dimensions;
+  private updateDimensions() {
+    const numberDimensions = this.state.includeDimensions.length + this.state.remainingDimensions.length;
+    const hasReceivedData = this.dataAdapter.dimensions.length > 0;
+    const hasUpdatedDimensions = numberDimensions === this.dataAdapter.dimensions.length;
 
+    if (hasReceivedData && !hasUpdatedDimensions) {
+      const oldIncludedDimensions = this.dataAdapter.dimensions
+        .filter(d => this.state.includeDimensions.indexOf(d) > -1);
+
+      const newDimensions = this.dataAdapter.dimensions
+        .filter(d => this.state.includeDimensions.indexOf(d) === -1);
+
+      this.dataAdapter.xDimension = DEFAULT_X_DIMENSION;
+      this.dataAdapter.yDimension = DEFAULT_Y_DIMENSION;
+
+      this.setState({
+        includeDimensions: oldIncludedDimensions,
+        remainingDimensions: newDimensions
+      });
+    }
+  }
+
+  private renderDimensionOption(dimension: string) {
     return (
-      <div className={ `${selector} selection` }>
-        <label htmlFor={ selector }>{ label }</label>
-        <select name={ selector } id={ selector } value={ activeValue } onChange={ (e) =>
-          this.onDimensionForAxisSelected(selector, e.target.value) }>{
-          allDimensions.map(dim => <option key={dim} value={dim}>{dim}</option>)
-        }</select>
-      </div>
+      <option
+        key={ dimension }
+        className="dimension-option"
+        value={ dimension }>
+
+          { dimension }
+      </option>
     );
   }
 
-  private renderXYDimensionSelection() {
-    if (this.state.activeRenderer !== "Scatter Plot") {
-      return null;
-    }
-
+  private renderDimensionSelection() {
     return (
-      <div className="dimension-selection">
-        { this.renderDimensionSelection(X_AXIS_SELECTOR, "x: ", this.dataAdapter.xDimension || "") }
-        { this.renderDimensionSelection(Y_AXIS_SELECTOR, "y: ", this.dataAdapter.yDimension || "") }
-      </div>
+      <select
+        className="dimension-selection"
+        value={ "Select Dimension" }
+        onChange={ this.onDimensionAdded.bind(this) }>
+        <option value="Select Dimension" disabled={ true }>Include dimension</option>
+        { this.state.remainingDimensions.map(this.renderDimensionOption.bind(this)) }
+      </select>
     );
   }
 
@@ -215,8 +236,8 @@ export class App extends Component<{}, State> {
 
   private renderDimensionSliders() {
     const dims = this.state.activeRenderer === "Scatter Plot"
-      ? DUMMY_DIMENSIONS.slice(0,4)
-      : DUMMY_DIMENSIONS;
+      ? this.state.includeDimensions.slice(0,4)
+      : this.state.includeDimensions;
 
     return (
       <div className="dimension-sliders">
@@ -395,9 +416,6 @@ export class App extends Component<{}, State> {
   }
 
   private renderRenderer() {
-    const dimensionX = this.dataAdapter.xDimension;
-    const dimensionY = this.dataAdapter.yDimension;
-
     const width = window.innerWidth - 1;
     const height = window.innerHeight - 85;
 
@@ -409,7 +427,7 @@ export class App extends Component<{}, State> {
           data={ this.dataAdapter.data }
           nonSteeringData={ this.dataAdapter.nonSteeringData }
           showNonSteeringData={ this.state.showSideBySideView }
-          dimensions={ DUMMY_DIMENSIONS }
+          dimensions={ this.state.includeDimensions }
           extents={ [] }
           highlightLastChunk={ this.state.highlightLatestPoints }
           chunkSize={ this.dataAdapter.chunkSize }
@@ -418,7 +436,7 @@ export class App extends Component<{}, State> {
         />
       );
     } else if (this.state.activeRenderer === "Star Coordinates") {
-      const extents = DUMMY_DIMENSIONS.map(dim => {
+      const extents = this.state.includeDimensions.map(dim => {
         return this.dataAdapter.getDomain(dim);
       });
 
@@ -429,7 +447,7 @@ export class App extends Component<{}, State> {
           data={ this.dataAdapter.data }
           nonSteeringData={ this.dataAdapter.nonSteeringData }
           showNonSteeringData={ this.state.showSideBySideView }
-          dimensions={ DUMMY_DIMENSIONS }
+          dimensions={ this.state.includeDimensions }
           extents={ extents }
           highlightLastChunk={ this.state.highlightLatestPoints }
           chunkSize={ this.dataAdapter.chunkSize }
@@ -438,6 +456,9 @@ export class App extends Component<{}, State> {
         />
       );
     }
+
+    const dimensionX = this.dataAdapter.xDimension;
+    const dimensionY = this.dataAdapter.yDimension;
 
     return (
       <ScatterplotRenderer
@@ -469,10 +490,12 @@ export class App extends Component<{}, State> {
     const width = window.innerWidth - 1;
     const height = window.innerHeight - 85;
 
+    this.updateDimensions();
+
     return (
       <div className="App">
         <div className="header">
-          { this.renderXYDimensionSelection() }
+          { this.renderDimensionSelection() }
           { this.renderDimensionSliders() }
           { this.renderScenarioPresets() }
         </div>

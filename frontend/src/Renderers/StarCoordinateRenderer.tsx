@@ -172,7 +172,7 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
   }
 
   private getDataInPolarCoordinates(useNonSteeringData: boolean) {
-    if (this.scales.length === 0) {
+    if (this.scales.length === 0 || this.scales.length !== this.props.dimensions.length) {
       this.updateScales();
     }
 
@@ -378,6 +378,7 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
       container = this.nonSteeringAxesSvg.select("g.container");
     }
 
+    container.selectAll("g.axes").remove();
     const axes = container.append("g").attr("class", "axes");
 
     // enclosing background circle
@@ -433,6 +434,11 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
     this.renderNonSteeringPoints();
   }
 
+  private updateAxes() {
+    this.renderAxes(true);
+    this.renderAxes(false);
+  }
+
   private renderDetailsPanel() {
     if (this.state.selectedPoint === null) {
       return null;
@@ -458,6 +464,7 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
 
   public render() {
     this.updatePoints();
+    this.updateAxes();
 
     const canvasWidth = this.getCanvasWidth();
     const isNonSteeringCanvasVisible = this.props.showNonSteeringData ? 'visible' : 'hidden';
@@ -498,8 +505,7 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
     this.axesSvg.call(this.brush as any);
 
     this.updateScales();
-    this.renderAxes(true);
-    this.renderAxes(false);
+    this.updateAxes();
 
     this.props.onBrushedRegion([[0, 0], [0, 0]]);
   }

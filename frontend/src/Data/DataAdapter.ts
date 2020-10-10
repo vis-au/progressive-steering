@@ -4,15 +4,12 @@ import { DEFAULT_TOTAL_DATA_SIZE, DEFAULT_POIS } from "./EelBackendDummy";
 
 class DataAdapter {
   private _chunkSize: number = 0;
-  private _progressionBuffer: any[] = [];
   private _progressionState: ProgressionState = 'running';
   private _trainingState: TrainingState = "collectingData";
   private _data: any[] = [];
   private _nonSteeringData: any[] = [];
   private _cumulativeDataSize: number[] = [0];
   private _dimensions: string[] = [];
-  private _xDimension: string | null = null;
-  private _yDimension: string | null = null;
   private _onDataChangedCallbacks: any[] = [];
   private _onFilterChangedCallbacks: any[] = [];
   private _onMetricChangedCallbacks: any[] = [];
@@ -226,19 +223,47 @@ class DataAdapter {
   }
 
   public get xDimension(): string | null {
-    return this._xDimension;
+    if (this._dimensions.length < 1) {
+      return null;
+    }
+
+    return this._dimensions[0];
   }
 
   public set xDimension(xDimension: string | null) {
-    this._xDimension = xDimension;
+    if (xDimension === null) {
+      return;
+    }
+
+    const indexInDimensions = this._dimensions.indexOf(xDimension);
+    if (indexInDimensions === -1) {
+      return;
+    }
+
+    this._dimensions.splice(indexInDimensions, 1);
+    this._dimensions.splice(0, 0, xDimension);
   }
 
   public get yDimension(): string | null {
-    return this._yDimension;
+    if (this._dimensions.length < 2) {
+      return null;
+    }
+
+    return this.dimensions[1];
   }
 
   public set yDimension(yDimension: string | null) {
-    this._yDimension = yDimension;
+    if (yDimension === null) {
+      return;
+    }
+
+    const indexInDimensions = this._dimensions.indexOf(yDimension);
+    if (indexInDimensions === -1) {
+      return;
+    }
+
+    this._dimensions.splice(indexInDimensions, 1);
+    this._dimensions.splice(1, 0, yDimension);
   }
 
   public get chunkSize(): number {

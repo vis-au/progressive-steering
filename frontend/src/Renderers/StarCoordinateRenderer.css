@@ -14,6 +14,11 @@ svg.recentNonSteeredStarPointsCanvas {
   right: 0;
 }
 
+svg.starCoordinateAxesCanvas text,
+svg.nonSteeringStarCoordinateAxesCanvas text {
+  fill: black;
+}
+
 svg.recentStarPointsCanvas circle.recent-point {
   fill: white;
   stroke: steelblue;
