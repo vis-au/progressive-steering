@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as d3 from 'd3';
-import "./DoubleSlider.css";
+import "./Histogram.css";
 
 interface Props {
   label: string,
@@ -26,7 +26,7 @@ function id(label: string) {
   return label.toLowerCase().split(" ").join("_");
 }
 
-export default class DoubleSlider extends React.Component<Props, State> {
+export default class Histogram extends React.Component<Props, State> {
   private scale: d3.ScaleLinear<number, number> = d3.scaleLinear();
   private brush: any;
   private selection: any;
@@ -148,11 +148,11 @@ export default class DoubleSlider extends React.Component<Props, State> {
     this.renderHistogram();
 
     return (
-      <div className="double-slider-container">
+      <div className="histogram-container">
         <label htmlFor={ id(this.props.label) }>{ this.props.label }</label>
         <svg
           id={ id(this.props.label) }
-          className="double-slider"
+          className="histogram-canvas"
           width={ this.props.width + 2*(this.props.margin || DEFAULT_MARGIN) }
           height={ this.props.height || DEFAULT_HEIGHT }>
 

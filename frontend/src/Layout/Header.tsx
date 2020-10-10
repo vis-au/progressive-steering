@@ -3,7 +3,7 @@ import * as React from 'react';
 import { EelDataAdapter } from '../Data/DataAdapter';
 import { ScenarioPreset } from '../Data/EelBridge';
 import { Renderer } from '../Renderers/Renderers';
-import DoubleSlider from '../Widgets/DoubleSlider';
+import Histogram from '../Widgets/Histogram';
 
 import './Header.css';
 
@@ -45,13 +45,13 @@ export default class Header extends React.Component<Props, State> {
     );
   }
 
-  private renderDimensionSlider(dimension: string) {
+  private renderDimensionHistogram(dimension: string) {
     const extent = this.props.dataAdapter.getDomain(dimension).slice();
     const bins = this.props.dataAdapter.getHistogram(dimension);
     const selectedBins = this.props.dataAdapter.getHistogram(dimension, true);
 
     return (
-      <DoubleSlider
+      <Histogram
         key={ dimension }
         label={ dimension }
         min={ extent[0] }
@@ -64,14 +64,14 @@ export default class Header extends React.Component<Props, State> {
     );
   }
 
-  private renderDimensionSliders() {
+  private renderDimensionHistograms() {
     const dims = this.props.activeRenderer === "Scatter Plot"
       ? this.props.includeDimensions.slice(0,4)
       : this.props.includeDimensions;
 
     return (
-      <div className="dimension-sliders">
-        { dims.map(this.renderDimensionSlider.bind(this)) }
+      <div className="dimension-histograms">
+        { dims.map(this.renderDimensionHistogram.bind(this)) }
       </div>
     );
   }
@@ -109,7 +109,7 @@ export default class Header extends React.Component<Props, State> {
     return (
       <div className="header">
         { this.renderDimensionSelection() }
-        { this.renderDimensionSliders() }
+        { this.renderDimensionHistograms() }
         { this.renderScenarioPresets() }
       </div>
     );

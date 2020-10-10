@@ -1,11 +1,11 @@
-.double-slider-container {
+.histogram-container {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
 }
 
-.double-slider-container label {
+.histogram-container label {
   margin-right: 1rem;
   max-width: 6rem;
   overflow-x: hidden;
