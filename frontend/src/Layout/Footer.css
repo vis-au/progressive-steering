@@ -1,0 +1,70 @@
+
+.footer {
+  border-top: 2px solid #efefef;
+}
+.footer .left,
+.footer .right {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+}
+
+.footer .training-state-indicator {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-items: center;
+  justify-content: center;
+  padding: 0.05rem 0.75rem 0.2rem;
+}
+.footer .training-state-indicator .indicator {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 0.5rem;
+  background: red;
+  margin: 0 0.5rem;
+  margin-top: 0.2rem;
+}
+.footer .training-state-indicator .indicator.collecting {
+  background: blueviolet;
+}
+.footer .training-state-indicator .indicator.tree {
+  background: teal;
+}
+.footer .training-state-indicator .indicator.flushing {
+  background: firebrick;
+}
+
+.footer .metrics {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+}
+.footer .highlight-latest-point-toggle,
+.footer .show-heatmap-toggle,
+.footer .use-delta-heatmap-toggle,
+.footer .show-sidebyside-toggle,
+.footer .selection-padding-input {
+  padding: 0 0.5rem;
+}
+.footer .selection-padding-input input {
+  width: 2rem;
+}
+
+.footer .progression-controls {
+  display: flex;
+  flex-direction: row;
+  margin: 0 0.5rem;
+}
+.footer .progression-controls .control {
+  margin: 0 0.25rem;
+  padding: 0 0.25rem;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+}
+.footer .progression-controls .control:hover {
+  background: #efefef;
+}
