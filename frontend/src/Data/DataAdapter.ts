@@ -146,6 +146,28 @@ class DataAdapter {
     this.notifyDataObservers();
   }
 
+  private getPaddedSelectedBins(histogramGenerator: d3.HistogramGeneratorNumber<number, number>, thresholds: number[]) {
+
+    const selectedHistogramGenerator = d3.histogram()
+      .domain(histogramGenerator.domain())
+      .thresholds(histogramGenerator.thresholds() as any)
+      .value(histogramGenerator.value());
+
+    const selectedHistogram = selectedHistogramGenerator(this._allItemsInSelection);
+    const selectedHistogramPadded = thresholds.map(x0 => {
+      const bin = selectedHistogram.find(d => d.x0 === x0);
+
+      if (bin === undefined) {
+        return [];
+      }
+
+      return bin;
+    });
+
+    const paddedBins = selectedHistogramPadded.map(d => d.length);
+    return paddedBins;
+  }
+
   /**
    * Computes the histogram for a dimension in the data. Is not progressive.
    * @param dimension dimension of the data
@@ -155,17 +177,20 @@ class DataAdapter {
       return;
     }
     const histogramGenerator = d3.histogram()
+      .domain(this.dimensionExtents.get(dimension) || [0, 1])
       .value((d: any) => d[dimension]);
 
     let histogram: d3.Bin<number, number>[] | null = null;
+
+    histogram = histogramGenerator(this._data);
+
     if (onlySelected) {
-      histogram = histogramGenerator(this._allItemsInSelection);
-    } else {
-      histogram = histogramGenerator(this._data);
+      const thresholds = histogram.map(bin => bin.x0 || -1);
+      const paddedSelectedBins = this.getPaddedSelectedBins(histogramGenerator, thresholds);
+      return paddedSelectedBins;
     }
 
     const bins = histogram.map(bin => bin.length);
-
     return bins;
   }
 
