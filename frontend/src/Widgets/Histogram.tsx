@@ -11,7 +11,8 @@ interface Props {
   margin?: number,
   bins?: number[],
   selectedBins?: number[],
-  onBrush: (filter: [number, number]) => any
+  onBrush: (filter: [number, number]) => any,
+  onDelete: () => void
 }
 interface State {
   currentLowerBound: number,
@@ -160,6 +161,7 @@ export default class Histogram extends React.Component<Props, State> {
           <g className="selectionOverlay"></g>
           <g className="boundary-scale"></g>
         </svg>
+        <button className="delete" onClick={ this.props.onDelete }>+</button>
       </div>
     );
   }

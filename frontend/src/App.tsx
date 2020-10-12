@@ -146,6 +146,19 @@ export class App extends Component<{}, State> {
     this.setState({ includeDimensions });
   }
 
+  private onDimensionRemoved(dimension: string) {
+    const includeDimensions = this.state.includeDimensions;
+    const indexInDimensions = includeDimensions.indexOf(dimension);
+
+    if (indexInDimensions === -1) {
+      return;
+    }
+
+    includeDimensions.splice(indexInDimensions, 1);
+
+    this.setState({ includeDimensions });
+  }
+
   private onScenarioPresetSelected(event: React.ChangeEvent<HTMLSelectElement>) {
     const presetName = event.target.value;
     const preset = this.dataAdapter.scenarioPresets.find(preset => preset.name === presetName);
@@ -196,6 +209,7 @@ export class App extends Component<{}, State> {
           remainingDimensions={ this.state.remainingDimensions }
           selectedScenarioPreset={ this.state.selectedScenarioPreset }
           onDimensionAdded={ this.onDimensionAdded.bind(this) }
+          onDimensionRemoved={ this.onDimensionRemoved.bind(this) }
           onScenarioPresetSelected={ this.onScenarioPresetSelected.bind(this) }
         />
 

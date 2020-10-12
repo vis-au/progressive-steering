@@ -14,6 +14,7 @@ interface Props {
   remainingDimensions: string[],
   selectedScenarioPreset: ScenarioPreset | null,
   onDimensionAdded: (event: React.ChangeEvent<HTMLSelectElement>) => void,
+  onDimensionRemoved: (dimension: string) => void,
   onScenarioPresetSelected: (event: React.ChangeEvent<HTMLSelectElement>) => void,
 }
 interface State {
@@ -59,6 +60,7 @@ export default class Header extends React.Component<Props, State> {
         width={ 125 }
         bins={ bins }
         selectedBins={ selectedBins }
+        onDelete={ () => this.props.onDimensionRemoved(dimension) }
         onBrush={ (filter: [number, number]) => this.props.dataAdapter.filterNumericalDimension(dimension, filter) }
       />
     );
