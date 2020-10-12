@@ -16,8 +16,7 @@ interface Props {
   height: number,
   dimensionX: string | null,
   dimensionY: string | null,
-  extentX: [number, number],
-  extentY: [number, number],
+  extents: Map<string, [number, number]>,
   data: any[],
   nonSteeringData: any[],
   trainingState: TrainingState,
@@ -112,10 +111,17 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   private updateScales() {
     if (this.svg === null) {
       return;
+    } else if (this.props.dimensionX === null) {
+      return;
+    } else if (this.props.dimensionY === null) {
+      return;
     }
 
-    this.scaleX.domain(this.props.extentX);
-    this.scaleY.domain([this.props.extentY[1], this.props.extentY[0]]);
+    const rangeX = this.props.extents.get(this.props.dimensionX) || [0, 1];
+    const rangeY = this.props.extents.get(this.props.dimensionY) || [0, 1];
+
+    this.scaleX.domain(rangeX);
+    this.scaleY.domain([rangeY[1], rangeY[0]]);
   }
 
   private updatePaddedBrushSize() {

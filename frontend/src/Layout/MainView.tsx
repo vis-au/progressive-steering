@@ -62,6 +62,10 @@ export default class MainView extends React.Component<Props, State> {
   private renderRenderer() {
     const width = window.innerWidth - 1;
     const height = window.innerHeight - 85;
+    const extents = new Map<string, [number, number]>();
+    this.props.dataAdapter.dimensions.forEach(dim => {
+      extents.set(dim, this.props.dataAdapter.getDomain(dim));
+    });
 
     if (this.props.activeRenderer === "RadViz") {
       return (
@@ -72,7 +76,7 @@ export default class MainView extends React.Component<Props, State> {
           nonSteeringData={ this.props.dataAdapter.nonSteeringData }
           showNonSteeringData={ this.props.showSideBySideView }
           dimensions={ this.props.includeDimensions }
-          extents={ [] }
+          extents={ extents }
           highlightLastChunk={ this.props.highlightLatestPoints }
           chunkSize={ this.props.dataAdapter.chunkSize }
           onBrushedPoints={ this.props.onBrushedPoints }
@@ -80,10 +84,6 @@ export default class MainView extends React.Component<Props, State> {
         />
       );
     } else if (this.props.activeRenderer === "Star Coordinates") {
-      const extents = this.props.includeDimensions.map(dim => {
-        return this.props.dataAdapter.getDomain(dim);
-      });
-
       return (
         <StarCoordinateRenderer
           width={ width }
@@ -110,8 +110,7 @@ export default class MainView extends React.Component<Props, State> {
       <ScatterplotRenderer
         width={ width }
         height={ height }
-        extentX={ this.props.dataAdapter.getDomain(dimensionX) }
-        extentY={ this.props.dataAdapter.getDomain(dimensionY) }
+        extents={ extents }
         dimensionX={ dimensionX }
         dimensionY={ dimensionY }
         data={ this.props.dataAdapter.data }

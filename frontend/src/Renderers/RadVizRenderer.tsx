@@ -10,7 +10,7 @@ interface Props {
   width: number,
   height: number,
   dimensions: string[],
-  extents: [number, number][],
+  extents: Map<string, [number, number]>,
   data: any[],
   nonSteeringData: any[],
   showNonSteeringData: boolean,
@@ -129,7 +129,9 @@ export default class RadVizRenderer extends React.Component<Props, State> {
       ? this.nonSteeringCanvas
       : this.canvas;
 
-    radVizGenerator.data(this.props.data);
+    radVizGenerator
+      .ranges(this.props.extents)
+      .data(this.props.data);
 
     const scaleX = this.radVizGenerator.scaleX();
     const scaleY = this.radVizGenerator.scaleY();

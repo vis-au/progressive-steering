@@ -10,7 +10,7 @@ interface Props {
   width: number,
   height: number,
   dimensions: string[],
-  extents: [number, number][],
+  extents: Map<string, [number, number]>,
   data: any[],
   nonSteeringData: any[],
   showNonSteeringData: boolean,
@@ -166,7 +166,8 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
   }
 
   private updateScales() {
-    this.scales = this.props.extents.map(extent => {
+    const extents = Array.from(this.props.extents).map(d => d[1]);
+    this.scales = extents.map(extent => {
       return d3.scaleLinear().domain(extent).range([0, 1]).clamp(true);
     });
   }
