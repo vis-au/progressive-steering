@@ -6,11 +6,19 @@
 }
 
 .histogram-container label {
-  margin-right: 1rem;
-  max-width: 6rem;
+  /* background: rgba(255, 255, 255, 0.7); */
+  position: absolute;
+  margin-left: 0.75rem;
+  font-size: 10pt;
+  transform: translateY(10px);
+  max-width: 8rem;
   overflow-x: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.histogram-canvas {
+  padding-bottom: 0.5rem;
 }
 
 g.histogram rect.bin {

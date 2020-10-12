@@ -11,14 +11,14 @@ interface Props {
   margin?: number,
   bins?: number[],
   selectedBins?: number[],
-  onSelection: (selection: [number, number]) => any
+  onBrush: (filter: [number, number]) => any
 }
 interface State {
   currentLowerBound: number,
   currentUpperBound: number
 }
 
-const DEFAULT_HEIGHT = 20;
+const DEFAULT_HEIGHT = 15;
 const DEFAULT_MARGIN = 10;
 const DEFAULT_TICK_NUMBER = 6;
 
@@ -60,8 +60,8 @@ export default class Histogram extends React.Component<Props, State> {
       this.selection = [];
     }
 
-    if (this.props.onSelection !== undefined) {
-      this.props.onSelection(this.selection);
+    if (this.props.onBrush !== undefined) {
+      this.props.onBrush(this.selection);
     }
   }
 

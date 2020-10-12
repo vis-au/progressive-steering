@@ -59,15 +59,14 @@ export default class Header extends React.Component<Props, State> {
         width={ 125 }
         bins={ bins }
         selectedBins={ selectedBins }
-        onSelection={ (filter: [number, number]) => this.props.dataAdapter.filterNumericalDimension(dimension, filter) }
+        onBrush={ (filter: [number, number]) => this.props.dataAdapter.filterNumericalDimension(dimension, filter) }
       />
     );
   }
 
   private renderDimensionHistograms() {
-    const dims = this.props.activeRenderer === "Scatter Plot"
-      ? this.props.includeDimensions.slice(0,4)
-      : this.props.includeDimensions;
+    // only show 10 histograms maximum, to avoid overflow in the header bar
+    const dims = this.props.includeDimensions.slice(0, 10);
 
     return (
       <div className="dimension-histograms">
