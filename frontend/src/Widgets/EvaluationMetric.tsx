@@ -17,7 +17,7 @@ interface State {
 const DEFAULT_WIDTH = 500;
 const DEFAULT_HEIGHT = 75;
 const DEFAULT_PADDING = 40;
-const INDICATOR_LINE_WIDTH = 1;
+const INDICATOR_LINE_WIDTH = 5;
 
 export default class EvaluationMetric extends React.Component<Props, State> {
   private scaleX = d3.scaleLinear().range([0, DEFAULT_WIDTH]);

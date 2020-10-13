@@ -26,7 +26,7 @@
 .evaluationMetric svg.canvas path.time {
   stroke: steelblue;
   fill: none;
-  stroke-width: 1px;
+  stroke-width: 2px;
 }
 .evaluationMetric svg.canvas circle.endpoint {
   fill: steelblue;
