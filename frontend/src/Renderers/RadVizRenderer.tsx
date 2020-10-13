@@ -17,7 +17,9 @@ interface Props {
   highlightLastChunk?: boolean,
   chunkSize?: number,
   onBrushedPoints: (points: any[]) => any,
-  onBrushedRegion: (extent: number[][]) => any
+  onBrushedRegion: (extent: number[][]) => any,
+  onNewPointsInSelection: (currentPoints: any[], allPoints?: any[]) => any,
+  onNewNonSteeredPointsInSelection: (currentPoints: any[], allPoints?: any[]) => any,
 }
 interface State {
   margin: number,
@@ -40,6 +42,7 @@ export default class RadVizRenderer extends React.Component<Props, State> {
   private nonSteeringScreenPositions: ScaledCartesianCoordinate[];
 
   private brush: d3.BrushBehavior<any>;
+  private selection: any;
 
   public constructor(props: Props) {
     super(props);
@@ -47,6 +50,7 @@ export default class RadVizRenderer extends React.Component<Props, State> {
     this.canvas = null;
     this.nonSteeringCanvas = null;
     this.brushSvg = null;
+    this.selection = null;
 
     this.steeringScreenPositions = [];
     this.nonSteeringScreenPositions = [];
@@ -88,8 +92,29 @@ export default class RadVizRenderer extends React.Component<Props, State> {
     return this.props.data.slice(itemCount - (this.props.chunkSize || itemCount), itemCount);
   }
 
-  private getNewPointsInCurrentSelection(newPoints: any[], useNonSteeringData: boolean = false): any[] {
-    return [];
+  private isNodeInBounds(node: ScaledCartesianCoordinate, bounds: number[][]) {
+    return (
+      node.px >= bounds[0][0] &&
+      node.px < bounds[1][0] &&
+      node.py >= bounds[0][1] &&
+      node.py < bounds[1][1]
+    );
+  }
+
+  private getNewPointsInCurrentSelection(newPoints: ScaledCartesianCoordinate[], useNonSteeringData: boolean = false): any[] {
+    if (this.selection === null || this.selection.length === 0) {
+      return [];
+    }
+
+    const pointsInSelection: ScaledCartesianCoordinate[] = [];
+
+    newPoints.forEach(datum => {
+      if (this.isNodeInBounds(datum, this.selection)) {
+        pointsInSelection.push(datum);
+      }
+    });
+
+    return pointsInSelection;
   }
 
   private showDetails(d: ScaledCartesianCoordinate) {
@@ -108,6 +133,97 @@ export default class RadVizRenderer extends React.Component<Props, State> {
     }
 
     return true;
+  }
+
+  private onBrushEnd() {
+    if (this.canvas === null) {
+      return;
+    }
+
+    const scaleX = this.radVizGenerator.scaleX();
+    const scaleY = this.radVizGenerator.scaleY();
+    const centerX = this.radVizGenerator.center().x;
+    const centerY = this.radVizGenerator.center().y;
+
+    this.selection = d3.event.selection || null;
+
+    if (this.selection === null) {
+      this.setState({
+        brushedPoints: []
+      });
+      return;
+    }
+
+    this.selection[0][0] -= centerX;
+    this.selection[0][1] -= centerY;
+    this.selection[1][0] -= centerX;
+    this.selection[1][1] -= centerY;
+
+    const brushedCoordinates: ScaledCartesianCoordinate[] = this.radVizGenerator.data().entries
+      .map(entry => {
+        return { px: scaleX(entry.x2), py: scaleY(entry.x1), values: entry };
+      })
+      .filter(point => {
+        return point.px > this.selection[0][0]
+            && point.px < this.selection[1][0]
+            && point.py > this.selection[0][1]
+            && point.py < this.selection[1][1];
+      });
+
+    const brushedData = brushedCoordinates.map(d => d.values.original);
+
+    this.props.onBrushedPoints(brushedData);
+
+    this.setState({
+      brushedPoints: brushedCoordinates
+    });
+  }
+
+  private getPointsInRegion(region: number[][], useNonSteeringData: boolean = false) {
+    if (this.selection === null || this.selection.length === 0) {
+      return [];
+    }
+
+    const x0 = region[0][0];
+    const x3 = region[1][0];
+    const y0 = region[0][1];
+    const y3 = region[1][1];
+
+    const data = useNonSteeringData
+      ? this.nonSteeringScreenPositions
+      : this.steeringScreenPositions;
+
+    const pointsInRegion: ScaledCartesianCoordinate[] = data.filter(d => {
+      return d.px >= x0 && d.px <= x3 && d.py >= y0 && d.py <= y3;
+    });
+
+    return pointsInRegion;
+  }
+
+  private getCurrentlyBrushedPoints(useNonSteeringData: boolean = false) {
+    const extent = this.selection;
+
+    if (!extent) {
+      return [];
+    }
+
+    const currentlyBrushedPoints = this.getPointsInRegion(extent, useNonSteeringData);
+
+    return currentlyBrushedPoints;
+  }
+
+  private updateNewPointsInCurrentSelection(newPoints: ScaledCartesianCoordinate[]) {
+    const newPointsInSelection = this.getNewPointsInCurrentSelection(newPoints).map(d => d.values.original);
+    const allPointsInSelection = this.getCurrentlyBrushedPoints().map(d => d.values.original);
+
+    const newNonSteeredPoints = this.getLatestChunk(true);
+    const newNonSteeredPointsInSelection = this.getNewPointsInCurrentSelection(newNonSteeredPoints, true);
+    const allNonSteeredPointsInSelection = this.getCurrentlyBrushedPoints(true);
+
+    if (newPointsInSelection.length > 0 && !!this.props.onNewPointsInSelection) {
+      this.props.onNewPointsInSelection(newPointsInSelection, allPointsInSelection);
+      this.props.onNewNonSteeredPointsInSelection(newNonSteeredPointsInSelection, allNonSteeredPointsInSelection);
+    }
   }
 
   private renderPoints(useNonSteeringData: boolean = false): ScaledCartesianCoordinate[] {
@@ -201,6 +317,8 @@ export default class RadVizRenderer extends React.Component<Props, State> {
     this.renderInsideOutsidePoints(scaledChunk, false);
 
     this.steeringScreenPositions.push(...scaledChunk);
+
+    return scaledChunk;
   }
 
   private renderNonSteeringPoints() {
@@ -208,11 +326,23 @@ export default class RadVizRenderer extends React.Component<Props, State> {
     this.renderInsideOutsidePoints(scaledChunk, true);
 
     this.nonSteeringScreenPositions.push(...scaledChunk);
+
+    return scaledChunk;
+  }
+
+  private updateQuadtrees(steeredChunk: ScaledCartesianCoordinate[], nonSteeredChunk: ScaledCartesianCoordinate[]) {
+    if (!this.receivedNewData()) {
+      return;
+    }
+
+    this.updateNewPointsInCurrentSelection(steeredChunk);
   }
 
   private updatePoints() {
-    this.renderSteeringPoints();
-    this.renderNonSteeringPoints();
+    const steered = this.renderSteeringPoints();
+    const nonSteered = this.renderNonSteeringPoints();
+
+    return { steered, nonSteered };
   }
 
   private renderDetailsPanel() {
@@ -229,52 +359,9 @@ export default class RadVizRenderer extends React.Component<Props, State> {
     );
   }
 
-  private onBrushEnd() {
-    if (this.canvas === null) {
-      return;
-    }
-
-    const scaleX = this.radVizGenerator.scaleX();
-    const scaleY = this.radVizGenerator.scaleY();
-    const centerX = this.radVizGenerator.center().x;
-    const centerY = this.radVizGenerator.center().y;
-
-    const selection = d3.event.selection;
-
-    if (selection === null) {
-      this.setState({
-        brushedPoints: []
-      });
-      return;
-    }
-
-    selection[0][0] -= centerX;
-    selection[0][1] -= centerY;
-    selection[1][0] -= centerX;
-    selection[1][1] -= centerY;
-
-    const brushedCoordinates: ScaledCartesianCoordinate[] = this.radVizGenerator.data().entries
-      .map(entry => {
-        return { px: scaleX(entry.x2), py: scaleY(entry.x1), values: entry };
-      })
-      .filter(point => {
-        return point.px > selection[0][0]
-            && point.px < selection[1][0]
-            && point.py > selection[0][1]
-            && point.py < selection[1][1];
-      });
-
-    const brushedData = brushedCoordinates.map(d => d.values.original);
-
-    this.props.onBrushedPoints(brushedData);
-
-    this.setState({
-      brushedPoints: brushedCoordinates
-    });
-  }
-
   public render() {
-    this.updatePoints();
+    const scaledData = this.updatePoints();
+    this.updateQuadtrees(scaledData.steered, scaledData.nonSteered);
 
     const canvasWidth = this.getCanvasWidth();
     const isNonSteeringCanvasVisible = this.props.showNonSteeringData ? 'visible' : 'hidden';

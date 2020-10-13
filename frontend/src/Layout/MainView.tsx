@@ -78,6 +78,8 @@ export default class MainView extends React.Component<Props, State> {
           chunkSize={ this.props.dataAdapter.chunkSize }
           onBrushedPoints={ this.props.onBrushedPoints }
           onBrushedRegion={ this.props.onBrushedRegion }
+          onNewPointsInSelection={ this.props.onNewPointsInSelection }
+          onNewNonSteeredPointsInSelection={ this.props.onNewNonSteeredPointsInSelection }
         />
       );
     } else if (this.props.activeRenderer === "Star Coordinates") {

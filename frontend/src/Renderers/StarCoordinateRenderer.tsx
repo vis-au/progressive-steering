@@ -322,11 +322,7 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
       return;
     }
 
-    const lastChunkIds = this.getLatestChunk().map(d => d.id);
-    const lastChunkPositions = chunk
-      .filter(d => lastChunkIds.indexOf(d.values.id) > -1);
-    const pointsInSelection = this.getNewPointsInCurrentSelection(lastChunkPositions, false);
-    // const pointsInSelection = this.getNewPointsInCurrentSelection(chunk, false);
+    const pointsInSelection = this.getNewPointsInCurrentSelection(chunk, false);
 
     const points = canvas.selectAll("circle.recent-point").data(chunk)
       .join("circle")
@@ -480,7 +476,6 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
   private updateNewPointsInCurrentSelection(newPoints: ScaledCartesianCoordinate[]) {
     const newPointsInSelection = this.getNewPointsInCurrentSelection(newPoints).map(d => d.values);
     const allPointsInSelection = this.getCurrentlyBrushedPoints().map(d => d.values);
-
 
     const newNonSteeredPoints = this.getLatestChunk(true);
     const newNonSteeredPointsInSelection = this.getNewPointsInCurrentSelection(newNonSteeredPoints, true);
