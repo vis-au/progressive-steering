@@ -45,11 +45,9 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   private scaleX: d3.ScaleLinear<number, number>;
   private scaleY: d3.ScaleLinear<number, number>;
 
-  private quadtree: d3.Quadtree<[number, number]>;
-  private nonSteeringQuadtree: d3.Quadtree<[number, number]>;
+  private quadtree: d3.Quadtree<ScaledCartesianCoordinate>;
+  private nonSteeringQuadtree: d3.Quadtree<ScaledCartesianCoordinate>;
   private densityContourGenerator: d3.ContourDensity<[number, number]>;
-  private steeringScreenPositions: ScaledCartesianCoordinate[];
-  private nonSteeringScreenPositions: ScaledCartesianCoordinate[];
 
   private lastChunk: any[] = [];
   private lastDrawnPreset: number[][] = [];
@@ -70,13 +68,10 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.nonSteeringSVG = null;
     this.selection = null;
 
-    this.steeringScreenPositions = [];
-    this.nonSteeringScreenPositions = [];
-
-    this.quadtree = d3.quadtree()
+    this.quadtree = d3.quadtree<ScaledCartesianCoordinate>()
       .extent([[0, 0], [this.props.width, this.props.height]])
-      .x((d: any) => this.scaleX(d[this.props.dimensionX || ""]))
-      .y((d: any) => this.scaleY(d[this.props.dimensionY || ""]));
+      .x((d: ScaledCartesianCoordinate) => d.px)
+      .y((d: ScaledCartesianCoordinate) => d.py);
 
     this.nonSteeringQuadtree = this.quadtree.copy();
 
@@ -161,7 +156,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       return [];
     }
 
-    const currentlyBrushedPoints: any[] = this.getPointsInRegion(extent, useNonSteeringData);
+    const currentlyBrushedPoints = this.getPointsInRegion(extent, useNonSteeringData);
 
     return currentlyBrushedPoints;
   }
@@ -199,9 +194,9 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     return pointsInSelection;
   }
 
-  private updateNewPointsInCurrentSelection(newPoints: any[]) {
-    const newPointsInSelection = this.getNewPointsInCurrentSelection(newPoints);
-    const allPointsInSelection = this.getCurrentlyBrushedPoints();
+  private updateNewPointsInCurrentSelection(newPoints: ScaledCartesianCoordinate[]) {
+    const newPointsInSelection = this.getNewPointsInCurrentSelection(newPoints.map(d => d.values));
+    const allPointsInSelection = this.getCurrentlyBrushedPoints().map(d => d.values);
 
     const newNonSteeredPoints = this.getLatestChunk(true);
     const newNonSteeredPointsInSelection = this.getNewPointsInCurrentSelection(newNonSteeredPoints, true);
@@ -233,12 +228,12 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       return [];
     }
 
-    const pointsInRegion: any[] = [];
+    const pointsInRegion: ScaledCartesianCoordinate[] = [];
 
     const x0 = this.scaleX(region[0][0]);
     const x3 = this.scaleX(region[1][0]);
-    const y3 = this.scaleY(region[1][1]);
     const y0 = this.scaleY(region[0][1]);
+    const y3 = this.scaleY(region[1][1]);
 
     const quadtree = useNonSteeringData
       ? this.nonSteeringQuadtree
@@ -247,7 +242,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     quadtree.visit((node: any, x1, y1, x2, y2) => {
       if (!Array.isArray(node)) {
         do {
-          const nodeIsInBounds = this.isNodeInBounds(node.data, region);
+          const nodeIsInBounds = this.isNodeInBounds(node.data.values, region);
 
           if (nodeIsInBounds) {
             pointsInRegion.push(node.data);
@@ -405,8 +400,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     }
 
     const currentSelection = this.state.brushedRegions[this.state.brushedRegions.length - 1];
-
-    let pointsInSelection = this.getPointsInRegion(currentSelection, useNonSteeringData);
+    let pointsInSelection = this.getCurrentlyBrushedPoints(useNonSteeringData);
 
     const x = this.scaleX(currentSelection[0][0]);
     const y = this.scaleY(currentSelection[1][1]) + 15;
@@ -533,14 +527,13 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     : this.props.width;
   }
 
-  private updateQuadtrees() {
+  private updateQuadtrees(steeredChunk: ScaledCartesianCoordinate[], nonSteeredChunk: ScaledCartesianCoordinate[]) {
     if (!this.receivedNewData()) {
       return;
     }
-    const steeredChunk = this.getLatestChunk(false);
+
     this.quadtree.addAll(steeredChunk);
     this.updateNewPointsInCurrentSelection(steeredChunk);
-    const nonSteeredChunk = this.getLatestChunk(true);
     this.nonSteeringQuadtree.addAll(nonSteeredChunk);
   }
 
@@ -603,22 +596,25 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     const scaledChunk = this.renderPoints(true);
     this.renderInsideOutsidePoints(scaledChunk, true);
 
-    this.nonSteeringScreenPositions.push(...scaledChunk);
+    return scaledChunk;
   }
 
   private renderSteeringPoints() {
     const scaledChunk = this.renderPoints(false);
     this.renderInsideOutsidePoints(scaledChunk, false);
 
-    this.steeringScreenPositions.push(...scaledChunk);
+    return scaledChunk;
   }
 
   private updatePoints() {
-    this.renderSteeringPoints();
+    const steered = this.renderSteeringPoints();
+    const nonSteered: ScaledCartesianCoordinate[] = [];
 
     if (this.props.showNonSteeringData) {
-      this.renderNonSteeringPoints();
+      nonSteered.push(...this.renderNonSteeringPoints());
     }
+
+    return { steered, nonSteered };
   }
 
   private renderInsideOutsidePoints(chunk: ScaledCartesianCoordinate[], useNonSteeringData: boolean) {
@@ -653,16 +649,16 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   }
 
   private renderDensityPlots() {
-    const pointsInBrushedRegions = this.state.brushedRegions
-      .map(d => this.getPointsInRegion(d))
-      .flat();
+    // const pointsInBrushedRegions = this.state.brushedRegions
+    //   .map(d => this.getPointsInRegion(d))
+    //   .flat();
 
-    const canvas = d3.select("svg.densityCanvas");
+    // const canvas = d3.select("svg.densityCanvas");
 
-    canvas.selectAll("path.density-region").data(this.densityContourGenerator(pointsInBrushedRegions))
-      .join("path")
-        .attr("class", "density-region")
-        .attr("d", d3.geoPath());
+    // canvas.selectAll("path.density-region").data(this.densityContourGenerator(pointsInBrushedRegions))
+    //   .join("path")
+    //     .attr("class", "density-region")
+    //     .attr("d", d3.geoPath());
   }
 
   private renderHeatMap(canvasWidth: number) {
@@ -673,8 +669,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
           height={ this.props.height }
           scaleX={ this.scaleX }
           scaleY={ this.scaleY }
-          steeredData={ this.steeringScreenPositions }
-          nonSteeredData={ this.nonSteeringScreenPositions }
+          steeredData={ this.quadtree.data() }
+          nonSteeredData={ this.quadtree.data() }
           showNonSteeredCanvas={ this.props.showNonSteeringData }
           useDeltaHeatMap={ this.props.useDeltaHeatMap }
         />
@@ -687,8 +683,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   public render() {
     this.updateScales();
     this.updateAxes();
-    this.updatePoints();
-    this.updateQuadtrees();
+    const scaledData = this.updatePoints();
+    this.updateQuadtrees(scaledData.steered, scaledData.nonSteered);
     // this.renderDensityPlots();
     this.renderPresetSelection();
     this.updatePaddedBrushSize();
