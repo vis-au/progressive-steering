@@ -421,6 +421,7 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
     this.renderInsideOutsidePoints(scaledChunk, false);
 
     this.steeringScreenPositions.push(...scaledChunk);
+    return scaledChunk;
   }
 
   private renderNonSteeringPoints() {
@@ -428,16 +429,75 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
     this.renderInsideOutsidePoints(scaledChunk, true);
 
     this.nonSteeringScreenPositions.push(...scaledChunk);
+    return scaledChunk;
   }
 
   private updatePoints() {
-    this.renderSteeringPoints();
-    this.renderNonSteeringPoints();
+    const steered = this.renderSteeringPoints();
+    const nonSteered = this.renderNonSteeringPoints();
+
+    return { steered, nonSteered };
   }
 
   private updateAxes() {
     this.renderAxes(true);
     this.renderAxes(false);
+  }
+
+  private getPointsInRegion(region: number[][], useNonSteeringData: boolean = false) {
+    if (this.selection === null || this.selection.length === 0) {
+      return [];
+    }
+
+    const x0 = region[0][0];
+    const x3 = region[1][0];
+    const y0 = region[0][1];
+    const y3 = region[1][1];
+
+    const data = useNonSteeringData
+      ? this.nonSteeringScreenPositions
+      : this.steeringScreenPositions;
+
+    const pointsInRegion: ScaledCartesianCoordinate[] = data.filter(d => {
+      return d.px >= x0 && d.px <= x3 && d.py >= y0 && d.py <= y3;
+    });
+
+    return pointsInRegion;
+  }
+
+  private getCurrentlyBrushedPoints(useNonSteeringData: boolean = false) {
+    const extent = this.selection;
+
+    if (!extent) {
+      return [];
+    }
+
+    const currentlyBrushedPoints = this.getPointsInRegion(extent, useNonSteeringData);
+
+    return currentlyBrushedPoints;
+  }
+
+  private updateNewPointsInCurrentSelection(newPoints: ScaledCartesianCoordinate[]) {
+    const newPointsInSelection = this.getNewPointsInCurrentSelection(newPoints).map(d => d.values);
+    const allPointsInSelection = this.getCurrentlyBrushedPoints().map(d => d.values);
+
+
+    const newNonSteeredPoints = this.getLatestChunk(true);
+    const newNonSteeredPointsInSelection = this.getNewPointsInCurrentSelection(newNonSteeredPoints, true);
+    const allNonSteeredPointsInSelection = this.getCurrentlyBrushedPoints(true);
+
+    if (newPointsInSelection.length > 0 && !!this.props.onNewPointsInSelection) {
+      this.props.onNewPointsInSelection(newPointsInSelection, allPointsInSelection);
+      this.props.onNewNonSteeredPointsInSelection(newNonSteeredPointsInSelection, allNonSteeredPointsInSelection);
+    }
+  }
+
+  private updateQuadtrees(steeredChunk: ScaledCartesianCoordinate[], nonSteeredChunk: ScaledCartesianCoordinate[]) {
+    if (!this.receivedNewData()) {
+      return;
+    }
+
+    this.updateNewPointsInCurrentSelection(steeredChunk);
   }
 
   private renderDetailsPanel() {
@@ -464,8 +524,9 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
   }
 
   public render() {
-    this.updatePoints();
+    const scaledData = this.updatePoints();
     this.updateAxes();
+    this.updateQuadtrees(scaledData.steered, scaledData.nonSteered);
 
     const canvasWidth = this.getCanvasWidth();
     const isNonSteeringCanvasVisible = this.props.showNonSteeringData ? 'visible' : 'hidden';
