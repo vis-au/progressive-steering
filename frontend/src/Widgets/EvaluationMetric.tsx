@@ -8,10 +8,11 @@ import "./EvaluationMetric.css";
 interface Props {
   label: string,
   values: number[],
-  trainingStates: TrainingState[]
+  trainingStates: TrainingState[],
+  canvasVisible?: boolean,
+  onClick: () => void
 }
 interface State {
-  canvasVisible: boolean
 }
 
 const DEFAULT_WIDTH = 500;
@@ -30,10 +31,6 @@ export default class EvaluationMetric extends React.Component<Props, State> {
     this.lineGenerator
       .x((d, i) => this.scaleX(i))
       .y(d => this.scaleY(d[1]));
-
-    this.state = {
-      canvasVisible: false
-    }
   }
 
   private getCanvasSelector() {
@@ -41,7 +38,7 @@ export default class EvaluationMetric extends React.Component<Props, State> {
   }
 
   private toggleVisibility() {
-    this.setState({ canvasVisible: !this.state.canvasVisible });
+    this.props.onClick();
   }
 
   private updateAxes() {
@@ -96,8 +93,8 @@ export default class EvaluationMetric extends React.Component<Props, State> {
   }
 
   public render() {
-    const canvasLabel = this.state.canvasVisible ? '' : 'hidden';
-    const activeLabel = this.state.canvasVisible ? 'active' : '';
+    const canvasLabel = this.props.canvasVisible ? '' : 'hidden';
+    const activeLabel = this.props.canvasVisible ? 'active' : '';
 
     return (
       <div className={`evaluationMetric ${activeLabel}`} onClick={ this.toggleVisibility.bind(this) }>

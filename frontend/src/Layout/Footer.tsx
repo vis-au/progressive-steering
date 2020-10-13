@@ -4,7 +4,7 @@ import { EelDataAdapter } from '../Data/DataAdapter';
 import { ProgressionState } from '../Data/EelBridge';
 import EvaluationMetric from '../Widgets/EvaluationMetric';
 import ProgressBar from '../Widgets/ProgressBar';
-import { DEFAULT_EVALUATION_METRICS } from '../Data/EelBackendDummy';
+import { DEFAULT_EVALUATION_METRICS, EvaluationMetricType } from '../Data/EelBackendDummy';
 
 import './Footer.css';
 
@@ -23,9 +23,29 @@ interface Props {
   onPaddingStepsChanged: (event: React.ChangeEvent<HTMLInputElement>) => void,
 }
 interface State {
+  visibleEvaluationMetric: EvaluationMetricType | null
 }
 
 export default class Footer extends React.Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+
+    this.state = {
+      visibleEvaluationMetric: null
+    };
+  }
+
+  private onMetricClicked(metric: EvaluationMetricType) {
+    if (this.state.visibleEvaluationMetric === metric) {
+      this.setState({
+        visibleEvaluationMetric: null
+      });
+    } else {
+      this.setState({
+        visibleEvaluationMetric: metric
+      });
+    }
+  }
 
   private renderProgressionControls() {
     const text = this.props.dataAdapter.progressionState === 'paused' ? 'RESUME' : 'PAUSE';
@@ -42,18 +62,22 @@ export default class Footer extends React.Component<Props, State> {
     return (
       <div className="metrics">
         <EvaluationMetric
+          canvasVisible={ this.state.visibleEvaluationMetric === "Points received"}
           label={ "Points received" }
           values={ this.props.dataAdapter.cumulativeDataSize }
-          trainingStates={ this.props.dataAdapter.trainingStateHistory } />
+          trainingStates={ this.props.dataAdapter.trainingStateHistory }
+          onClick={ () => this.onMetricClicked("Points received") } />
         {
           DEFAULT_EVALUATION_METRICS.map(metric => {
             const label = metric === "recall" ? "in selection" : metric;
             return (
               <EvaluationMetric
+                canvasVisible={ this.state.visibleEvaluationMetric === metric }
                 key={ metric }
                 label={ label }
                 values={ this.props.dataAdapter.getEvaluationMetric(metric) }
-                trainingStates={ this.props.dataAdapter.trainingStateHistory } />
+                trainingStates={ this.props.dataAdapter.trainingStateHistory }
+                onClick={ () => this.onMetricClicked(metric) }/>
             );
           })
         }

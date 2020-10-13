@@ -8,7 +8,9 @@ export const DATA_EXTENT = 1.0;
 export const DEFAULT_DIMENSIONS = ["id", "street", "price"];
 
 export const DEFAULT_TOTAL_DATA_SIZE = 8780;
-export const DEFAULT_EVALUATION_METRICS = ["recall", "precision"];
+export type EvaluationMetricType = 'precision' | 'recall' | 'Points received';
+export const DEFAULT_EVALUATION_METRICS: EvaluationMetricType[] = ["recall", "precision"];
+
 
 export const DEFAULT_POIS = [
   {lon: 560, lat: 470, label: "poi 1"},
