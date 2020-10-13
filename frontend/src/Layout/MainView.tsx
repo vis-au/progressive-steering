@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { EelDataAdapter, getPOIs } from '../Data/DataAdapter';
-import { ScenarioPreset } from '../Data/EelBridge';
+import { getXDimension, getYDimension, ScenarioPreset } from '../Data/EelBridge';
 import RadVizRenderer from '../Renderers/RadVizRenderer';
 import { Renderer } from '../Renderers/Renderers';
 import ScatterplotRenderer from '../Renderers/ScatterplotRenderer';
@@ -62,10 +62,7 @@ export default class MainView extends React.Component<Props, State> {
   private renderRenderer() {
     const width = window.innerWidth - 1;
     const height = window.innerHeight - 85;
-    const extents = new Map<string, [number, number]>();
-    this.props.dataAdapter.dimensions.forEach(dim => {
-      extents.set(dim, this.props.dataAdapter.getDomain(dim));
-    });
+    const extents = this.props.dataAdapter.getDomains();
 
     if (this.props.activeRenderer === "RadViz") {
       return (
@@ -103,8 +100,8 @@ export default class MainView extends React.Component<Props, State> {
       );
     }
 
-    const dimensionX = this.props.dataAdapter.xDimension;
-    const dimensionY = this.props.dataAdapter.yDimension;
+    const dimensionX = getXDimension();
+    const dimensionY = getYDimension();
 
     return (
       <ScatterplotRenderer

@@ -25,6 +25,18 @@ export type ProgressionState = 'ready' | 'running' | 'paused' | 'done';
 
 export type TrainingState = 'collectingData' | 'usingTree' | 'flushing';
 
+// default dimensions used for scatter plot layout
+let DEFAULT_X_DIMENSION = "Saving opportunity";
+let DEFAULT_Y_DIMENSION = "Distance";
+
+export function getXDimension() {
+  return DEFAULT_X_DIMENSION;
+}
+
+export function getYDimension() {
+  return DEFAULT_Y_DIMENSION;
+}
+
 // datamanger is a singleton instance that we reference from different places in the bridge
 // functions
 const dataAdapter = getEelDataAdapter();
@@ -86,13 +98,13 @@ export function sendRandomDataChunk(chunk: any) {
  * @param extent minimum and maximum value for the dimension represented on the x axis.
  */
 export function sendXDomain(extent: [number, number]) {
-  const xDomain = dataAdapter.xDimension;
+  const xDim = DEFAULT_X_DIMENSION;
 
-  if (xDomain === null) {
+  if (xDim === null) {
     return;
   }
 
-  dataAdapter.setDomain(xDomain, extent);
+  dataAdapter.setDomain(xDim, extent);
 }
 
 /**
@@ -100,13 +112,13 @@ export function sendXDomain(extent: [number, number]) {
  * @param extent minimum and maximum value for the dimension represented on the y axis.
  */
 export function sendYDomain(extent: [number, number]) {
-  const yDomain = dataAdapter.yDimension;
+  const yDim = DEFAULT_Y_DIMENSION;
 
-  if (yDomain === null) {
+  if (yDim === null) {
     return;
   }
 
-  dataAdapter.setDomain(yDomain, extent);
+  dataAdapter.setDomain(yDim, extent);
 }
 
 /**
@@ -124,7 +136,7 @@ export function sendDimensionTotalExtent(message: {name: string, min: number, ma
  * @param xName name of the x dimension
  */
 export function setXName(xName: string) {
-  dataAdapter.xDimension = xName;
+  DEFAULT_X_DIMENSION = xName;
   console.log("new x domain:", xName);
   return;
 }
@@ -134,7 +146,7 @@ export function setXName(xName: string) {
  * @param yName name of the y dimension
  */
 export function setYName(yName: string) {
-  dataAdapter.yDimension = yName;
+  DEFAULT_Y_DIMENSION = yName;
   console.log("new y domain:", yName);
   return;
 }

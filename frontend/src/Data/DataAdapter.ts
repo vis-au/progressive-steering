@@ -146,6 +146,13 @@ class DataAdapter {
     this.notifyDataObservers();
   }
 
+  /**
+   * Returns all knonwn domain bounds.
+   */
+  public getDomains() {
+    return this.dimensionExtents;
+  }
+
   private getPaddedSelectedBins(histogramGenerator: d3.HistogramGeneratorNumber<number, number>, thresholds: number[]) {
 
     const selectedHistogramGenerator = d3.histogram()
@@ -245,50 +252,6 @@ class DataAdapter {
 
   public set dimensions(dimensions: string[]) {
     this._dimensions = dimensions;
-  }
-
-  public get xDimension(): string | null {
-    if (this._dimensions.length < 1) {
-      return null;
-    }
-
-    return this._dimensions[0];
-  }
-
-  public set xDimension(xDimension: string | null) {
-    if (xDimension === null) {
-      return;
-    }
-
-    const indexInDimensions = this._dimensions.indexOf(xDimension);
-    if (indexInDimensions === -1) {
-      return;
-    }
-
-    this._dimensions.splice(indexInDimensions, 1);
-    this._dimensions.splice(0, 0, xDimension);
-  }
-
-  public get yDimension(): string | null {
-    if (this._dimensions.length < 2) {
-      return null;
-    }
-
-    return this.dimensions[1];
-  }
-
-  public set yDimension(yDimension: string | null) {
-    if (yDimension === null) {
-      return;
-    }
-
-    const indexInDimensions = this._dimensions.indexOf(yDimension);
-    if (indexInDimensions === -1) {
-      return;
-    }
-
-    this._dimensions.splice(indexInDimensions, 1);
-    this._dimensions.splice(1, 0, yDimension);
   }
 
   public get chunkSize(): number {

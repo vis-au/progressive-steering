@@ -14,8 +14,6 @@ const STEPS_BEFORE_PADDING_GROWS = 1;
 
 const DEFAULT_SELECTED_DIMENSIONS = ["Distance", "Saving opportunity"];
 const DEFAULT_UNSELECTED_DIMENSIONS = ["cleaning_fee", "price", "accommodates"];
-const DEFAULT_X_DIMENSION = "Saving opportunity";
-const DEFAULT_Y_DIMENSION = "Distance";
 
 
 interface State {
@@ -42,9 +40,6 @@ export class App extends Component<{}, State> {
     this.dataAdapter.subscribeOnDataChanged(this.onNewDataReceived.bind(this));
     this.dataAdapter.subscribeOnFilterChanged(this.onFilterChanged.bind(this));
     this.dataAdapter.subscribeOnMetricChanged(this.onMetricChanged.bind(this));
-
-    this.dataAdapter.xDimension = DEFAULT_X_DIMENSION;
-    this.dataAdapter.yDimension = DEFAULT_Y_DIMENSION;
 
     // Place des Vosges, VIS deadline
     const dummyData = {
@@ -186,9 +181,6 @@ export class App extends Component<{}, State> {
 
       const newDimensions = this.dataAdapter.dimensions
         .filter(d => this.state.includeDimensions.indexOf(d) === -1);
-
-      this.dataAdapter.xDimension = DEFAULT_X_DIMENSION;
-      this.dataAdapter.yDimension = DEFAULT_Y_DIMENSION;
 
       this.setState({
         includeDimensions: oldIncludedDimensions,
