@@ -246,7 +246,6 @@ export default class RadVizRenderer extends React.Component<Props, State> {
       : this.canvas;
 
     radVizGenerator
-      .ranges(this.props.extents)
       .data(this.props.data);
 
     const scaleX = this.radVizGenerator.scaleX();
@@ -340,7 +339,11 @@ export default class RadVizRenderer extends React.Component<Props, State> {
 
   private updatePoints() {
     const steered = this.renderSteeringPoints();
-    const nonSteered = this.renderNonSteeringPoints();
+    const nonSteered: ScaledCartesianCoordinate[] = [];
+
+    if (this.props.showNonSteeringData) {
+      nonSteered.push(...this.renderNonSteeringPoints());
+    }
 
     return { steered, nonSteered };
   }

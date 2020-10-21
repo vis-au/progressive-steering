@@ -430,7 +430,11 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
 
   private updatePoints() {
     const steered = this.renderSteeringPoints();
-    const nonSteered = this.renderNonSteeringPoints();
+    const nonSteered: ScaledCartesianCoordinate[] = [];
+
+    if (this.props.showNonSteeringData) {
+      nonSteered.push(...this.renderNonSteeringPoints());
+    }
 
     return { steered, nonSteered };
   }
