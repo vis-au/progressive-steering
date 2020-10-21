@@ -6,6 +6,7 @@ import RadVizRenderer from '../Renderers/RadVizRenderer';
 import { Renderer } from '../Renderers/Renderers';
 import ScatterplotRenderer from '../Renderers/ScatterplotRenderer';
 import StarCoordinateRenderer from '../Renderers/StarCoordinateRenderer';
+import TernaryPlotRenderer from '../Renderers/TernaryPlotRenderer';
 import MapViewRenderer, { POI } from '../Widgets/MapViewer';
 
 import './MainView.css';
@@ -29,7 +30,7 @@ interface Props {
 interface State {
 }
 
-const RENDERER_LABELS: Renderer[] = ["Scatter Plot", "Star Coordinates", "RadViz"];
+const RENDERER_LABELS: Renderer[] = ["Scatter Plot", "Star Coordinates", "RadViz", "Ternary"];
 
 export default class MainView extends React.Component<Props, State> {
 
@@ -98,6 +99,15 @@ export default class MainView extends React.Component<Props, State> {
           onBrushedRegion={ this.props.onBrushedRegion }
           onNewPointsInSelection={ this.props.onNewPointsInSelection }
           onNewNonSteeredPointsInSelection={ this.props.onNewNonSteeredPointsInSelection }
+        />
+      );
+    } else if (this.props.activeRenderer === "Ternary") {
+      return (
+        <TernaryPlotRenderer
+          data={ this.props.dataAdapter.data }
+          dimensions={ this.props.includeDimensions }
+          height={ height }
+          width={ width }
         />
       );
     }
