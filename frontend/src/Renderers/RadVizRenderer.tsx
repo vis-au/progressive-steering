@@ -245,8 +245,15 @@ export default class RadVizRenderer extends React.Component<Props, State> {
       ? this.nonSteeringCanvas
       : this.canvas;
 
-    radVizGenerator
-      .data(this.props.data);
+    const renderData = this.props.data.map(d => {
+      const datum: any = {};
+      datum.id = d.id;
+      this.props.dimensions.forEach(dim => {
+        datum[dim] = d[dim];
+      });
+      return datum;
+    });
+    radVizGenerator.data(renderData);
 
     const scaleX = this.radVizGenerator.scaleX();
     const scaleY = this.radVizGenerator.scaleY();
