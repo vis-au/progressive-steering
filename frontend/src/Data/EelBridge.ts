@@ -1,5 +1,5 @@
 import { getEelDataAdapter } from './DataAdapter';
-import { runDummyBackend, DEFAULT_DIMENSIONS } from './EelBackendDummy';
+import { runDummyBackend } from './EelBackendDummy';
 
 // Point Eel web socket to the instance
 export const eel = window.eel
@@ -49,6 +49,27 @@ function getTrainingStateFromChunk(chunk: any): TrainingState {
   }
 }
 
+export const DEFAULT_TERNARY_DIM0 = "host_fee";
+export const DEFAULT_TERNARY_DIM1 = "cleaning_fee";
+export const DEFAULT_TERNARY_DIM2 = "airbnb_fee";
+
+function addTernaryProperties(datum: any) {
+  const minAirbnbRate = 8;
+  const maxAirBnbRateDelta = 20;
+  const airbnbRate = (Math.random() * maxAirBnbRateDelta + minAirbnbRate) / 100;
+  const hostRate = 1 - airbnbRate;
+
+  const fullPrice = datum["price"] + datum["cleaning_fee"];
+  const airbnbFee = airbnbRate * datum["price"];
+  const hostFee = hostRate * datum["price"];
+
+  datum[DEFAULT_TERNARY_DIM0] = (datum["cleaning_fee"] / fullPrice) * 100;
+  datum[DEFAULT_TERNARY_DIM1] = (airbnbFee / fullPrice) * 100;
+  datum[DEFAULT_TERNARY_DIM2] = (hostFee / fullPrice) * 100;
+
+  return datum;
+};
+
 function serializeChunk(chunk: any) {
   const serializedChunk: any[] = [];
   const ids = Object.keys(chunk);
@@ -59,12 +80,14 @@ function serializeChunk(chunk: any) {
     // DEFAULT_DIMENSIONS.forEach((dimension, i) => {
     //   datum[dimension] = chunk[id].values[i];
     // });
-    const datum = { ...chunk[id].values };
+    let datum = { ...chunk[id].values };
 
     datum["Saving opportunity"] = chunk[id].aboveM.saving;
     datum["Distance"] = chunk[id].dist2user;
     datum["status"] = chunk[id].state;
     datum["id"] = +id;
+
+    datum = addTernaryProperties(datum);
 
     serializedChunk.push(datum);
   });

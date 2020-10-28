@@ -106,6 +106,8 @@ export default class MainView extends React.Component<Props, State> {
         <TernaryPlotRenderer
           data={ this.props.dataAdapter.data }
           dimensions={ this.props.includeDimensions }
+          nonSteeringData={ this.props.dataAdapter.nonSteeringData }
+          chunkSize={ this.props.dataAdapter.chunkSize }
           height={ height }
           width={ width }
         />

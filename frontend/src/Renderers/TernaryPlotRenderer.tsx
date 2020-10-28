@@ -1,13 +1,17 @@
 import * as React from 'react';
 import * as d3 from 'd3';
 
+import { DEFAULT_POINT_COLOR, DEFAULT_POINT_RADIUS } from './RendererDefaultParameters';
+import { DEFAULT_TERNARY_DIM0, DEFAULT_TERNARY_DIM1, DEFAULT_TERNARY_DIM2 } from '../Data/EelBridge';
+
 import './TernaryPlotRenderer.css';
-import { DEFAULT_POINT_COLOR } from './RendererDefaultParameters';
 
 interface Props {
   width: number,
   height: number,
   data: any[],
+  nonSteeringData: any[],
+  chunkSize: number,
   dimensions: string[]
 }
 interface State {
@@ -35,6 +39,8 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
   private b: (t: number) => number[];
   private c: (t: number) => number[];
 
+  private lastChunk: any[] = [];
+
   constructor(props: Props) {
     super(props);
 
@@ -59,6 +65,29 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
       yOffset
     };
   }
+
+  private getLatestChunk(useNonSteeringData: boolean = false) {
+    let itemCount = this.props.data.length;
+
+    if (useNonSteeringData) {
+      itemCount = this.props.nonSteeringData.length;
+      return this.props.nonSteeringData.slice(itemCount - (this.props.chunkSize || itemCount), itemCount);
+    }
+
+    // if chunksize property is not defined, return the full dataset
+    return this.props.data.slice(itemCount - (this.props.chunkSize || itemCount), itemCount);
+  }
+
+  private receivedNewData() {
+    const chunk = this.getLatestChunk()
+
+    if (chunk[0] !== undefined && chunk[0] === this.lastChunk[0]) {
+      return false;
+    }
+
+    return true;
+  }
+
   private renderGrid(chart: d3.Selection<SVGGElement, any, HTMLElement, any>) {
     const grid = d3.range(0, 1, 0.1);
 
@@ -119,9 +148,9 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
       .attr("font-size", 16)
       .selectAll(".labels")
       .data([
-        { label: this.props.dimensions[0], pos: _a(0.5), rot: 60 },
-        { label: this.props.dimensions[1], pos: _b(0.5), rot: -60 },
-        { label: this.props.dimensions[2], pos: _c(0.5), rot: 0 }
+        { label: DEFAULT_TERNARY_DIM0, pos: _a(0.5), rot: 60 },
+        { label: DEFAULT_TERNARY_DIM1, pos: _b(0.5), rot: -60 },
+        { label: DEFAULT_TERNARY_DIM2, pos: _c(0.5), rot: 0 }
       ])
       .enter().append("text")
         .attr("transform", d => `translate(${d.pos}) rotate(${d.rot})`)
@@ -129,26 +158,27 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
         .text(d => d.label)
   }
 
-  private renderPoints(chart: d3.Selection<SVGGElement, any, HTMLElement, any>) {
-    const dim0 = this.props.dimensions[0];
-    const dim1 = this.props.dimensions[1];
-    const dim2 = this.props.dimensions[2];
+  private updatePoints(chart: d3.Selection<SVGGElement, any, HTMLElement, any>) {
+    if (!this.receivedNewData()) {
+      return [];
+    }
 
     chart.selectAll(".countries")
-      .data(this.props.data.map(d => ({
-        country: d.country,
-        pos: [
-          this.A[0] * d[dim0] / 100 + this.B[0] * d[dim1] / 100 + this.C[0] * d[dim2] / 100,
-          this.A[1] * d[dim0] / 100 + this.B[1] * d[dim1] / 100 + this.C[1] * d[dim2] / 100
-        ]
-      })))
+      .data(this.props.data.map(d => {
+        return {
+          pos: [
+            this.A[0] * +d[DEFAULT_TERNARY_DIM0] / 100 + this.B[0] * +d[DEFAULT_TERNARY_DIM1] / 100 + this.C[0] * +d[DEFAULT_TERNARY_DIM2] / 100,
+            this.A[1] * +d[DEFAULT_TERNARY_DIM0] / 100 + this.B[1] * +d[DEFAULT_TERNARY_DIM1] / 100 + this.C[1] * +d[DEFAULT_TERNARY_DIM2] / 100
+          ]
+        };
+      }
+      ))
       .enter().append("circle")
-        .attr("r", 5)
+        .attr("r", DEFAULT_POINT_RADIUS)
         .attr("cx", d => d.pos[0])
         .attr("cy", d => d.pos[1])
         .attr("fill", DEFAULT_POINT_COLOR)
-        .attr("stroke", DEFAULT_POINT_COLOR)
-        .append("title").text(d => d.country);
+        .attr("stroke", DEFAULT_POINT_COLOR);
   }
 
   // adapted from https://observablehq.com/@toja/d3-ternary-plot
@@ -169,7 +199,7 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
     this.renderGrid(chart);
     this.renderTicks(chart);
     this.renderLabels(chart);
-    this.renderPoints(chart);
+    this.updatePoints(chart);
   }
 
   public render() {
