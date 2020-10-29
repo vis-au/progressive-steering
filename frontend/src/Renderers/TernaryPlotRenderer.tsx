@@ -5,18 +5,29 @@ import { DEFAULT_POINT_COLOR, DEFAULT_POINT_RADIUS } from './RendererDefaultPara
 import { DEFAULT_TERNARY_DIM0, DEFAULT_TERNARY_DIM1, DEFAULT_TERNARY_DIM2 } from '../Data/EelBridge';
 
 import './TernaryPlotRenderer.css';
+import { ScaledCartesianCoordinate } from '../PointTypes';
 
 interface Props {
   width: number,
   height: number,
+  dimensions: string[],
+  // extents: Map<string, [number, number]>,
   data: any[],
   nonSteeringData: any[],
-  chunkSize: number,
-  dimensions: string[]
+  showNonSteeringData: boolean,
+  highlightLastChunk?: boolean,
+  chunkSize?: number,
+  // stepsBeforePaddingGrows: number,
+  onBrushedPoints?: (points: any[]) => any,
+  // onBrushedRegion: (extent: number[][]) => any,
+  onNewPointsInSelection: (currentPoints: any[], allPoints?: any[]) => any,
+  // onNewNonSteeredPointsInSelection: (currentPoints: any[], allPoints?: any[]) => any,
 }
 interface State {
   size: number,
-  yOffset: number
+  yOffset: number,
+  brushedPoints: ScaledCartesianCoordinate[],
+  selectedPoint: ScaledCartesianCoordinate | null;
 }
 
 function line(positions: number[][]) {
@@ -40,6 +51,15 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
   private c: (t: number) => number[];
 
   private lastChunk: any[] = [];
+  private steeringScreenPositions: ScaledCartesianCoordinate[];
+  private nonSteeringScreenPositions: ScaledCartesianCoordinate[];
+
+  private axesSvg: d3.Selection<d3.BaseType, unknown, HTMLElement, any> | null;
+  private canvas: d3.Selection<d3.BaseType, unknown, HTMLElement, any> | null;
+  private nonSteeringCanvas: d3.Selection<d3.BaseType, unknown, HTMLElement, any> | null;
+
+  private brush: d3.BrushBehavior<any>;
+  private selection: any;
 
   constructor(props: Props) {
     super(props);
@@ -60,9 +80,24 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
     this.b = line([C, A]);
     this.c = line([A, B]);
 
+    this.selection = null;
+    this.axesSvg = null;
+    this.canvas = null;
+    this.nonSteeringCanvas = null;
+
+    this.steeringScreenPositions = [];
+    this.nonSteeringScreenPositions = [];
+
+    this.brush = d3.brush()
+      .on("start", null)
+      .on("brush", null)
+      .on("end", this.onBrushEnd.bind(this));
+
     this.state = {
       size,
-      yOffset
+      yOffset,
+      brushedPoints: [],
+      selectedPoint: null
     };
   }
 
@@ -78,6 +113,74 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
     return this.props.data.slice(itemCount - (this.props.chunkSize || itemCount), itemCount);
   }
 
+  private getCanvasWidth() {
+    return this.props.showNonSteeringData
+      ? this.props.width / 2 - 1
+      : this.props.width;
+  }
+
+  private isNodeInBounds(node: ScaledCartesianCoordinate, bounds: number[][]) {
+    const canvasWidth = this.getCanvasWidth();
+
+    return (
+      node.px + canvasWidth/2 >= bounds[0][0] &&
+      node.px + canvasWidth/2 < bounds[1][0] &&
+      node.py + this.props.height/2 >= bounds[0][1] &&
+      node.py + this.props.height/2 < bounds[1][1]
+    );
+  }
+
+  private getNewPointsInCurrentSelection(newPoints: ScaledCartesianCoordinate[], useNonSteeringData: boolean = false): any[] {
+    if (this.selection === null || this.selection.length === 0) {
+      return [];
+    }
+
+    const pointsInSelection: ScaledCartesianCoordinate[] = [];
+
+    newPoints.forEach(datum => {
+      if (this.isNodeInBounds(datum, this.selection)) {
+        pointsInSelection.push(datum);
+      }
+    });
+
+    return pointsInSelection;
+  }
+
+  private getPointsInRegion(region: number[][], useNonSteeringData: boolean = false) {
+    if (this.selection === null || this.selection.length === 0) {
+      return [];
+    }
+
+    const canvasWidth = this.getCanvasWidth();
+
+    const x0 = region[0][0] - canvasWidth / 2;
+    const x3 = region[1][0] - canvasWidth / 2;
+    const y0 = region[0][1] - this.props.height / 2;
+    const y3 = region[1][1] - this.props.height / 2;
+
+    const data = useNonSteeringData
+      ? this.nonSteeringScreenPositions
+      : this.steeringScreenPositions;
+
+    const pointsInRegion: ScaledCartesianCoordinate[] = data.filter(d => {
+      return d.px >= x0 && d.px <= x3 && d.py >= y0 && d.py <= y3;
+    });
+
+    return pointsInRegion;
+  }
+
+  private getCurrentlyBrushedPoints(useNonSteeringData: boolean = false) {
+    const extent = this.selection;
+
+    if (!extent) {
+      return [];
+    }
+
+    const currentlyBrushedPoints = this.getPointsInRegion(extent, useNonSteeringData);
+
+    return currentlyBrushedPoints;
+  }
+
   private receivedNewData() {
     const chunk = this.getLatestChunk()
 
@@ -86,6 +189,35 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
     }
 
     return true;
+  }
+
+  private onBrushEnd() {
+    if (this.canvas === null) {
+      return;
+    } else if (this.props.onBrushedPoints === undefined) {
+      return;
+    }
+
+    this.selection = d3.event.selection || null;
+
+    if (this.selection === null) {
+      this.setState({
+        brushedPoints: []
+      });
+      return;
+    }
+
+    const lastChunkIds = this.getLatestChunk().map(d => d.id);
+    const lastChunkPositions = this.steeringScreenPositions
+      .filter(d => lastChunkIds.indexOf(d.values.id) > -1);
+    const brushedCoordinates = this.getNewPointsInCurrentSelection(lastChunkPositions, false);
+
+    const brushedData = brushedCoordinates.map(d => d.values);
+    this.props.onBrushedPoints(brushedData);
+
+    this.setState({
+      brushedPoints: brushedCoordinates
+    });
   }
 
   private renderGrid(chart: d3.Selection<SVGGElement, any, HTMLElement, any>) {
@@ -158,35 +290,65 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
         .text(d => d.label)
   }
 
-  private updatePoints(chart: d3.Selection<SVGGElement, any, HTMLElement, any>) {
+  private updateNewPointsInCurrentSelection(newPoints: ScaledCartesianCoordinate[]) {
+    const newPointsInSelection = this.getNewPointsInCurrentSelection(newPoints).map(d => d.values);
+    const allPointsInSelection = this.getCurrentlyBrushedPoints().map(d => d.values);
+
+    // const newNonSteeredPoints = this.getLatestChunk(true);
+    // const newNonSteeredPointsInSelection = this.getNewPointsInCurrentSelection(newNonSteeredPoints, true);
+    // const allNonSteeredPointsInSelection = this.getCurrentlyBrushedPoints(true);
+
+    if (newPointsInSelection.length > 0 && !!this.props.onNewPointsInSelection) {
+      this.props.onNewPointsInSelection(newPointsInSelection, allPointsInSelection);
+      // this.props.onNewNonSteeredPointsInSelection(newNonSteeredPointsInSelection, allNonSteeredPointsInSelection);
+    }
+  }
+
+  private renderData(chart: d3.Selection<SVGGElement, any, HTMLElement, any>) {
     if (!this.receivedNewData()) {
       return [];
     }
 
+    const latestChunk = this.getLatestChunk();
+
+    const steeringScreenPositions = latestChunk.map(d => {
+      const dim0 = d[DEFAULT_TERNARY_DIM0];
+      const dim1 = d[DEFAULT_TERNARY_DIM1];
+      const dim2 = d[DEFAULT_TERNARY_DIM2];
+
+      const px = this.A[0] * +dim0 / 100 + this.B[0] * +dim1 / 100 + this.C[0] * +dim2 / 100;
+      const py = this.A[1] * +dim0 / 100 + this.B[1] * +dim1 / 100 + this.C[1] * +dim2 / 100;
+
+      return {
+        px,
+        py,
+        values: d
+      };
+    });
+
     chart.selectAll(".countries")
-      .data(this.props.data.map(d => {
-        return {
-          pos: [
-            this.A[0] * +d[DEFAULT_TERNARY_DIM0] / 100 + this.B[0] * +d[DEFAULT_TERNARY_DIM1] / 100 + this.C[0] * +d[DEFAULT_TERNARY_DIM2] / 100,
-            this.A[1] * +d[DEFAULT_TERNARY_DIM0] / 100 + this.B[1] * +d[DEFAULT_TERNARY_DIM1] / 100 + this.C[1] * +d[DEFAULT_TERNARY_DIM2] / 100
-          ]
-        };
-      }
-      ))
+      .data(this.steeringScreenPositions)
       .enter().append("circle")
         .attr("r", DEFAULT_POINT_RADIUS)
-        .attr("cx", d => d.pos[0])
-        .attr("cy", d => d.pos[1])
+        .attr("cx", d => d.px)
+        .attr("cy", d => d.py)
         .attr("fill", DEFAULT_POINT_COLOR)
         .attr("stroke", DEFAULT_POINT_COLOR);
+
+    return steeringScreenPositions;
   }
 
-  // adapted from https://observablehq.com/@toja/d3-ternary-plot
-  private renderTernaryPlot() {
+  private renderPoints(useNonSteeringData: boolean = false) {
+    if (this.canvas === null) {
+      return [];
+    } else if (!this.receivedNewData()) {
+      return [];
+    }
+
     const svg = d3.select("svg.ternaryPlotCanvas");
     svg.selectAll("g").remove();
 
-    const chart = svg.append('g')
+    const chart = this.canvas.append('g')
       .attr("transform", `translate(${this.props.width / 2} ${this.props.height / 2})`)
       .attr("font-family", "sans-serif");
 
@@ -199,16 +361,99 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
     this.renderGrid(chart);
     this.renderTicks(chart);
     this.renderLabels(chart);
-    this.updatePoints(chart);
+
+    const chunk = this.renderData(chart);
+    this.steeringScreenPositions.push(...chunk);
+
+    return chunk;
+  }
+
+  private renderInsideOutsidePoints(chunk: ScaledCartesianCoordinate[], useNonSteeringData: boolean) {
+    // no need to update if the chunk has not changed
+    if (!this.receivedNewData()) {
+      return;
+    }
+
+    const canvas = useNonSteeringData
+      ? d3.select("svg.ternaryPlotNonSteeringRecentPointCanvas")
+      : d3.select("svg.ternaryPlotRecentPointCanvas");
+
+    canvas.selectAll("circle.recent-point").remove();
+
+    if (!this.props.highlightLastChunk) {
+      return;
+    }
+
+    const pointsInSelection = this.getNewPointsInCurrentSelection(chunk, false);
+
+    const points = canvas.selectAll("circle.recent-point").data(chunk)
+      .join("circle")
+        .attr("class", "recent-point")
+        .classed("inside-selection", d => pointsInSelection.indexOf(d) > -1)
+        .classed("steered", !useNonSteeringData)
+        .attr("cx", d => d.px + this.props.width/2)
+        .attr("cy", d => d.py + this.props.height/2)
+        .attr("r", DEFAULT_POINT_RADIUS);
+
+    points.transition().duration(250).attr("r", DEFAULT_POINT_RADIUS * 2);
+  }
+
+  // adapted from https://observablehq.com/@toja/d3-ternary-plot
+  private renderSteeringPoints() {
+    const scaledChunk = this.renderPoints(false);
+    this.renderInsideOutsidePoints(scaledChunk, false);
+
+    return scaledChunk;
+  }
+
+  private updateQuadtrees(steeredChunk: ScaledCartesianCoordinate[], nonSteeredChunk: ScaledCartesianCoordinate[]) {
+    if (!this.receivedNewData()) {
+      return;
+    }
+
+    this.updateNewPointsInCurrentSelection(steeredChunk);
+  }
+
+  private updatePoints() {
+    const steered = this.renderSteeringPoints();
+    const nonSteered: ScaledCartesianCoordinate[] = [];
+
+    if (this.props.showNonSteeringData) {
+      // nonSteered.push(...this.renderNonSteeringPoints());
+    }
+
+    return { steered, nonSteered };
   }
 
   public render() {
-    window.setTimeout(() => { this.renderTernaryPlot() }, 100);
+    const scaledData = this.updatePoints();
+    this.updateQuadtrees(scaledData.steered, scaledData.nonSteered);
+
+    const canvasWidth = this.getCanvasWidth();
+    const isNonSteeringCanvasVisible = this.props.showNonSteeringData ? 'visible' : 'hidden';
+
+    this.lastChunk = this.getLatestChunk();
+
     return (
       <div className="ternaryPlotRenderer">
-        <svg className="ternaryPlotCanvas" width={ this.props.width } height={ this.props.height }></svg>
-
+        <div className="left" style={{ width: canvasWidth }}>
+          <svg className="ternaryPlotCanvas" width={ canvasWidth } height={ this.props.height }></svg>
+          <svg className="ternaryPlotRecentPointCanvas" width={ canvasWidth } height={ this.props.height }></svg>
+          <svg className="ternaryPlotAxesCanvas" width={ canvasWidth } height={ this.props.height }></svg>
+        </div>
+        <div className={`right ${isNonSteeringCanvasVisible}`} style={ { width: canvasWidth }}>
+          <svg className="nonSteeringTernaryPlotCanvas" width={ canvasWidth } height={ this.props.height } />
+          <svg className="ternaryPlotNonSteeringRecentPointCanvas" width={ canvasWidth } height={ this.props.height }></svg>
+        </div>
       </div>
     );
+  }
+
+  public componentDidMount() {
+    this.canvas = d3.select("svg.ternaryPlotCanvas");
+    this.nonSteeringCanvas = d3.select("svg.nonSteeringTernaryPlotCanvas");
+    this.axesSvg = d3.select("svg.ternaryPlotAxesCanvas");
+
+    this.axesSvg.call(this.brush as any);
   }
 }

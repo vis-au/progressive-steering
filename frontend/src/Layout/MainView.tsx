@@ -104,12 +104,16 @@ export default class MainView extends React.Component<Props, State> {
     } else if (this.props.activeRenderer === "Ternary") {
       return (
         <TernaryPlotRenderer
-          data={ this.props.dataAdapter.data }
-          dimensions={ this.props.includeDimensions }
-          nonSteeringData={ this.props.dataAdapter.nonSteeringData }
-          chunkSize={ this.props.dataAdapter.chunkSize }
           height={ height }
           width={ width }
+          data={ this.props.dataAdapter.data }
+          nonSteeringData={ this.props.dataAdapter.nonSteeringData }
+          showNonSteeringData={ this.props.showSideBySideView }
+          dimensions={ this.props.includeDimensions }
+          highlightLastChunk={ this.props.highlightLatestPoints }
+          chunkSize={ this.props.dataAdapter.chunkSize }
+          onBrushedPoints={ this.props.onBrushedPoints }
+          onNewPointsInSelection={ this.props.onNewPointsInSelection }
         />
       );
     }
