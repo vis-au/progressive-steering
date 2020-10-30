@@ -6,7 +6,8 @@ svg.ternaryPlotRecentPointCanvas {
 }
 
 svg.nonSteeringTernaryPlotCanvas,
-svg.ternaryPlotNonSteeringRecentPointCanvas {
+svg.ternaryPlotNonSteeringRecentPointCanvas,
+svg.nonSteeringTernaryPlotAxisCanvas {
   position: absolute;
   right: 0;
 }
