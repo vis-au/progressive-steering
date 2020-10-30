@@ -1,11 +1,11 @@
 import * as React from 'react';
 import * as d3 from 'd3';
 
-import { DEFAULT_POINT_COLOR, DEFAULT_POINT_RADIUS } from './RendererDefaultParameters';
+import { DEFAULT_POINT_COLOR, DEFAULT_POINT_RADIUS, NON_STEERING_POINT_COLOR } from './RendererDefaultParameters';
 import { DEFAULT_TERNARY_DIM0, DEFAULT_TERNARY_DIM1, DEFAULT_TERNARY_DIM2 } from '../Data/EelBridge';
+import { ScaledCartesianCoordinate } from '../PointTypes';
 
 import './TernaryPlotRenderer.css';
-import { ScaledCartesianCoordinate } from '../PointTypes';
 
 interface Props {
   width: number,
@@ -304,12 +304,16 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
     }
   }
 
-  private renderData(chart: d3.Selection<SVGGElement, any, HTMLElement, any>) {
-    if (!this.receivedNewData()) {
+  private renderData(useNonSteeringData: boolean) {
+    if (this.canvas === null) {
+      return [];
+    } else if (this.nonSteeringCanvas === null) {
+      return [];
+    } else if (!this.receivedNewData()) {
       return [];
     }
 
-    const latestChunk = this.getLatestChunk();
+    const latestChunk = this.getLatestChunk(useNonSteeringData);
 
     const steeringScreenPositions = latestChunk.map(d => {
       const dim0 = d[DEFAULT_TERNARY_DIM0];
@@ -326,14 +330,18 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
       };
     });
 
+    const chart = useNonSteeringData
+      ? this.nonSteeringCanvas.select("g.chart")
+      : this.canvas.select("g.chart");
+
     chart.selectAll(".countries")
-      .data(this.steeringScreenPositions)
+      .data(steeringScreenPositions)
       .enter().append("circle")
         .attr("r", DEFAULT_POINT_RADIUS)
         .attr("cx", d => d.px)
         .attr("cy", d => d.py)
-        .attr("fill", DEFAULT_POINT_COLOR)
-        .attr("stroke", DEFAULT_POINT_COLOR);
+        .attr("fill", useNonSteeringData ? NON_STEERING_POINT_COLOR : DEFAULT_POINT_COLOR)
+        .attr("stroke", useNonSteeringData ? NON_STEERING_POINT_COLOR : DEFAULT_POINT_COLOR);
 
     return steeringScreenPositions;
   }
@@ -341,15 +349,41 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
   private renderPoints(useNonSteeringData: boolean = false) {
     if (this.canvas === null) {
       return [];
+    } else if (this.nonSteeringCanvas === null) {
+      return [];
     } else if (!this.receivedNewData()) {
       return [];
     }
 
-    const svg = d3.select("svg.ternaryPlotCanvas");
-    svg.selectAll("g").remove();
+    const canvas = useNonSteeringData
+      ? this.nonSteeringCanvas
+      : this.canvas;
 
-    const chart = this.canvas.append('g')
-      .attr("transform", `translate(${this.props.width / 2} ${this.props.height / 2})`)
+    const chart = canvas.select("g.chart");
+    const chunk = this.renderData(chart as any);
+    this.steeringScreenPositions.push(...chunk);
+
+    return chunk;
+  }
+
+  private renderAxes(useNonSteeringData: boolean = false) {
+    if (this.canvas === null) {
+      return [];
+    } else if (this.nonSteeringCanvas === null) {
+      return [];
+    }
+
+    const canvas = useNonSteeringData
+      ? this.nonSteeringCanvas
+      : this.canvas;
+
+    canvas.selectAll("g").remove();
+
+    const canvasWidth = this.getCanvasWidth();
+
+    const chart = canvas.append('g')
+      .attr("class", "chart")
+      .attr("transform", `translate(${canvasWidth/2} ${this.props.height / 2})`)
       .attr("font-family", "sans-serif");
 
     // triangle
@@ -361,11 +395,6 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
     this.renderGrid(chart);
     this.renderTicks(chart);
     this.renderLabels(chart);
-
-    const chunk = this.renderData(chart);
-    this.steeringScreenPositions.push(...chunk);
-
-    return chunk;
   }
 
   private renderInsideOutsidePoints(chunk: ScaledCartesianCoordinate[], useNonSteeringData: boolean) {
@@ -385,13 +414,14 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
     }
 
     const pointsInSelection = this.getNewPointsInCurrentSelection(chunk, false);
+    const canvasWidth = this.getCanvasWidth();
 
     const points = canvas.selectAll("circle.recent-point").data(chunk)
       .join("circle")
         .attr("class", "recent-point")
         .classed("inside-selection", d => pointsInSelection.indexOf(d) > -1)
         .classed("steered", !useNonSteeringData)
-        .attr("cx", d => d.px + this.props.width/2)
+        .attr("cx", d => d.px + canvasWidth/2)
         .attr("cy", d => d.py + this.props.height/2)
         .attr("r", DEFAULT_POINT_RADIUS);
 
@@ -406,6 +436,13 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
     return scaledChunk;
   }
 
+  private renderNonSteeringPoints() {
+    const scaledChunk = this.renderPoints(true);
+    this.renderInsideOutsidePoints(scaledChunk, true);
+
+    return scaledChunk;
+  }
+
   private updateQuadtrees(steeredChunk: ScaledCartesianCoordinate[], nonSteeredChunk: ScaledCartesianCoordinate[]) {
     if (!this.receivedNewData()) {
       return;
@@ -416,7 +453,7 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
 
   private updatePoints() {
     const steered = this.renderSteeringPoints();
-    const nonSteered: ScaledCartesianCoordinate[] = [];
+    const nonSteered = this.renderNonSteeringPoints();
 
     if (this.props.showNonSteeringData) {
       // nonSteered.push(...this.renderNonSteeringPoints());
@@ -455,5 +492,21 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
     this.axesSvg = d3.select("svg.ternaryPlotAxesCanvas");
 
     this.axesSvg.call(this.brush as any);
+
+    this.renderAxes(false);
+
+    if (this.props.showNonSteeringData) {
+      this.renderAxes(true);
+    }
+  }
+
+  public componentDidUpdate(oldProps: Props) {
+    if (oldProps.showNonSteeringData !== this.props.showNonSteeringData) {
+      this.renderAxes(false);
+
+      if (this.props.showNonSteeringData) {
+        this.renderAxes(true);
+      }
+    }
   }
 }

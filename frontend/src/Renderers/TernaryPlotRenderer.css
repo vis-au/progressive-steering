@@ -5,6 +5,12 @@ svg.ternaryPlotRecentPointCanvas {
   left: 0;
 }
 
+svg.nonSteeringTernaryPlotCanvas,
+svg.ternaryPlotNonSteeringRecentPointCanvas {
+  position: absolute;
+  right: 0;
+}
+
 svg.ternaryPlotRecentPointCanvas circle.recent-point {
   fill: white;
   stroke: steelblue;
@@ -14,12 +20,12 @@ svg.ternaryPlotRecentPointCanvas circle.recent-point.inside-selection {
   fill: steelblue;
 }
 
-svg.recentPointNonSteeringTernaryPlotCanvas circle.recent-point {
+svg.ternaryPlotNonSteeringRecentPointCanvas circle.recent-point {
   fill: white;
   stroke: #555;
   stroke-width: 2px;
 }
 
-svg.recentPointNonSteeringTernaryPlotCanvas circle.recent-point.inside-selection {
+svg.ternaryPlotNonSteeringRecentPointCanvas circle.recent-point.inside-selection {
   fill: #555;
 }
