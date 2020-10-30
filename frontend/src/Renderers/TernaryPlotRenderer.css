@@ -12,6 +12,13 @@ svg.nonSteeringTernaryPlotAxisCanvas {
   right: 0;
 }
 
+svg.nonSteeringTernaryPlotAxisCanvas rect.brushedRegion {
+  stroke: #ccc;
+  fill: none;
+  stroke-width: 0.25px;
+  shape-rendering: crispEdges;
+}
+
 svg.ternaryPlotRecentPointCanvas circle.recent-point {
   fill: white;
   stroke: steelblue;

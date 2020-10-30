@@ -369,6 +369,40 @@ export default class RadVizRenderer extends React.Component<Props, State> {
     );
   }
 
+  private renderBrushedRegion(brushedRegion: number[][], index: number) {
+    const x = brushedRegion[0][0];
+    const y = brushedRegion[0][1];
+    const width = Math.abs(brushedRegion[0][0] - brushedRegion[1][0]);
+    const height = Math.abs(brushedRegion[0][1] - brushedRegion[1][1]);
+    const opacity = 1;
+
+    return (
+      <rect
+        key={ index }
+        className="brushedRegion"
+        width={ width }
+        height={ height }
+        x={ x }
+        y={ y }
+        strokeOpacity={ opacity }
+        fillOpacity={ opacity }
+      />
+    );
+  }
+
+  private renderBrushedRegions() {
+    if (this.selection === null) {
+      return null;
+    }
+
+    // 50, 50 translate necessary because the viewport is scaled to 100, 100 with xmidyxmid meet
+    return (
+      <g className="brushed-regions" transform={ `translate(50, 50)` }>
+        { this.renderBrushedRegion(this.selection, 0) }
+      </g>
+    );
+  }
+
   public render() {
     const scaledData = this.updatePoints();
     this.updateQuadtrees(scaledData.steered, scaledData.nonSteered);
@@ -388,7 +422,7 @@ export default class RadVizRenderer extends React.Component<Props, State> {
         </div>
         <div className={`right ${isNonSteeringCanvasVisible}`}>
           <div id="nonSteeringRadVizCanvas" style={ { width: canvasWidth, height: this.props.height } }/>
-          <svg className="nonSteeringRadVizAxesCanvas" width={ canvasWidth } height={ this.props.height }/>
+    <svg className="nonSteeringRadVizAxesCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ canvasWidth } height={ this.props.height }>{ this.renderBrushedRegions() }</svg>
           <svg className="recentNonSteeredRadVizsCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ this.props.height } height={ this.props.height }/>
         </div>
       </div>
