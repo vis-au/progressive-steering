@@ -422,7 +422,7 @@ export default class RadVizRenderer extends React.Component<Props, State> {
         </div>
         <div className={`right ${isNonSteeringCanvasVisible}`}>
           <div id="nonSteeringRadVizCanvas" style={ { width: canvasWidth, height: this.props.height } }/>
-    <svg className="nonSteeringRadVizAxesCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ canvasWidth } height={ this.props.height }>{ this.renderBrushedRegions() }</svg>
+          <svg className="nonSteeringRadVizAxesCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ canvasWidth } height={ this.props.height }>{ this.renderBrushedRegions() }</svg>
           <svg className="recentNonSteeredRadVizsCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ this.props.height } height={ this.props.height }/>
         </div>
       </div>
