@@ -151,6 +151,11 @@ export function sendYDomain(extent: [number, number]) {
 export function sendDimensionTotalExtent(message: {name: string, min: number, max: number}) {
   const {name, min, max} = message;
   dataAdapter.setDomain(name, [min, max]);
+
+  if (dataAdapter.dimensions.indexOf(name) === -1) {
+    dataAdapter.dimensions.push(name);
+  }
+
   return;
 }
 
