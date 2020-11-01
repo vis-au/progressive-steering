@@ -96,6 +96,7 @@ class DataAdapter {
   public reset() {
     this._data = [];
     this._nonSteeringData = [];
+    this._cumulativeDataSize = [0];
     this._allItemsInSelection = [];
     this._allNonSteeredItemsInSelection = [];
     this._trainingStateHistory = [];
