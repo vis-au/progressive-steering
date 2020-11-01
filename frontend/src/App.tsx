@@ -134,6 +134,11 @@ export class App extends Component<{}, State> {
     this.dataAdapter.progressionState = newState;
   }
 
+  private onProgressionReset() {
+    this.dataAdapter.progressionState = "ready";
+    this.dataAdapter.reset();
+  }
+
   private onDimensionAdded(event: React.ChangeEvent<HTMLSelectElement>) {
     const includeDimensions = this.state.includeDimensions;
     includeDimensions.push(event.target.value);
@@ -231,6 +236,7 @@ export class App extends Component<{}, State> {
           stepsBeforePaddingGrows={ this.state.stepsBeforePaddingGrows }
           onHighlightLatestPointChanged={ this.onHighlightLatestPointChanged.bind(this) }
           onProgressionStateChanged={ this.onProgressionStateChanged.bind(this) }
+          onProgressionReset={ this.onProgressionReset.bind(this) }
           onShowHeatMapChanged={ this.onShowHeatMapChanged.bind(this) }
           onShowSideBySideViewChanged={ this.onShowSideBySideViewChanged.bind(this) }
           onUseDeltaHeatMapChanged={ this.onUseDeltaHeatMapChanged.bind(this) }

@@ -16,6 +16,7 @@ interface Props {
   showSideBySideView: boolean,
   stepsBeforePaddingGrows: number,
   onProgressionStateChanged: (newState: ProgressionState) => void,
+  onProgressionReset: () => void,
   onHighlightLatestPointChanged: () => void,
   onShowHeatMapChanged: () => void,
   onUseDeltaHeatMapChanged: () => void,
@@ -48,12 +49,24 @@ export default class Footer extends React.Component<Props, State> {
   }
 
   private renderProgressionControls() {
-    const text = this.props.dataAdapter.progressionState === 'paused' ? 'RESUME' : 'PAUSE';
-    const onClickState: ProgressionState = this.props.dataAdapter.progressionState === 'paused' ? 'running' : 'paused';
+    let text = "START";
+    let nextState: ProgressionState = "running";
+
+    if (this.props.dataAdapter.progressionState === "done") {
+      text = "RESTART";
+      nextState = "ready";
+    } else if (this.props.dataAdapter.progressionState === "paused") {
+      text = "RESUME";
+      nextState = "running";
+    } else if (this.props.dataAdapter.progressionState === "running") {
+      text = "PAUSE";
+      nextState = "paused";
+    }
 
     return (
       <div className="progression-controls">
-          <button className="control" onClick={ () => this.props.onProgressionStateChanged(onClickState) }>{ text }</button>
+        <button className="control" onClick={ () => this.props.onProgressionStateChanged(nextState) }>{ text }</button>
+        <button className="control" onClick={ () => this.props.onProgressionReset() }>RESET</button>
       </div>
     );
   }
