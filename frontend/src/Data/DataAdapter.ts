@@ -4,7 +4,7 @@ import { DEFAULT_TOTAL_DATA_SIZE, DEFAULT_POIS } from "./EelBackendDummy";
 
 class DataAdapter {
   private _chunkSize: number = 0;
-  private _progressionState: ProgressionState = 'running';
+  private _progressionState: ProgressionState = 'ready';
   private _trainingState: TrainingState = "collectingData";
   private _data: any[] = [];
   private _nonSteeringData: any[] = [];
@@ -91,6 +91,18 @@ class DataAdapter {
 
   private notifyMetricObservers(message?: any) {
     this.notifyObservers(this._onMetricChangedCallbacks, message);
+  }
+
+  public reset() {
+    this._data = [];
+    this._nonSteeringData = [];
+    this._allItemsInSelection = [];
+    this._allNonSteeredItemsInSelection = [];
+    this._trainingStateHistory = [];
+    this.evaluationMetrics.clear();
+    this._trainingState = "collectingData";
+    this.notifyDataObservers();
+    this.notifyMetricObservers();
   }
 
   /**
