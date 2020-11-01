@@ -420,6 +420,20 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
     return scaledChunk;
   }
 
+  private clearCanvases() {
+    if (this.canvas === null) {
+      return;
+    } else if (this.nonSteeringCanvas === null) {
+      return;
+    }
+
+    const steeringContext: any = (this.canvas.node() as any).getContext("2d");
+    const nonSteeringContext: any = (this.nonSteeringCanvas.node() as any).getContext("2d");
+
+    steeringContext.clearRect(0, 0, this.props.width, this.props.height);
+    nonSteeringContext.clearRect(0, 0, this.props.width, this.props.height);
+  }
+
   private renderNonSteeringPoints() {
     const scaledChunk = this.renderPoints(true);
     this.renderInsideOutsidePoints(scaledChunk, true);
@@ -434,6 +448,9 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
 
     if (this.props.showNonSteeringData) {
       nonSteered.push(...this.renderNonSteeringPoints());
+    }
+    if (this.props.data.length === 0) {
+      this.clearCanvases();
     }
 
     return { steered, nonSteered };

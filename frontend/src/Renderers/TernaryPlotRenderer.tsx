@@ -334,9 +334,10 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
       ? this.nonSteeringCanvas.select("g.chart")
       : this.canvas.select("g.chart");
 
-    chart.selectAll(".countries")
-      .data(steeringScreenPositions)
+    chart.selectAll("circle.point")
+      .data(steeringScreenPositions, (d: any) => d.values.id)
       .enter().append("circle")
+        .attr("class", "point")
         .attr("r", DEFAULT_POINT_RADIUS)
         .attr("cx", d => d.px)
         .attr("cy", d => d.py)
@@ -355,12 +356,7 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
       return [];
     }
 
-    const canvas = useNonSteeringData
-      ? this.nonSteeringCanvas
-      : this.canvas;
-
-    const chart = canvas.select("g.chart");
-    const chunk = this.renderData(chart as any);
+    const chunk = this.renderData(useNonSteeringData);
     this.steeringScreenPositions.push(...chunk);
 
     return chunk;
@@ -451,12 +447,26 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
     this.updateNewPointsInCurrentSelection(steeredChunk);
   }
 
+  private clearCanvases() {
+    if (this.canvas === null) {
+      return;
+    } else if (this.nonSteeringCanvas === null) {
+      return;
+    }
+
+    this.canvas.selectAll("circle.point").remove();
+    this.nonSteeringCanvas.selectAll("circle.point").remove();
+  }
+
   private updatePoints() {
     const steered = this.renderSteeringPoints();
     const nonSteered = this.renderNonSteeringPoints();
 
     if (this.props.showNonSteeringData) {
       // nonSteered.push(...this.renderNonSteeringPoints());
+    }
+    if (this.props.data.length === 0) {
+      this.clearCanvases();
     }
 
     return { steered, nonSteered };
