@@ -68,10 +68,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.nonSteeringSVG = null;
     this.selection = null;
 
-    this.quadtree = d3.quadtree<ScaledCartesianCoordinate>()
-      .extent([[0, 0], [this.props.width, this.props.height]])
-      .x((d: ScaledCartesianCoordinate) => d.px)
-      .y((d: ScaledCartesianCoordinate) => d.py);
+    this.quadtree = this.generateNewQuadtree();
 
     this.nonSteeringQuadtree = this.quadtree.copy();
 
@@ -103,6 +100,13 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     return true;
   }
 
+  private generateNewQuadtree() {
+    return d3.quadtree<ScaledCartesianCoordinate>()
+      .extent([[0, 0], [this.props.width, this.props.height]])
+      .x((d: ScaledCartesianCoordinate) => d.px)
+      .y((d: ScaledCartesianCoordinate) => d.py);
+  }
+
   private updateScales() {
     if (this.svg === null) {
       return;
@@ -123,6 +127,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     if (this.svg === null) {
       return;
     } else if (!this.receivedNewData()) {
+      return;
+    } else if (this.props.data.length === 0) {
       return;
     }
 
@@ -615,6 +621,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
     const steeringContext: any = (this.canvas.node() as any).getContext("2d");
     const nonSteeringContext: any = (this.nonSteeringCanvas.node() as any).getContext("2d");
+    this.quadtree = this.generateNewQuadtree();
+    this.nonSteeringQuadtree = this.quadtree.copy();
 
     steeringContext.clearRect(0, 0, this.props.width, this.props.height);
     nonSteeringContext.clearRect(0, 0, this.props.width, this.props.height);
