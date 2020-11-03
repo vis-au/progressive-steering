@@ -48,6 +48,20 @@ export default class Footer extends React.Component<Props, State> {
     }
   }
 
+  private renderProgressionControlOverlay() {
+    if (this.props.dataAdapter.progressionState !== "ready")  {
+      return null;
+    }
+
+    return (
+      <div className="control-overlay"
+        onClick={ () => this.props.onProgressionStateChanged("running") }>
+        <label>launch here</label>
+        <i className="icon material-icons">keyboard_return</i>
+      </div>
+    )
+  }
+
   private renderProgressionControls() {
     let text = "START";
     let nextState: ProgressionState = "running";
@@ -65,6 +79,7 @@ export default class Footer extends React.Component<Props, State> {
 
     return (
       <div className="progression-controls">
+        { this.renderProgressionControlOverlay() }
         <button className="control" onClick={ () => this.props.onProgressionStateChanged(nextState) }>{ text }</button>
         <button className="control" onClick={ () => this.props.onProgressionReset() }>RESET</button>
       </div>

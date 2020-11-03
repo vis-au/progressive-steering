@@ -58,6 +58,28 @@
   flex-direction: row;
   margin: 0 0.5rem;
 }
+.footer .progression-controls .control-overlay {
+  position: absolute;
+  right: 50px;
+  bottom: 70px;
+  font-size: 25px;
+  border: 1px dashed #ccc;
+  color: #aaa;
+  border-radius: 4px;
+  padding: 1.25rem 1.7rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: start;
+}
+.footer .progression-controls .control-overlay label {
+  padding-right: 1rem;
+  padding-bottom: 0.5rem;
+}
+.footer .progression-controls .control-overlay i.icon {
+  font-size: 35px;
+  font-weight: bold;
+  transform: rotate(-90deg);
+}
 .footer .progression-controls .control {
   margin: 0 0.25rem;
   padding: 0 0.25rem;
