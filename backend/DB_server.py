@@ -135,6 +135,20 @@ actualChunk={}
 global actualChunkRandom  #debug
 actualChunkRandom={}
 
+def reset():
+    global userSelectionUpdated, totalChunkNumber, totalInb, treeReady, chunkSize
+    global modifier, queryAtt, IN, DIZ_plotted
+
+    IN = []
+    DIZ_plotted = {}
+    userSelectionUpdated = False
+    totalChunkNumber = 0
+    totalInb = 0
+    treeReady = False
+    chunkSize = 100
+    modifier = "True"
+    queryAtt = "*"
+
 def feedTuples(query, chunkSize, minimumBoxItems=50):
     global modifier
     global DIZ_plotted
@@ -260,10 +274,9 @@ def feedTuples(query, chunkSize, minimumBoxItems=50):
          #rightID=rightID.union(set(actualChunkRandom.keys()))
          eel.sleep(0.04)
 
-
-    while not userSelectionUpdated: #waiting for the first box
+    while progression_state == PROGRESSTION_STATES["ready"]:
         eel.sleep(1)
-    userSelectionUpdated=False
+
     # init database
     mydb=dbConnect("localhost", "root", USER_PW, "airbnb")
     mycursor = mydb.cursor()
@@ -294,6 +307,9 @@ def feedTuples(query, chunkSize, minimumBoxItems=50):
         if progression_state == PROGRESSTION_STATES["paused"]:
             print("paused ...")
             eel.sleep(1)
+        elif progression_state == PROGRESSTION_STATES["ready"]:
+            print("restarting ...")
+            return
         else:
             chunks, myresult, mycursor=processResult(chunks, myresult, mycursor, state)
             if doubleSending:
@@ -313,6 +329,9 @@ def feedTuples(query, chunkSize, minimumBoxItems=50):
         if progression_state == PROGRESSTION_STATES["paused"]:
             print("paused ...")
             eel.sleep(1)
+        elif progression_state == PROGRESSTION_STATES["ready"]:
+            print("restarting ...")
+            return
         else:
             chunks, myresult, mycursor=processResult(chunks, myresult, mycursor, state)
             if doubleSending:
@@ -330,6 +349,9 @@ def feedTuples(query, chunkSize, minimumBoxItems=50):
         if progression_state == PROGRESSTION_STATES["paused"]:
             print("paused ...")
             eel.sleep(1)
+        elif progression_state == PROGRESSTION_STATES["ready"]:
+            print("restarting ...")
+            return
         else:
             chunks, myresult, mycursor=processResult(chunks, myresult, mycursor, state)
             if doubleSending:
@@ -337,25 +359,15 @@ def feedTuples(query, chunkSize, minimumBoxItems=50):
     print("uscito loop 3 treeready=")#, treeReady, "modifier=", modifier)
     totalChunkNumber=chunks
 #######################################################################################
-global testCases
-"""
-testCases=[{"boxMinRange":15, "boxMaxRange":30, "boxMinDistance":3, "boxMaxDistance":12, "tuples":5972},              #4742 per float
-           {"boxMinRange":25, "boxMaxRange":30, "boxMinDistance":0, "boxMaxDistance":4,  "tuples":3320},
-           {"boxMinRange":29, "boxMaxRange":30, "boxMinDistance":1, "boxMaxDistance":2,  "tuples":696},
-           {"boxMinRange":10, "boxMaxRange":20, "boxMinDistance":0, "boxMaxDistance":3,  "tuples":4580},
-           {"boxMinRange":1.2,   "boxMaxRange":50.15, "boxMinDistance":3.16, "boxMaxDistance":3.9,  "tuples":2934},
-           {"boxMinRange":37.69, "boxMaxRange":38.38, "boxMinDistance":1.78, "boxMaxDistance":2.71, "tuples":0},
-           {"boxMinRange":11.37, "boxMaxRange":22.57, "boxMinDistance":5.71, "boxMaxDistance":6.19, "tuples":262}]
 
-testCases=eval(open("testCases.txt", encoding="UTF8").read())
-"""
+def start_progression():
+    global progression_state
 
-@eel.expose
-def start():
-    sql=buildQuery(userLat, userLon, userRange, userDay, queryAtt, modifier, chunkSize)
-    eel.spawn(feedTuples(sql, chunkSize))
-
-
+    while True:
+        reset()
+        sql=buildQuery(userLat, userLon, userRange, userDay, queryAtt, modifier, chunkSize)
+        progression_state = PROGRESSTION_STATES["ready"]
+        eel.spawn(feedTuples(sql, chunkSize))
 
 
 def encodeTestCases(testCases):
@@ -370,11 +382,6 @@ def encodeTestCases(testCases):
 @eel.expose
 def get_use_cases():
     return encodeTestCases(testCases)
-    return {"testcase1":{"name": "case1_15_40_3_12", "x_bounds" : [15,16], "y_bounds":[3,12]},  #15, 40
-            "testcase2":{"name": "case2_35_40_0_4", "x_bounds" : [35,40],  "y_bounds":[0,4]},
-            "testcase3":{"name": "case3_29_37_1_2", "x_bounds" : [29,37],  "y_bounds":[1,2]},
-            "testcase4":{"name": "case4_32_37_0_5", "x_bounds" : [32-0.1,37+0.1],  "y_bounds":[0,5]}
-            }
 
 @eel.expose
 def send_to_backend_userData(x):
@@ -412,13 +419,10 @@ def send_to_backend_userData(x):
   eel.send_dimension_total_extent({"name": "accommodates", "min": 0, "max": 5})
   eel.send_dimension_total_extent({"name": "longitude", "min": 2.2, "max": 2.5})
   eel.send_dimension_total_extent({"name": "latitude", "min": 48.8, "max": 49})
+  eel.send_dimension_total_extent({"name": "zipcode", "min": 74400, "max": 750011})
 
-  #eel.set_min_selection_size({"name": "Saving opportunity", "min": 0, "max": x["moneyRange"][1]-["moneyRange"][0]})
+  start_progression()
 
-  sql=buildQuery(userLat, userLon, userRange, userDay, queryAtt, modifier, chunkSize)
-  eel.spawn(feedTuples(sql, chunkSize))
-  #eel.spawn(my_other_thread())
-  #feedTuples(sql,10)
 
 @eel.expose
 def send_user_selection(selected_items):
@@ -429,16 +433,8 @@ def send_user_selection(selected_items):
     global treeReady
     global IN
 
-    for e in selected_items.copy():
-        if DIZ_plotted[e]["dist2user"]>=Y1 and DIZ_plotted[e]["dist2user"]<=Y2 and DIZ_plotted[e]["aboveM"]["saving"]>=X1 and DIZ_plotted[e]["aboveM"]["saving"]<=X2:
-            pass
-        else:
-            selected_items.remove(e)
-
     if len(selected_items)==0:
         return(0)
-        lastSelectedItems=[]
-
 
     lastSelectedItems=selected_items.copy()
     print("new", len(selected_items), "items received...", selected_items)
@@ -447,7 +443,6 @@ def send_user_selection(selected_items):
         DIZ_plotted[k]["inside"]=1
     IN.extend(selected_items)
     #print("new selected items received", selected_items)
-
 
     eel.sleep(0.01)
 
