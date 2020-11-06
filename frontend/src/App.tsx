@@ -43,14 +43,16 @@ export class App extends Component<{}, State> {
 
     // Place des Vosges, VIS deadline
     const dummyData = {
-      'lat':48.85565,
-      'lon':2.365492,
+      'lat': 48.85565,
+      'lon': 2.365492,
       'moneyRange': [30, 70],
-      'day':"2020-04-31",
-      "userMaxDistance":10
+      'day': "2020-04-31",
+      "userMaxDistance": 10
     };
 
     eel.send_to_backend_userData(dummyData);
+
+    this.dataAdapter.dimensions.push(...DEFAULT_SELECTED_DIMENSIONS.concat(DEFAULT_UNSELECTED_DIMENSIONS));
 
     this.state = {
       selectedPoints: [],
