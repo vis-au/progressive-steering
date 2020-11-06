@@ -9,7 +9,7 @@
     "@types/react": "16.8.20",
     "@types/react-dom": "16.8.4",
     "d3": "^5.16.0",
-    "d3-radviz": "git+https://github.com/aware-diag-sapienza/d3-radviz.git",
+    "d3-radviz": "git://github.com/aware-diag-sapienza/d3-radviz.git#fix-type-definitions-file",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "^3.4.3",
