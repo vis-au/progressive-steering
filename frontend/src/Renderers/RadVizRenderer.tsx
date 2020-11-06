@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { RadViz, radviz } from 'd3-radviz';
 import * as d3 from 'd3';
+
 import { ScaledCartesianCoordinate } from '../PointTypes';
+import { DEFAULT_POINT_RADIUS } from './RendererDefaultParameters';
 
 import "./RadVizRenderer.css";
-import { DEFAULT_POINT_RADIUS } from './RendererDefaultParameters';
 
 interface Props {
   width: number,

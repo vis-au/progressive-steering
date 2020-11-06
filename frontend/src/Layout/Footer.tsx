@@ -96,6 +96,7 @@ export default class Footer extends React.Component<Props, State> {
           trainingStates={ this.props.dataAdapter.trainingStateHistory }
           onClick={ () => this.onMetricClicked("Points received") } />
         {
+          // these metrics are set by the backend through eel, not by the frontend
           DEFAULT_EVALUATION_METRICS.map(metric => {
             const label = metric === "recall" ? "in selection" : metric;
             return (
