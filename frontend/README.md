@@ -1,5 +1,5 @@
 # Progressive Steering - Frontend
-This directory contains the files of the frontend for the progressive steering application.
+This directory contains the files of the frontend module for ProSteer.
 
 ```
 frontend
@@ -13,13 +13,8 @@ frontend
 ```
 
 ## Prerequisites
-The frontend requires [NodeJS v10.15.3](https://nodejs.org/en/) or higher.
-In addition to that, a global installation of [TypeScript](https://www.typescriptlang.org/) is needed.
+The frontend module requires [NodeJS v10.15.3](https://nodejs.org/en/) or higher.
 You can install it from npm using the following the command.
-
-```sh
-npm install -g typescript
-```
 
 Inside the `fronted/` directory, run `npm install` to install the local packages for the frontend.
 The packages that will be downloaded are listed inside the `package.json` file under the `dependencies` property.
@@ -32,9 +27,10 @@ To launch the frontend, run the following command
 > npm start
 ```
 
-Your terminal should now show the following output:
+Your terminal should now show the compilation method, ending with the following output:
 ```
 Compiled successfully!
 ```
-At the same time, a browser window should open on [localhost:3000](http://localhost:3000). Otherwise, open it manually.
-If your browser displays this error message: `TypeError: eel is undefined`, you most likely need to launch the backend.
+At the same time, a browser window should open on [localhost:3000](http://localhost:3000). Otherwise, open it manually, for instance by clicking on [this link](http://localhost:3000).
+If your browser displays this error message: `TypeError: eel is undefined`, you need to launch the backend module first.
+See the README.md in the `backend/` directory of this project.
