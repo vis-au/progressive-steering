@@ -59,6 +59,10 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
       const x = this.binScaleX(d.px);
       const y = this.binScaleY(d.py);
 
+      if (x === undefined || y === undefined) {
+        return;
+      }
+
       bins[y][x] += 1;
     });
 
