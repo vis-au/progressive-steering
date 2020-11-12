@@ -172,7 +172,21 @@ export class App extends Component<{}, State> {
 
   private onRendererChanged(event: React.ChangeEvent<HTMLInputElement>) {
     const renderer = event.target.value as Renderer;
+    const includeDimensions = this.state.includeDimensions;
+    const remainingDimensions = this.state.remainingDimensions;
+
+    if (renderer === "RadViz" || renderer === "Star Coordinates") {
+
+      if (includeDimensions.length === 2) {
+        includeDimensions.push(...remainingDimensions.slice(0, 2));
+      } else if (includeDimensions.length === 3) {
+        includeDimensions.push(...remainingDimensions.slice(0, 1));
+      }
+    }
+
     this.setState({
+      includeDimensions,
+      remainingDimensions,
       activeRenderer: renderer
     });
   }
