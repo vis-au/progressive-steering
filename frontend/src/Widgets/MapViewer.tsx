@@ -23,7 +23,7 @@ interface State {
 
 export default class MapViewRenderer extends React.Component<Props, State> {
   private mapData: any = null;
-  private buttonWidth: number = 75;
+  private buttonWidth: number = 45;
 
   constructor(props: Props) {
     super(props);
@@ -76,14 +76,14 @@ export default class MapViewRenderer extends React.Component<Props, State> {
   }
 
   public render() {
-    const isMapVisible = this.state.mapVisible ? "" : "hidden";
+    const isMapVisible = this.state.mapVisible ? "" : "hide";
     this.updateSelectedPOI();
 
     return (
       <div className="map-view-component"
         style={ { width: this.state.mapVisible ? this.props.width : this.buttonWidth } }>
         <svg
-          className={`map-canvas ${isMapVisible}`}
+          className={`map-canvas`}
           width={ this.props.width }
           height={ this.props.height }
           style={{display: this.state.mapVisible ? "block" : "none" }}>
@@ -91,10 +91,10 @@ export default class MapViewRenderer extends React.Component<Props, State> {
           <g className="overlay"></g>
         </svg>
         <button
-          className="toggle-map"
+          className={ `toggle-map ${isMapVisible}` }
           style={{ width: this.buttonWidth }}
           onClick={ this.toggleMap.bind(this) }>
-            Map
+            <i className="icon material-icons" title="Toggle map ...">map</i>
         </button>
       </div>
     );
