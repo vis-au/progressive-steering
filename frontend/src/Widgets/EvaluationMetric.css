@@ -23,6 +23,12 @@
   background: white;
   border: 1px solid #ccc;
 }
+.evaluationMetric svg.canvas g.selection-line line {
+  stroke: #ccc;
+}
+.evaluationMetric svg.canvas g.selection-line text {
+  fill: #555;
+}
 .evaluationMetric svg.canvas path.time {
   stroke: steelblue;
   fill: none;
@@ -31,6 +37,7 @@
 .evaluationMetric svg.canvas circle.endpoint {
   fill: steelblue;
 }
+
 
 .evaluationMetric .state-indicator .indicator.collectingData {
   stroke: blueviolet;

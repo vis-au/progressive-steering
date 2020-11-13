@@ -13,6 +13,9 @@ interface Props {
   onClick: () => void
 }
 interface State {
+  isCursorVisible: boolean,
+  cursorPosition: {x: number, y: number},
+  value: number
 }
 
 const DEFAULT_WIDTH = 500;
@@ -32,6 +35,39 @@ export default class EvaluationMetric extends React.Component<Props, State> {
     this.lineGenerator
       .x((d, i) => this.scaleX(i))
       .y(d => this.scaleY(d[1]));
+
+    this.state = {
+      isCursorVisible: true,
+      cursorPosition: { x: -1, y: -1 },
+      value: 0
+    }
+  }
+
+  private onMouseEnter() {
+    this.setState({ isCursorVisible: true });
+  }
+
+  private onMouseMove(event: any, asdf: any, sdfg: any) {
+    if (!d3.event) {
+      return;
+    }
+
+    const mousePosition = {
+      x: d3.event.layerX,
+      y: d3.event.layerY
+    };
+
+    const chunkIndex = Math.round(this.scaleX.invert(mousePosition.x - DEFAULT_HORIZONTAL_PADDING/2));
+    const value = this.props.values[chunkIndex];
+
+    this.setState({
+      cursorPosition: mousePosition,
+      value
+    });
+  }
+
+  private onMouseLeave() {
+    this.setState({ isCursorVisible: false });
   }
 
   private getCanvasSelector() {
@@ -53,9 +89,12 @@ export default class EvaluationMetric extends React.Component<Props, State> {
   }
 
   private updateTimeSeries() {
-    const svg = d3.select(`#${this.getCanvasSelector()}`);
+    const svg = d3.select(`#${this.getCanvasSelector()}`)
+      .on("mouseenter", this.onMouseEnter.bind(this))
+      .on("mousemove", this.onMouseMove.bind(this))
+      .on("mouseleave", this.onMouseLeave.bind(this));
 
-    svg.selectAll("*").remove();
+    svg.selectAll("g.content").remove();
     const content = svg.append("g")
       .attr("class", "content")
       .attr("transform", `translate(${DEFAULT_HORIZONTAL_PADDING/2},${DEFAULT_VERTICAL_PADDING/2})`);
@@ -93,6 +132,34 @@ export default class EvaluationMetric extends React.Component<Props, State> {
     this.scaleY.domain([minY, maxY]);
   }
 
+  private renderSelectionLine() {
+    const isOnEdge = this.state.cursorPosition.x >= DEFAULT_WIDTH - 15;
+    const labelX = isOnEdge
+      ? this.state.cursorPosition.x - 10
+      : this.state.cursorPosition.x + 10;
+
+    const textAnchor = isOnEdge ? "end" : "start";
+    const cursorHiddenLabel = this.state.isCursorVisible ? '' : 'hidden';
+
+    return (
+      <g className={`selection-line ${cursorHiddenLabel}`}>
+        <line
+          x1={ this.state.cursorPosition.x }
+          x2={ this.state.cursorPosition.x }
+          y1={ 0 }
+          y2={ DEFAULT_HEIGHT + DEFAULT_VERTICAL_PADDING }
+        />
+        <text
+          textAnchor={ textAnchor }
+          x={ labelX }
+          y={ this.state.cursorPosition.y }>
+
+            { this.state.value }
+        </text>
+      </g>
+    );
+  }
+
   public render() {
     const canvasLabel = this.props.canvasVisible ? '' : 'hidden';
     const activeLabel = this.props.canvasVisible ? 'active' : '';
@@ -101,7 +168,10 @@ export default class EvaluationMetric extends React.Component<Props, State> {
       <div className={`evaluationMetric ${activeLabel}`} onClick={ this.toggleVisibility.bind(this) }>
         <span className="label">{ this.props.label }:</span>
         <span className="value">{ this.props.values[this.props.values.length - 1] }</span>
-        <svg id={ this.getCanvasSelector() } className={ `canvas ${canvasLabel}` } width={ DEFAULT_WIDTH + DEFAULT_HORIZONTAL_PADDING } height={ DEFAULT_HEIGHT + DEFAULT_VERTICAL_PADDING }></svg>
+        <svg id={ this.getCanvasSelector() } className={ `canvas ${canvasLabel}` } width={ DEFAULT_WIDTH + DEFAULT_HORIZONTAL_PADDING } height={ DEFAULT_HEIGHT + DEFAULT_VERTICAL_PADDING }>
+
+          { this.renderSelectionLine() }
+        </svg>
       </div>
     );
   }
