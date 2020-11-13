@@ -761,8 +761,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
     this.svg.select("g.brush").append("text")
       .attr("fill", "black")
-      .attr("transform", "translate(0, 10)")
-      .text("xdimension: 123, ydimension: 456");
+      .attr("transform", "translate(0, 10)");
   }
 
   public componentDidUpdate(prevProps: Props) {

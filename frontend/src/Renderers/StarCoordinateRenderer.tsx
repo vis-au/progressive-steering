@@ -617,8 +617,6 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
 
     this.updateScales();
     this.updateAxes();
-
-    this.props.onBrushedRegion([[0, 0], [0, 0]]);
   }
 
   public componentDidUpdate(oldProps: Props) {

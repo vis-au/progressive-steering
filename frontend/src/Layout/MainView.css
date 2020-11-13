@@ -12,19 +12,20 @@
   justify-content: start;
 }
 .renderer-tabs .renderer-tab {
-  border: 1px solid #ccc;
   background: #fff;
-  box-shadow: 0 0 5px #fff;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  margin: 0.5rem;
+  padding: 0.25rem 1.25rem;
 }
 .renderer-tabs .renderer-tab.active {
-  border-bottom: 4px solid #ccc;
-  background: #efefef;
+  color: #fff;
+  border-color: steelblue;
+  background: steelblue;
 }
 .renderer-tabs .renderer-tab input {
   display: none;
 }
 .renderer-tabs .renderer-tab label {
-  padding: 1rem;
-  line-height: 2rem;
   cursor: pointer;
 }

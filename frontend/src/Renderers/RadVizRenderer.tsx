@@ -436,7 +436,5 @@ export default class RadVizRenderer extends React.Component<Props, State> {
     this.nonSteeringCanvas = d3.select("div#nonSteeringRadVizCanvas");
 
     this.brushSvg.call(this.brush as any);
-
-    this.props.onBrushedRegion([[0, 0], [0, 0]]);
   }
 }
