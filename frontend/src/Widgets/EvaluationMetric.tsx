@@ -17,7 +17,8 @@ interface State {
 
 const DEFAULT_WIDTH = 500;
 const DEFAULT_HEIGHT = 75;
-const DEFAULT_PADDING = 40;
+const DEFAULT_VERTICAL_PADDING = 30;
+const DEFAULT_HORIZONTAL_PADDING = 70;
 const INDICATOR_LINE_WIDTH = 5;
 
 export default class EvaluationMetric extends React.Component<Props, State> {
@@ -45,7 +46,7 @@ export default class EvaluationMetric extends React.Component<Props, State> {
     const container = d3.select(`#${this.getCanvasSelector()}`).select("g.content");
     container.selectAll("g.axis").remove();
 
-    const yAxis = d3.axisRight(this.scaleY);
+    const yAxis = d3.axisLeft(this.scaleY).ticks(5);
     container.append("g")
       .attr("class", "axis y")
       .call(yAxis);
@@ -57,7 +58,7 @@ export default class EvaluationMetric extends React.Component<Props, State> {
     svg.selectAll("*").remove();
     const content = svg.append("g")
       .attr("class", "content")
-      .attr("transform", `translate(${DEFAULT_PADDING/2},${DEFAULT_PADDING/2})`);
+      .attr("transform", `translate(${DEFAULT_HORIZONTAL_PADDING/2},${DEFAULT_VERTICAL_PADDING/2})`);
 
     content.append("path")
       .attr("class", "time")
@@ -100,7 +101,7 @@ export default class EvaluationMetric extends React.Component<Props, State> {
       <div className={`evaluationMetric ${activeLabel}`} onClick={ this.toggleVisibility.bind(this) }>
         <span className="label">{ this.props.label }:</span>
         <span className="value">{ this.props.values[this.props.values.length - 1] }</span>
-        <svg id={ this.getCanvasSelector() } className={ `canvas ${canvasLabel}` } width={ DEFAULT_WIDTH + DEFAULT_PADDING } height={ DEFAULT_HEIGHT + DEFAULT_PADDING }></svg>
+        <svg id={ this.getCanvasSelector() } className={ `canvas ${canvasLabel}` } width={ DEFAULT_WIDTH + DEFAULT_HORIZONTAL_PADDING } height={ DEFAULT_HEIGHT + DEFAULT_VERTICAL_PADDING }></svg>
       </div>
     );
   }
