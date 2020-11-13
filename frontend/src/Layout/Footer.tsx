@@ -202,6 +202,9 @@ export default class Footer extends React.Component<Props, State> {
         <div className="left">
           { this.renderTrainingState() }
           { this.renderEvaluationMetrics() }
+        </div>
+
+        <div className="center">
           { this.renderHighlightLatestPointsToggle() }
           { this.renderShowHeatMapToggle() }
           { this.renderUseDeltaHeatMapToggle() }

@@ -2,12 +2,18 @@
 .footer {
   border-top: 2px solid #efefef;
 }
+
 .footer .left,
+.footer .center,
 .footer .right {
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
   justify-content: flex-start;
+  white-space: nowrap;
+}
+.footer .center {
+  overflow: auto;
 }
 
 .footer .training-state-indicator {
