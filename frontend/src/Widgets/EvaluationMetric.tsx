@@ -21,7 +21,7 @@ interface State {
 const DEFAULT_WIDTH = 500;
 const DEFAULT_HEIGHT = 75;
 const DEFAULT_VERTICAL_PADDING = 30;
-const DEFAULT_HORIZONTAL_PADDING = 70;
+const DEFAULT_HORIZONTAL_PADDING = 50;
 const INDICATOR_LINE_WIDTH = 5;
 
 export default class EvaluationMetric extends React.Component<Props, State> {
@@ -82,10 +82,17 @@ export default class EvaluationMetric extends React.Component<Props, State> {
     const container = d3.select(`#${this.getCanvasSelector()}`).select("g.content");
     container.selectAll("g.axis").remove();
 
-    const yAxis = d3.axisLeft(this.scaleY).ticks(5);
+    const yAxis = d3.axisRight(this.scaleY)
+      .tickSize(DEFAULT_WIDTH - DEFAULT_VERTICAL_PADDING/2)
+      .ticks(5);
     container.append("g")
       .attr("class", "axis y")
-      .call(yAxis);
+      .call(yAxis)
+      .call(g => g.selectAll(".tick:not(:first-of-type) line")
+        .attr("stroke-opacity", 0.5)
+        .attr("stroke-dasharray", "2,2"))
+      .call(g => g.select(".domain")
+        .remove());
   }
 
   private updateTimeSeries() {

@@ -34,13 +34,13 @@
   margin-top: 0.2rem;
 }
 .footer .training-state-indicator .indicator.collecting {
-  background: blueviolet;
+  background: #66c2a5;
 }
 .footer .training-state-indicator .indicator.tree {
-  background: teal;
+  background: #fc8d62;
 }
 .footer .training-state-indicator .indicator.flushing {
-  background: firebrick;
+  background: #8da0cb;
 }
 
 .footer .metrics {

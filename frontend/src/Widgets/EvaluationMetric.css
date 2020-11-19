@@ -40,11 +40,11 @@
 
 
 .evaluationMetric .state-indicator .indicator.collectingData {
-  stroke: blueviolet;
+  stroke: #66c2a5;
 }
 .evaluationMetric .state-indicator .indicator.usingTree {
-  stroke: teal;
+  stroke: #fc8d62;
 }
 .evaluationMetric .state-indicator .indicator.flushing {
-  stroke: firebrick;
+  stroke: #8da0cb;
 }
