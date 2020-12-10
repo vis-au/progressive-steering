@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { EelDataAdapter } from '../Data/DataAdapter';
-import { ProgressionState } from '../Data/EelBridge';
+import { ProgressionState, TrainingState } from '../Data/EelBridge';
 import EvaluationMetric from '../Widgets/EvaluationMetric';
 import ProgressBar from '../Widgets/ProgressBar';
 import { DEFAULT_EVALUATION_METRICS, EvaluationMetricType } from '../Data/EelBackendDummy';
@@ -181,17 +181,17 @@ export default class Footer extends React.Component<Props, State> {
   }
 
   private renderTrainingState() {
-    let trainingStateClass = "collecting";
+    let trainingLabel = "non-steering";
     if (this.props.dataAdapter.trainingState === "usingTree") {
-      trainingStateClass = "tree";
-    } else if (this.props.dataAdapter.trainingState === "flushing") {
-      trainingStateClass = "flushing";
+      trainingLabel = "steering";
+    } else if (this.props.dataAdapter.trainingState === "collectingData") {
+      trainingLabel = "activation";
     }
 
     return (
       <div className="training-state-indicator">
-        <div className={ `indicator ${trainingStateClass}` }></div>
-        <div>{ this.props.dataAdapter.trainingState }</div>
+        <div className={ `indicator ${trainingLabel}` }></div>
+        <div>{ trainingLabel }</div>
       </div>
     );
   }

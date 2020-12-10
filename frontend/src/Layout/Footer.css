@@ -33,13 +33,13 @@
   margin: 0 0.5rem;
   margin-top: 0.2rem;
 }
-.footer .training-state-indicator .indicator.collecting {
+.footer .training-state-indicator .indicator.activation {
   background: #66c2a5;
 }
-.footer .training-state-indicator .indicator.tree {
+.footer .training-state-indicator .indicator.steering {
   background: #fc8d62;
 }
-.footer .training-state-indicator .indicator.flushing {
+.footer .training-state-indicator .indicator.non-steering {
   background: #8da0cb;
 }
 
