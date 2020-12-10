@@ -39,7 +39,7 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
       .range(d3.range(BINS_Y));
   }
 
-  private getBinnedData(useSteeredData: boolean) {
+  private getBins(useSteeredData: boolean) {
     const bins: number[][] = [];
 
     // initialize every cell of the matrix with 0
@@ -69,10 +69,10 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
     return bins;
   }
 
-  private getDifferenceBins(useNonSteeredData: boolean = false) {
-    // steeredbins and nonsteeredbins are expected to have the same "resolution"
-    const steeredBins: number[][] = this.getBinnedData(true);
-    const nonSteeredBins: number[][] = this.getBinnedData(false);
+  private getMatrix(useNonSteeredData: boolean = false) {
+    // steeredbins and nonsteeredbins are expected to have the same shape/resolution
+    const steeredBins: number[][] = this.getBins(true);
+    const nonSteeredBins: number[][] = this.getBins(false);
 
     const differenceBins: number[][] = [];
 
@@ -82,15 +82,15 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
       row.forEach((steeredValue, x) => {
         const nonSteeredValue = nonSteeredBins[y][x];
 
-        let diff = useNonSteeredData ? nonSteeredValue : steeredValue;
+        let binValue = useNonSteeredData ? nonSteeredValue : steeredValue;
 
         if (this.props.useDeltaHeatMap) {
-          diff = useNonSteeredData
+          binValue = useNonSteeredData
             ? nonSteeredValue - steeredValue
             : steeredValue - nonSteeredValue;
         }
 
-        rowDiff.push(diff);
+        rowDiff.push(binValue);
       });
 
       differenceBins.push(rowDiff);
@@ -109,8 +109,8 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
 
     svg.selectAll("*").remove();
 
-    const bins = this.getDifferenceBins(useNonSteeringCanvas);
-    const binsFlat = bins.flat();
+    const matrix = this.getMatrix(useNonSteeringCanvas);
+    const binsFlat = matrix.flat();
 
     const positionX = d3.scaleLinear().domain([0, BINS_X]).range([0, this.props.canvasWidth]);
     const positionY = d3.scaleLinear().domain([0, BINS_Y]).range([0, this.props.height]);
