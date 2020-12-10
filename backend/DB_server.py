@@ -297,6 +297,21 @@ def feedTuples(query, chunkSize, minimumBoxItems=50):
     global rightID
     leftID=set({})
     rightID=set({})
+####################### FLUSHING DATA NO SELECTION °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
+    print("Entering LOOP0 - Query: ", query, modifier)
+    print("c", c)
+    state="flushing"
+    while len(myresult)>0 and (not treeReady or totalInb<minimumBoxItems or len(modifier)<=3) and len(IN) == 0:
+        if progression_state == PROGRESSTION_STATES["paused"]:
+            print("paused ...")
+            eel.sleep(1)
+        elif progression_state == PROGRESSTION_STATES["ready"]:
+            print("restarting ...")
+            return
+        else:
+            chunks, myresult, mycursor=processResult(chunks, myresult, mycursor, state)
+            if doubleSending:
+                processRandomResult(chunks, myresultRandom, state)
 ####################### COLLECTING DATA NO TREE °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
     print("Entering LOOP1 - Query: ", query, modifier)
     print("c", c)
