@@ -105,6 +105,15 @@ def getSteeringCondition(dataPS):
     #print(y)
     #X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0, random_state=1) # 70% training and 30% test
     X_train=X
+
+    # no_points_inside = len(y[y == 1])
+    # no_points_outisde = len(y[y == 0])
+    # no_points = len(y)
+
+    # weight_0 = no_points_outisde / no_points
+    # weight_1 = no_points_inside / no_points
+
+    # clf = DecisionTreeClassifier(criterion="entropy", max_depth=None, class_weight={ 0: weight_0, 1: weight_1 })
     
     clf = DecisionTreeClassifier(criterion="entropy", max_depth=None)
     
