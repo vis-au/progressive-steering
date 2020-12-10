@@ -695,7 +695,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
           scaleX={ this.scaleX }
           scaleY={ this.scaleY }
           steeredData={ this.quadtree.data() }
-          nonSteeredData={ this.quadtree.data() }
+          nonSteeredData={ this.nonSteeringQuadtree.data() }
           showNonSteeredCanvas={ this.props.showNonSteeringData }
           useDeltaHeatMap={ this.props.useDeltaHeatMap }
         />
