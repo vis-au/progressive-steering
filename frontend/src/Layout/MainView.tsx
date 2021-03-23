@@ -52,7 +52,7 @@ export default class MainView extends React.Component<Props, State> {
     );
   }
 
-  private renderRendererTabs() {
+  private renderDataRendererTabs() {
     return (
       <div className="renderer-tabs">
         { RENDERER_LABELS.map(this.renderRendererTab.bind(this)) }
@@ -60,9 +60,7 @@ export default class MainView extends React.Component<Props, State> {
     );
   }
 
-  private renderRenderer() {
-    const width = window.innerWidth - 1;
-    const height = window.innerHeight - 85;
+  private renderDataRenderer(width: number, height: number) {
     const extents = this.props.dataAdapter.getDomains();
 
     if (this.props.activeRenderer === "RadViz") {
@@ -146,21 +144,27 @@ export default class MainView extends React.Component<Props, State> {
     );
   }
 
+  private renderMapRenderer(width: number, height: number) {
+    return (
+      <MapViewRenderer
+        width={ width * 0.45 }
+        height={ height - 1 }
+        pois={ getPOIs() }
+        initialPOI={ null }
+        onPOISelected={ (poi: POI) => this.props.dataAdapter.filterCategoricalDimension("city", poi.label) }
+      />
+    );
+  }
+
   public render() {
     const width = window.innerWidth - 1;
     const height = window.innerHeight - 85;
 
     return (
       <div className="mainView" style={ {minHeight: height} }>
-        { this.renderRenderer() }
-        { this.renderRendererTabs() }
-        <MapViewRenderer
-          width={ width * 0.45 }
-          height={ height - 1 }
-          pois={ getPOIs() }
-          initialPOI={ null }
-          onPOISelected={ (poi: POI) => this.props.dataAdapter.filterCategoricalDimension("city", poi.label) }
-        />
+        { this.renderDataRenderer(width, height) }
+        { this.renderDataRendererTabs() }
+        { this.renderMapRenderer(width, height) }
       </div>
     );
   }
