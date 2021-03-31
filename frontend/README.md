@@ -13,7 +13,7 @@ frontend
 ```
 
 ## Prerequisites
-The frontend module requires [NodeJS v10.15.3](https://nodejs.org/en/) or higher.
+The frontend module requires [NodeJS v10.15.4](https://nodejs.org/en/) or higher.
 You can install it from npm using the following the command.
 
 Inside the `fronted/` directory, run `npm install` to install the local packages for the frontend.
