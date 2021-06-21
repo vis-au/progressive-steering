@@ -3,13 +3,19 @@
   display: flex;
   flex-direction: row;
   justify-content: stretch;
+  position: relative;
 }
 
 .renderer-tabs {
   position: absolute;
+  left: 25px;
   display: flex;
   flex-direction: row;
   justify-content: start;
+  visibility: hidden;
+}
+.mainView:hover .renderer-tabs {
+  visibility: visible;
 }
 .renderer-tabs .renderer-tab {
   background: #fff;
