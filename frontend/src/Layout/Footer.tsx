@@ -7,6 +7,7 @@ import ProgressBar from '../Widgets/ProgressBar';
 import { DEFAULT_EVALUATION_METRICS, EvaluationMetricType } from '../Data/EelBackendDummy';
 
 import './Footer.css';
+import Toggle from '../Widgets/Toggle';
 
 interface Props {
   dataAdapter: EelDataAdapter,
@@ -118,72 +119,61 @@ export default class Footer extends React.Component<Props, State> {
 
   private renderHighlightLatestPointsToggle() {
     return (
-      <div className="highlight-latest-point-toggle toggle">
-        <input
-          type="checkbox"
-          name="highlight-latest-point-toggle"
-          id="highlight-latest-point-toggle"
-          checked={ this.props.highlightLatestPoints }
-          onChange={ this.props.onHighlightLatestPointChanged }/>
-        <label htmlFor="highlight-latest-point-toggle">highlight last chunk</label>
-      </div>
+      <Toggle
+        id="highlight-latest-point-toggle"
+        checked={ this.props.highlightLatestPoints }
+        disabled={ false }
+        label="highlight last chunk"
+        onChange={ this.props.onHighlightLatestPointChanged }
+      />
     );
   }
 
   private renderShowDotsToggle() {
     return (
-      <div className="show-dots-heatmap-toggle toggle">
-        <input
-          type="checkbox"
-          name="show-dots-heatmap-toggle"
-          id="show-dots-heatmap-toggle"
-          checked={ this.props.showDots  }
-          onChange={ this.props.onShowDotsChanged }/>
-        <label htmlFor="show-dots-heatmap-toggle">dots</label>
-      </div>
+      <Toggle
+        id="show-dots-heatmap-toggle"
+        checked={ this.props.showDots }
+        disabled={ false }
+        label="dots"
+        onChange={ this.props.onShowDotsChanged }
+      />
     );
   }
 
   private renderShowHeatMapToggle() {
     return (
-      <div className="show-heatmap-toggle toggle">
-        <input
-          type="checkbox"
-          name="show-heatmap-toggle"
-          id="show-heatmap-toggle"
-          checked={ this.props.showHeatMap  }
-          onChange={ this.props.onShowHeatMapChanged }/>
-        <label htmlFor="show-heatmap-toggle">heatmap</label>
-      </div>
+      <Toggle
+        id="show-heatmap-toggle"
+        checked={ this.props.showHeatMap }
+        disabled={ false }
+        label="heatmap"
+        onChange={ this.props.onShowHeatMapChanged }
+      />
     );
   }
 
   private renderUseDeltaHeatMapToggle() {
     return (
-      <div className="use-delta-heatmap-toggle toggle">
-        <input
-          disabled={ !this.props.showHeatMap }
-          type="checkbox"
-          name="use-delta-heatmap-toggle"
-          id="use-delta-heatmap-toggle"
-          checked={ this.props.useDeltaHeatMap  }
-          onChange={ this.props.onUseDeltaHeatMapChanged }/>
-        <label htmlFor="use-delta-heatmap-toggle">delta heatmap</label>
-      </div>
+      <Toggle
+        id="use-delta-heatmap-toggle"
+        checked={ this.props.useDeltaHeatMap }
+        disabled={ !this.props.showHeatMap }
+        label="delta heatmap"
+        onChange={ this.props.onUseDeltaHeatMapChanged }
+      />
     );
   }
 
   private renderShowSideBySideViewToggle() {
     return (
-      <div className="show-sidebyside-toggle toggle">
-        <label htmlFor="show-sidebyside-toggle">show non-steered data</label>
-        <input
-          type="checkbox"
-          name="show-sidebyside-toggle"
-          id="show-sidebyside-toggle"
-          checked={ this.props.showSideBySideView  }
-          onChange={ this.props.onShowSideBySideViewChanged }/>
-      </div>
+      <Toggle
+        id="show-sidebyside-toggle"
+        checked={ this.props.showSideBySideView }
+        disabled={ false }
+        label="show non-steered data"
+        onChange={ this.props.onShowSideBySideViewChanged }
+      />
     );
   }
 

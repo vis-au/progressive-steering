@@ -1,0 +1,23 @@
+div.toggle {
+  background: white;
+  border: 1px solid #333;
+  border-radius: 3px;
+  padding: 0.1rem 0.5rem 0.15rem;
+  margin: 0 0.5rem;
+}
+div.toggle:hover {
+  background: #eee;
+}
+div.toggle input {
+  display: none;
+}
+div.toggle.checked {
+  background: #333;
+  color: white;
+}
+div.toggle.checked:hover {
+  background: #555;
+}
+div.toggle label {
+  cursor: pointer;
+}
