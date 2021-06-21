@@ -163,7 +163,7 @@ export default class MainView extends React.Component<Props, State> {
     return (
       <div className="mainView" style={ {minHeight: height} }>
         { this.renderDataRenderer(width, height) }
-        { this.renderDataRendererTabs() }
+        {/* { this.renderDataRendererTabs() } */}
         { this.renderMapRenderer(width, height) }
       </div>
     );

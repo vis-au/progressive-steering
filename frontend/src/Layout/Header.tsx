@@ -40,7 +40,7 @@ export default class Header extends React.Component<Props, State> {
         className="dimension-selection"
         value={ "Select Dimension" }
         onChange={ this.props.onDimensionAdded }>
-        <option value="Select Dimension" disabled={ true }>Include dimension</option>
+        <option value="Select Dimension" disabled={ true }>Add histogram ...</option>
         { this.props.remainingDimensions.map(this.renderDimensionOption.bind(this)) }
       </select>
     );
@@ -109,9 +109,16 @@ export default class Header extends React.Component<Props, State> {
   public render() {
     return (
       <div className="header">
-        { this.renderDimensionSelection() }
-        { this.renderDimensionHistograms() }
-        { this.renderScenarioPresets() }
+        <div className="left logo">
+          <img src="./logo.svg" height="100%" alt="logo" />
+        </div>
+        <div className="center">
+          { this.renderDimensionHistograms() }
+        </div>
+        <div className="right">
+          { this.renderDimensionSelection() }
+          { this.renderScenarioPresets() }
+        </div>
       </div>
     );
   }

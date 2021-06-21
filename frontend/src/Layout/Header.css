@@ -2,12 +2,25 @@
   box-shadow: 0 3px 10px #efefef;
 }
 
+.header > div {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+.header select {
+  margin: 0 0.5rem;
+  border: 1px solid black;
+  border-radius: 4px;
+  padding: 0 1rem;
+  background: white;
+  cursor: pointer;
+  height: 25px;
+  font-size: 14px;
+}
+
 .header .dimension-selection {
   display: flex;
   flex-direction: row;
-}
-.header .dimension-selection .selection {
-  margin-right: 1rem;
 }
 
 .header .dimension-histograms {
