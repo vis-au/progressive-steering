@@ -1,13 +1,24 @@
 .evaluationMetric {
   margin-right: 0.5rem;
-  border: 1px solid #ccc;
-  padding: 0.05rem 0.75rem 0.2rem;
-  border-radius: 2rem;
+  border: 1.2px solid #333;
+  padding: 0.1rem 0.5rem 0.2rem;
+  border-radius: 3px;
   cursor: pointer;
 }
+.evaluationMetric:hover {
+  background: #eee;
+}
 .evaluationMetric.active {
-  border-color: steelblue;
-  background: rgb(198, 219, 247);
+  color: white;
+  background: #333;
+}
+.evaluationMetric.active svg {
+  color: black;
+  text-shadow: white;
+}
+.evaluationMetric.active:hover {
+  background: #555;
+  border-color: #555;
 }
 .evaluationMetric .label {
   margin-right: 0.5rem;
@@ -30,12 +41,12 @@
   fill: #555;
 }
 .evaluationMetric svg.canvas path.time {
-  stroke: steelblue;
+  stroke: #333;
   fill: none;
   stroke-width: 2px;
 }
 .evaluationMetric svg.canvas circle.endpoint {
-  fill: steelblue;
+  fill: #333;
 }
 
 

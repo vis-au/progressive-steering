@@ -1,26 +1,32 @@
 .progressBarContainer {
   width: 100%;
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  font-size: 13px;
 }
 
+.progressBarLabel {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+.progressBarLabel .value {
+  font-weight: bold;
+}
 .progressBar {
-  width: 40%;
-  height: 0.5rem;
-  border-radius: 0.25rem;
+  width: 100%;
   display: flex;
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
-  border: 1px solid #777;
+  border: 1px solid #333;
   background: #fff;
 }
 .progress {
-  background: steelblue;
-  height: 0.5rem;
-  border-radius: 0.25rem;
+  background: #333;
+  height: 0.2rem;
   padding-left: 0rem;
   line-height: 0.9rem;
 }
