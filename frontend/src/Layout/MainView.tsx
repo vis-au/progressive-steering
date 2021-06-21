@@ -56,6 +56,7 @@ export default class MainView extends React.Component<Props, State> {
   private renderDataRendererTabs() {
     return (
       <div className="renderer-tabs">
+        <h2>View </h2>
         { RENDERER_LABELS.map(this.renderRendererTab.bind(this)) }
       </div>
     );

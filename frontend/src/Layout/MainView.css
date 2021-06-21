@@ -8,14 +8,22 @@
 
 .renderer-tabs {
   position: absolute;
-  left: 25px;
+  left: 15px;
   display: flex;
   flex-direction: row;
   justify-content: start;
   visibility: hidden;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.1s ease;
 }
 .mainView:hover .renderer-tabs {
   visibility: visible;
+  opacity: 1;
+}
+.renderer-tabs h2 {
+  font-size: 15px;
+  margin-right: 10px;
 }
 .renderer-tabs .renderer-tab {
   background: #fff;
