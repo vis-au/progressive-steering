@@ -17,6 +17,7 @@ interface Props {
   showSideBySideView: boolean,
   highlightLatestPoints: boolean,
   showHeatMap: boolean,
+  showDots: boolean,
   useDeltaHeatMap: boolean,
   stepsBeforePaddingGrows: number,
   includeDimensions: string[],
@@ -116,22 +117,20 @@ export default class MainView extends React.Component<Props, State> {
       );
     }
 
-    const dimensionX = getXDimension();
-    const dimensionY = getYDimension();
-
     return (
       <ScatterplotRenderer
         width={ width }
         height={ height }
         extents={ extents }
-        dimensionX={ dimensionX }
-        dimensionY={ dimensionY }
+        dimensionX={ getXDimension() }
+        dimensionY={ getYDimension() }
         data={ this.props.dataAdapter.data }
         nonSteeringData={ this.props.dataAdapter.nonSteeringData }
         chunkSize={ this.props.dataAdapter.chunkSize }
         trainingState={ this.props.dataAdapter.trainingState }
         highlightLastChunk={ this.props.highlightLatestPoints }
         showHeatMap={ this.props.showHeatMap }
+        showDots={ this.props.showDots }
         useDeltaHeatMap={ this.props.useDeltaHeatMap }
         showNonSteeringData={ this.props.showSideBySideView }
         presetSelection={ this.props.selectedScenarioPreset }
@@ -163,7 +162,7 @@ export default class MainView extends React.Component<Props, State> {
     return (
       <div className="mainView" style={ {minHeight: height} }>
         { this.renderDataRenderer(width, height) }
-        {/* { this.renderDataRendererTabs() } */}
+        { this.renderDataRendererTabs() }
         { this.renderMapRenderer(width, height) }
       </div>
     );

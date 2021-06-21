@@ -12,6 +12,7 @@ interface Props {
   dataAdapter: EelDataAdapter,
   highlightLatestPoints: boolean,
   showHeatMap: boolean,
+  showDots: boolean,
   useDeltaHeatMap: boolean,
   showSideBySideView: boolean,
   stepsBeforePaddingGrows: number,
@@ -19,6 +20,7 @@ interface Props {
   onProgressionReset: () => void,
   onHighlightLatestPointChanged: () => void,
   onShowHeatMapChanged: () => void,
+  onShowDotsChanged: () => void,
   onUseDeltaHeatMapChanged: () => void,
   onShowSideBySideViewChanged: () => void,
   onPaddingStepsChanged: (event: React.ChangeEvent<HTMLInputElement>) => void,
@@ -116,36 +118,49 @@ export default class Footer extends React.Component<Props, State> {
 
   private renderHighlightLatestPointsToggle() {
     return (
-      <div className="highlight-latest-point-toggle">
-        <label htmlFor="highlight-latest-point-toggle">highlight last chunk</label>
+      <div className="highlight-latest-point-toggle toggle">
         <input
           type="checkbox"
           name="highlight-latest-point-toggle"
           id="highlight-latest-point-toggle"
           checked={ this.props.highlightLatestPoints }
           onChange={ this.props.onHighlightLatestPointChanged }/>
+        <label htmlFor="highlight-latest-point-toggle">highlight last chunk</label>
+      </div>
+    );
+  }
+
+  private renderShowDotsToggle() {
+    return (
+      <div className="show-dots-heatmap-toggle toggle">
+        <input
+          type="checkbox"
+          name="show-dots-heatmap-toggle"
+          id="show-dots-heatmap-toggle"
+          checked={ this.props.showDots  }
+          onChange={ this.props.onShowDotsChanged }/>
+        <label htmlFor="show-dots-heatmap-toggle">dots</label>
       </div>
     );
   }
 
   private renderShowHeatMapToggle() {
     return (
-      <div className="show-heatmap-toggle">
-        <label htmlFor="show-heatmap-toggle">show heatmap</label>
+      <div className="show-heatmap-toggle toggle">
         <input
           type="checkbox"
           name="show-heatmap-toggle"
           id="show-heatmap-toggle"
           checked={ this.props.showHeatMap  }
           onChange={ this.props.onShowHeatMapChanged }/>
+        <label htmlFor="show-heatmap-toggle">heatmap</label>
       </div>
     );
   }
 
   private renderUseDeltaHeatMapToggle() {
     return (
-      <div className="use-delta-heatmap-toggle">
-        <label htmlFor="use-delta-heatmap-toggle">delta heatmap</label>
+      <div className="use-delta-heatmap-toggle toggle">
         <input
           disabled={ !this.props.showHeatMap }
           type="checkbox"
@@ -153,13 +168,14 @@ export default class Footer extends React.Component<Props, State> {
           id="use-delta-heatmap-toggle"
           checked={ this.props.useDeltaHeatMap  }
           onChange={ this.props.onUseDeltaHeatMapChanged }/>
+        <label htmlFor="use-delta-heatmap-toggle">delta heatmap</label>
       </div>
     );
   }
 
   private renderShowSideBySideViewToggle() {
     return (
-      <div className="show-sidebyside-toggle">
+      <div className="show-sidebyside-toggle toggle">
         <label htmlFor="show-sidebyside-toggle">show non-steered data</label>
         <input
           type="checkbox"
@@ -206,6 +222,7 @@ export default class Footer extends React.Component<Props, State> {
 
         <div className="center">
           { this.renderHighlightLatestPointsToggle() }
+          { this.renderShowDotsToggle() }
           { this.renderShowHeatMapToggle() }
           { this.renderUseDeltaHeatMapToggle() }
           { this.renderShowSideBySideViewToggle() }

@@ -13,15 +13,16 @@
 }
 .renderer-tabs .renderer-tab {
   background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 20px;
-  margin: 0.5rem;
-  padding: 0.25rem 1.25rem;
+  border: 1px solid #333;
+  font-size: 13px;
+  border-radius: 3px;
+  margin: 1.5rem 0.25rem;
+  padding: 0.1rem 0.5rem 0.15rem;
 }
 .renderer-tabs .renderer-tab.active {
   color: #fff;
-  border-color: steelblue;
-  background: steelblue;
+  border-color: #333;
+  background: #333;
 }
 .renderer-tabs .renderer-tab input {
   display: none;

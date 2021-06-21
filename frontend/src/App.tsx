@@ -20,6 +20,7 @@ interface State {
   selectedPoints: any[],
   highlightLatestPoints: boolean,
   showHeatMap: boolean,
+  showDots: boolean,
   useDeltaHeatMap: boolean,
   showSideBySideView: boolean,
   selectedScenarioPreset: ScenarioPreset | null,
@@ -58,6 +59,7 @@ export class App extends Component<{}, State> {
       selectedPoints: [],
       highlightLatestPoints: true,
       showHeatMap: false,
+      showDots: true,
       useDeltaHeatMap: true,
       showSideBySideView: false,
       selectedScenarioPreset: null,
@@ -118,6 +120,10 @@ export class App extends Component<{}, State> {
 
   private onShowHeatMapChanged() {
     this.setState({ showHeatMap: !this.state.showHeatMap });
+  }
+
+  private onShowDotsChanged() {
+    this.setState({ showDots: !this.state.showDots });
   }
 
   private onUseDeltaHeatMapChanged() {
@@ -233,6 +239,7 @@ export class App extends Component<{}, State> {
           includeDimensions={ this.state.includeDimensions }
           selectedScenarioPreset={ this.state.selectedScenarioPreset }
           showHeatMap={ this.state.showHeatMap }
+          showDots={ this.state.showDots }
           showSideBySideView={ this.state.showSideBySideView }
           stepsBeforePaddingGrows={ this.state.stepsBeforePaddingGrows }
           useDeltaHeatMap={ this.state.useDeltaHeatMap }
@@ -247,6 +254,7 @@ export class App extends Component<{}, State> {
           dataAdapter={ this.dataAdapter }
           highlightLatestPoints={ this.state.highlightLatestPoints }
           showHeatMap={ this.state.showHeatMap }
+          showDots={ this.state.showDots }
           showSideBySideView={ this.state.showSideBySideView }
           useDeltaHeatMap={ this.state.useDeltaHeatMap }
           stepsBeforePaddingGrows={ this.state.stepsBeforePaddingGrows }
@@ -254,6 +262,7 @@ export class App extends Component<{}, State> {
           onProgressionStateChanged={ this.onProgressionStateChanged.bind(this) }
           onProgressionReset={ this.onProgressionReset.bind(this) }
           onShowHeatMapChanged={ this.onShowHeatMapChanged.bind(this) }
+          onShowDotsChanged={ this.onShowDotsChanged.bind(this) }
           onShowSideBySideViewChanged={ this.onShowSideBySideViewChanged.bind(this) }
           onUseDeltaHeatMapChanged={ this.onUseDeltaHeatMapChanged.bind(this) }
           onPaddingStepsChanged={ this.onPaddingStepsChanged.bind(this) }

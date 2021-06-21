@@ -23,6 +23,7 @@ interface Props {
   presetSelection: ScenarioPreset | null,
   showNonSteeringData: boolean,
   showHeatMap: boolean,
+  showDots: boolean,
   useDeltaHeatMap: boolean,
   highlightLastChunk?: boolean,
   chunkSize?: number,
@@ -577,6 +578,10 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
     const scaledChunk = this.getScaledCoordinatesForData(useNonSteeringData);
 
+    if (!this.props.showDots) {
+      return scaledChunk;
+    }
+
     let context: any = (this.canvas.node() as any).getContext("2d");
     context.fillStyle = DEFAULT_POINT_COLOR;
     context.strokeStyle = DEFAULT_POINT_COLOR;
@@ -698,6 +703,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
           nonSteeredData={ this.nonSteeringQuadtree.data() }
           showNonSteeredCanvas={ this.props.showNonSteeringData }
           useDeltaHeatMap={ this.props.useDeltaHeatMap }
+          cellOpacity={ this.props.showDots ? 0.3 : 1 }
         />
       );
     } else {
@@ -718,12 +724,13 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     const canvasWidth = this.getCanvasWidth();
 
     const isNonSteeringCanvasHidden = this.props.showNonSteeringData ? "" : "hidden";
+    const isPointCanvasHidden = this.props.showDots ? "" : "hidden";
 
     return (
       <div className="scatterplotRenderer" style={ { width: canvasWidth } }>
         { this.renderHeatMap(canvasWidth) }
-        <canvas className="scatterplotCanvas" width={ canvasWidth } height={ this.props.height } />
-        <canvas className={ `nonSteeringCanvas ${isNonSteeringCanvasHidden}` } width={ canvasWidth } height={ this.props.height }></canvas>
+        <canvas className={`scatterplotCanvas ${isPointCanvasHidden}`} width={ canvasWidth } height={ this.props.height } />
+        <canvas className={ `nonSteeringCanvas ${isNonSteeringCanvasHidden} ${isPointCanvasHidden}` } width={ canvasWidth } height={ this.props.height }></canvas>
         <svg className="recentPointsCanvas" width={ canvasWidth } height={ this.props.height } />
         <svg className="densityCanvas" width={ canvasWidth } height={ this.props.height } />
         <svg className={ `recentNonSteeredPointsCanvas ${isNonSteeringCanvasHidden}` } width={ canvasWidth } height={ this.props.height } />

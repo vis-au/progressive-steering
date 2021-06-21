@@ -13,7 +13,8 @@ interface Props {
   steeredData: ScaledCartesianCoordinate[],
   nonSteeredData: ScaledCartesianCoordinate[],
   showNonSteeredCanvas: boolean,
-  useDeltaHeatMap: boolean
+  useDeltaHeatMap: boolean,
+  cellOpacity: number
 }
 interface State {
 }
@@ -132,7 +133,7 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
       .attr("width", this.props.canvasWidth / BINS_X - 2)
       .attr("height", this.props.height / BINS_Y - 2)
       .attr("fill", d => scaleColor(d))
-      .attr("fill-opacity", 0.3)
+      .attr("fill-opacity", this.props.cellOpacity)
       .attr("stroke", "white");
 
     svg.selectAll("text.density").data(binsFlat).join("text")
