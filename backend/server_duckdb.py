@@ -1,5 +1,4 @@
 import duckdb
-import time
 import math
 import platform
 import steering_module as sm
