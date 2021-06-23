@@ -122,7 +122,7 @@ export default class Footer extends React.Component<Props, State> {
       <Toggle
         id="highlight-latest-point-toggle"
         checked={ this.props.highlightLatestPoints }
-        disabled={ false }
+        disabled={ !this.props.showDots }
         label="highlight last chunk"
         icon="track_changes"
         onChange={ this.props.onHighlightLatestPointChanged }
@@ -136,7 +136,7 @@ export default class Footer extends React.Component<Props, State> {
         id="show-dots-toggle"
         checked={ this.props.showDots }
         disabled={ false }
-        label="dots"
+        label="show dots"
         icon="grain"
         onChange={ this.props.onShowDotsChanged }
       />
@@ -149,7 +149,7 @@ export default class Footer extends React.Component<Props, State> {
         id="show-heatmap-toggle"
         checked={ this.props.showHeatMap }
         disabled={ false }
-        label="heatmap"
+        label="show bins"
         icon="grid_on"
         onChange={ this.props.onShowHeatMapChanged }
       />
@@ -162,7 +162,7 @@ export default class Footer extends React.Component<Props, State> {
         id="use-delta-heatmap-toggle"
         checked={ this.props.useDeltaHeatMap }
         disabled={ !this.props.showHeatMap }
-        label="delta heatmap"
+        label="difference bins"
         icon="change_history"
         onChange={ this.props.onUseDeltaHeatMapChanged }
       />
@@ -175,7 +175,7 @@ export default class Footer extends React.Component<Props, State> {
         id="show-sidebyside-toggle"
         checked={ this.props.showSideBySideView }
         disabled={ false }
-        label="show non-steered data"
+        label="side-by-syde"
         icon="compare_arrows"
         onChange={ this.props.onShowSideBySideViewChanged }
       />
@@ -216,8 +216,8 @@ export default class Footer extends React.Component<Props, State> {
         </div>
 
         <div className="center">
-          { this.renderHighlightLatestPointsToggle() }
           { this.renderShowDotsToggle() }
+          { this.renderHighlightLatestPointsToggle() }
           { this.renderShowHeatMapToggle() }
           { this.renderUseDeltaHeatMapToggle() }
           { this.renderShowSideBySideViewToggle() }

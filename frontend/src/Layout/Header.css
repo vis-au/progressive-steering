@@ -12,13 +12,16 @@
 }
 .header select {
   margin: 0 0.5rem;
-  border: 1px solid black;
+  border: 1px solid transparent;
   border-radius: 4px;
   padding: 0 1rem;
-  background: white;
+  background: #efefef;
   cursor: pointer;
   height: 25px;
   font-size: 14px;
+}
+.header select:hover {
+  border-color: #ccc;
 }
 
 .header .dimension-selection {
