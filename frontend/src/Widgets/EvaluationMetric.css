@@ -1,12 +1,14 @@
 .evaluationMetric {
+  display: flex;
   margin-right: 0.5rem;
-  border: 1.2px solid #333;
-  padding: 0.1rem 0.5rem 0.2rem;
+  border: 1.2px solid transparent;
+  background: #efefef;
+  padding: 0.1rem 0.5rem 0.15rem;
   border-radius: 3px;
   cursor: pointer;
 }
 .evaluationMetric:hover {
-  background: #eee;
+  background: #ddd;
 }
 .evaluationMetric.active {
   color: white;
@@ -22,6 +24,13 @@
 }
 .evaluationMetric .label {
   margin-right: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+.evaluationMetric .label i.icon {
+  margin-right: 5px;
+  font-size: 18px;
+  font-weight: bold;
 }
 .evaluationMetric svg {
   shape-rendering: auto;

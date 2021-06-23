@@ -173,7 +173,15 @@ export default class EvaluationMetric extends React.Component<Props, State> {
 
     return (
       <div className={`evaluationMetric ${activeLabel}`} onClick={ this.toggleVisibility.bind(this) }>
-        <span className="label">{ this.props.label }:</span>
+        <span className="label">
+          <i className="icon material-icons">
+            {
+              this.props.canvasVisible ? "expand_less" : "expand_more"
+
+            }
+          </i>
+          { this.props.label }:
+        </span>
         <span className="value">{ this.props.values[this.props.values.length - 1] }</span>
         <svg id={ this.getCanvasSelector() } className={ `canvas ${canvasLabel}` } width={ DEFAULT_WIDTH + DEFAULT_HORIZONTAL_PADDING } height={ DEFAULT_HEIGHT + DEFAULT_VERTICAL_PADDING }>
 
