@@ -1,4 +1,5 @@
 import duckdb
+import time
 import math
 import platform
 import steering_module as sm
@@ -23,7 +24,7 @@ DIZ_plotted={} #a ll plotted points
 IN=[] # cumulated airb&b ID of points plotted in the user box till the actual chunk
 user_selection_updated=False # new box
 total_chunk_number=0
-total_inb=0 # number of points plotted in the user box till the actual chunk
+total_inside_box=0 # number of points plotted in the user box till the actual chunk
 tree_ready=False # it is used to interrupt the initial chunking cycle
 chunk_size=100
 modifier="True" # modify initial query with conditions coming from the tree
@@ -76,7 +77,7 @@ def distance(lat1, long1, lat2, long2):
     return int(arc * 6371*1000)/1000
 
 
-def get_saving(saving, saving_as_float): # the search is bound to a
+def above_m(saving, saving_as_float): # the search is bound to a
     return {
         "neighborhood_min": 5,
         "saving": saving_as_float if float_saving else saving,
@@ -94,14 +95,14 @@ def build_query(user_range, att, modifier, chunk_size):
 
 
 def reset():
-    global user_selection_updated, total_chunk_number, total_inb, tree_ready, chunk_size
+    global user_selection_updated, total_chunk_number, total_inside_box, tree_ready, chunk_size
     global modifier, query_att, IN, DIZ_plotted
 
     IN = []
     DIZ_plotted = {}
     user_selection_updated = False
     total_chunk_number = 0
-    total_inb = 0
+    total_inside_box = 0
     tree_ready = False
     chunk_size = 100
     modifier = "True"
@@ -123,46 +124,93 @@ def airbnb_tuple_to_dict(tuple, state, chunk):
         "cleaning_fee": tuple[18],
         "minimum_nights": tuple[21],
         "maximum_nights": tuple[22],
-        "dist2user": distance(user_lat, user_lon, tuple[10], tuple[11]),
-        "aboveM": get_saving(tuple[45], tuple[46]),
+        # "dist2user": distance(user_lat, user_lon, tuple[10], tuple[11]),
+        "dist2user": tuple[44],
+        "aboveM": above_m(tuple[45], tuple[46]),
         "chunk": chunk,
         "inside": 0
     }
 
 
-def processResult(chunk_number, result, state, query):
+def mark_ids_plotted(result):
+    value_string = ""
+    for i, tuple in enumerate(result):
+        value_string += "("+str(tuple[0])+"), " if i < len(result)-1 else "("+str(tuple[0])+");"
+
+    cursor.execute("INSERT INTO plotted (id) VALUES "+value_string)
+
+
+def process_result(chunk_number, result, state):
     global DIZ_plotted
-    global total_inb
+    global total_inside_box
 
     chunk = {}
-    chunk_number += 1
 
     for tuple in result:
-        cursor.execute("INSERT INTO plotted (id) VALUES (" +str(tuple[0])+")")
         DIZ_plotted[tuple[0]]=airbnb_tuple_to_dict(tuple, state, chunk_number)
         chunk[tuple[0]]={
             "chunk": chunk_number,
             "state": state,
             "values": DIZ_plotted[tuple[0]],
-            "dist2user": distance(user_lat, user_lon, tuple[10], tuple[11]),
-            "aboveM": get_saving(tuple[45], tuple[46])
+            "dist2user": tuple[44],
+            "aboveM": above_m(tuple[45], tuple[46])
         }
-        eel.sleep(0.001)
 
     send_chunk(chunk)
+    return chunk_number
 
-    eel.sleep(0.04)
+
+def process_random_result(chunk_number, random_result, state):
+    state = "random_("+state+")"
+    chunk = {}
+
+    for tuple in random_result[chunk_number*chunk_size:(chunk_number+1)*chunk_size]:
+        chunk[tuple[0]] = {
+            "chunk": chunk_number,
+            "state": state,
+            "values": airbnb_tuple_to_dict(tuple, state, chunk_number),
+            "dist2user": tuple[44],
+            "aboveM": above_m(tuple[45], tuple[46])
+        }
+
+    send_random_chunk(chunk)
+
+
+def get_inside_selection_at_chunk(chunk):
     inb = 0
 
     for k in DIZ_plotted:
-        if DIZ_plotted [k]["inside"]==1 and DIZ_plotted [k]["chunk"]==chunk_number:
+        if DIZ_plotted[k]["inside"]==1 and DIZ_plotted[k]["chunk"]==chunk:
             inb+=1
 
-    total_inb+=inb
-    print("chunk: ", chunk_number, state, "Items in box: ", total_inb, "Precision: ", inb/chunk_size, inb, distances())
+    return inb
 
-    eel.send_evaluation_metric({"name": "precision", "value": inb/chunk_size})
-    eel.send_evaluation_metric({"name": "recall", "value": total_inb})
+
+def progress_over_dataset(chunk_number, result, random_result, state, query):
+    global total_inside_box, IN
+
+    if progression_state == PROGRESSTION_STATES["paused"]:
+        eel.sleep(1)
+    elif progression_state == PROGRESSTION_STATES["ready"]:
+        return None, None
+
+    chunk_number += 1
+    process_result(chunk_number, result, state, query)
+    if double_sending:
+        process_random_result(chunk_number, random_result, state)
+
+    mark_ids_plotted(result)
+
+    # IMPORTANT: within this waiting period, the backend receives the "in-/outside" information by
+    # the frontend, which influences precision/insde calculation below
+    eel.sleep(1)
+
+    recent_inside = get_inside_selection_at_chunk(chunk_number)
+    total_inside_box += recent_inside
+    print("chunk:", chunk_number, state, "items in selection:", total_inside_box, "Precision:", recent_inside/chunk_size, recent_inside, distances())
+
+    eel.send_evaluation_metric({"name": "precision", "value": recent_inside/chunk_size})
+    eel.send_evaluation_metric({"name": "recall", "value": total_inside_box})
 
     cursor.execute(query)
     result = cursor.fetchall()
@@ -170,38 +218,8 @@ def processResult(chunk_number, result, state, query):
     return chunk_number, result
 
 
-def process_random_result(chunk, myresultRandom, state):
-    state = "random_("+state+")"
-    actualChunkRandom = {}
-
-    for tuple in myresultRandom[chunk*chunk_size:(chunk+1)*chunk_size]:
-        actualChunkRandom[tuple[0]] = {
-            "chunk": chunk,
-            "state": state,
-            "values": airbnb_tuple_to_dict(tuple, state, chunk),
-            "dist2user": distance(user_lat, user_lon, tuple[10], tuple[11]),
-            "aboveM": get_saving(tuple[45], tuple[46])
-        }
-        eel.sleep(0.001)
-
-    send_random_chunk(actualChunkRandom)
-    eel.sleep(0.04)
-
-
-def progress_over_dataset(chunk, myresult, myresultRandom, state, query):
-    if progression_state == PROGRESSTION_STATES["paused"]:
-        eel.sleep(1)
-    elif progression_state == PROGRESSTION_STATES["ready"]:
-        return None, None
-    else:
-        chunk, myresult=processResult(chunk, myresult, state, query)
-        if double_sending:
-            process_random_result(chunk, myresultRandom, state)
-    return chunk, myresult
-
-
 def run_steered_progression(query, chunkSize, min_box_items=50):
-    global modifier, DIZ_plotted, tree_ready, total_inb, total_chunk_number, user_selection_updated
+    global modifier, DIZ_plotted, tree_ready, total_inside_box, total_chunk_number
     global progression_state, PROGRESSTION_STATES, double_sending
 
     double_sending=True
@@ -231,7 +249,7 @@ def run_steered_progression(query, chunkSize, min_box_items=50):
     cursor.execute(query)
     my_result = cursor.fetchall()
 
-    while len(my_result)>0 and (not tree_ready or total_inb<min_box_items or len(modifier)<=3) and len(IN) == 0:
+    while len(my_result)>0 and (not tree_ready or total_inside_box<min_box_items or len(modifier)<=3) and len(IN) == 0:
         chunk, my_result = progress_over_dataset(chunk, my_result, my_result_random, state, query)
         if my_result is None:
             return
@@ -240,10 +258,10 @@ def run_steered_progression(query, chunkSize, min_box_items=50):
     print("Entering ACTIVATION PHASE - Query:", query, modifier)
     print("c", c)
     print(query)
-    total_inb=0
+    total_inside_box=0
     state="collectingData"
 
-    while len(my_result)>0 and (not tree_ready or total_inb<min_box_items or len(modifier)<=3):
+    while len(my_result)>0 and (not tree_ready or total_inside_box<min_box_items or len(modifier)<=3):
         chunk, my_result = progress_over_dataset(chunk, my_result, my_result_random, state, query)
         if my_result is None:
             return
@@ -393,7 +411,7 @@ def send_user_selection(selected_item_ids):
 @eel.expose
 def send_selection_bounds(x_bounds, y_bounds):
     global X1, X2, Y1, Y2
-    global total_inb
+    global total_inside_box
     global DIZ_plotted
     global user_selection_updated
     global last_selected_items
@@ -404,19 +422,19 @@ def send_selection_bounds(x_bounds, y_bounds):
     Y1=y_bounds["yMax"]
     Y2=x_bounds["xMax"]
 
-    total_inb=0
+    total_inside_box=0
     for k in DIZ_plotted:
         DIZ_plotted[k]["inside"]=0
         if k in last_selected_items:
             DIZ_plotted[k]["inside"]=1
-            total_inb+=1
+            total_inside_box+=1
 
     user_selection_updated=True
     return x_bounds, y_bounds
 
 @eel.expose
 def send_selection_bounds_values(x_bounds_val, y_bounds_val):
-    global total_inb
+    global total_inside_box
     global DIZ_plotted
     print("new selected region received_pixel", x_bounds_val, y_bounds_val)
     return x_bounds_val, y_bounds_val
@@ -495,7 +513,6 @@ def start_eel(develop):
     print("Backend launched successfully. Waiting for requests ...")
 
     # These will be queued until the first connection is made, but won"t be repeated on a page reload
-    #eel.say_hello_js("Python World!")   # Call a JavaScript function (must be after `eel.init()`)
 
     eel_kwargs = dict(
         host="localhost",
