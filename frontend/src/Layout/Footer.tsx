@@ -124,6 +124,7 @@ export default class Footer extends React.Component<Props, State> {
         checked={ this.props.highlightLatestPoints }
         disabled={ false }
         label="highlight last chunk"
+        icon="track_changes"
         onChange={ this.props.onHighlightLatestPointChanged }
       />
     );
@@ -132,10 +133,11 @@ export default class Footer extends React.Component<Props, State> {
   private renderShowDotsToggle() {
     return (
       <Toggle
-        id="show-dots-heatmap-toggle"
+        id="show-dots-toggle"
         checked={ this.props.showDots }
         disabled={ false }
         label="dots"
+        icon="grain"
         onChange={ this.props.onShowDotsChanged }
       />
     );
@@ -148,6 +150,7 @@ export default class Footer extends React.Component<Props, State> {
         checked={ this.props.showHeatMap }
         disabled={ false }
         label="heatmap"
+        icon="grid_on"
         onChange={ this.props.onShowHeatMapChanged }
       />
     );
@@ -160,6 +163,7 @@ export default class Footer extends React.Component<Props, State> {
         checked={ this.props.useDeltaHeatMap }
         disabled={ !this.props.showHeatMap }
         label="delta heatmap"
+        icon="change_history"
         onChange={ this.props.onUseDeltaHeatMapChanged }
       />
     );
@@ -172,6 +176,7 @@ export default class Footer extends React.Component<Props, State> {
         checked={ this.props.showSideBySideView }
         disabled={ false }
         label="show non-steered data"
+        icon="compare_arrows"
         onChange={ this.props.onShowSideBySideViewChanged }
       />
     );
