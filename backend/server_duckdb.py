@@ -194,7 +194,7 @@ def progress_over_dataset(chunk_number, result, random_result, state, query):
         return None, None
 
     chunk_number += 1
-    process_result(chunk_number, result, state, query)
+    process_result(chunk_number, result, state)
     if double_sending:
         process_random_result(chunk_number, random_result, state)
 
@@ -203,6 +203,9 @@ def progress_over_dataset(chunk_number, result, random_result, state, query):
     # IMPORTANT: within this waiting period, the backend receives the "in-/outside" information by
     # the frontend, which influences precision/insde calculation below
     eel.sleep(1)
+
+    if progression_state == PROGRESSTION_STATES["ready"]:
+        return None, None
 
     recent_inside = get_inside_selection_at_chunk(chunk_number)
     total_inside_box += recent_inside
