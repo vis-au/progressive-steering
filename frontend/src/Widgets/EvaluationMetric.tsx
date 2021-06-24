@@ -21,7 +21,7 @@ interface State {
 const DEFAULT_WIDTH = 500;
 const DEFAULT_HEIGHT = 75;
 const DEFAULT_VERTICAL_PADDING = 30;
-const DEFAULT_HORIZONTAL_PADDING = 50;
+const DEFAULT_HORIZONTAL_PADDING = 75;
 const INDICATOR_LINE_WIDTH = 5;
 
 export default class EvaluationMetric extends React.Component<Props, State> {
@@ -83,7 +83,8 @@ export default class EvaluationMetric extends React.Component<Props, State> {
     container.selectAll("g.axis").remove();
 
     const yAxis = d3.axisRight(this.scaleY)
-      .tickSize(DEFAULT_WIDTH - DEFAULT_VERTICAL_PADDING/2)
+      .tickSize(DEFAULT_WIDTH)
+      .tickPadding(10)
       .ticks(5);
     container.append("g")
       .attr("class", "axis y")
