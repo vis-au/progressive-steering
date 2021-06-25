@@ -17,8 +17,6 @@ interface Props {
   useDeltaHeatMap: boolean,
   showSideBySideView: boolean,
   stepsBeforePaddingGrows: number,
-  onProgressionStateChanged: (newState: ProgressionState) => void,
-  onProgressionReset: () => void,
   onHighlightLatestPointChanged: () => void,
   onShowHeatMapChanged: () => void,
   onShowDotsChanged: () => void,
@@ -27,6 +25,7 @@ interface Props {
   onPaddingStepsChanged: (event: React.ChangeEvent<HTMLInputElement>) => void,
 }
 interface State {
+  progressionState: ProgressionState,
   visibleEvaluationMetric: EvaluationMetricType | null
 }
 
@@ -35,8 +34,22 @@ export default class Footer extends React.Component<Props, State> {
     super(props);
 
     this.state = {
+      progressionState: this.props.dataAdapter.progressionState,
       visibleEvaluationMetric: null
     };
+  }
+
+  private onProgressionReset() {
+    this.onChangeProgressionState("ready");
+    this.props.dataAdapter.reset();
+  }
+
+  private onChangeProgressionState(newState: ProgressionState) {
+    this.props.dataAdapter.progressionState = newState;
+
+    this.setState({
+      progressionState: newState
+    });
   }
 
   private onMetricClicked(metric: EvaluationMetricType) {
@@ -57,8 +70,7 @@ export default class Footer extends React.Component<Props, State> {
     }
 
     return (
-      <div className="control-overlay"
-        onClick={ () => this.props.onProgressionStateChanged("running") }>
+      <div className="control-overlay">
         <label>launch here</label>
         <i className="icon material-icons">keyboard_return</i>
       </div>
@@ -69,13 +81,13 @@ export default class Footer extends React.Component<Props, State> {
     let text = "play_arrow";
     let nextState: ProgressionState = "running";
 
-    if (this.props.dataAdapter.progressionState === "done") {
+    if (this.state.progressionState === "done") {
       text = "repeat";
       nextState = "ready";
-    } else if (this.props.dataAdapter.progressionState === "paused") {
+    } else if (this.state.progressionState === "paused") {
       text = "play_arrow";
       nextState = "running";
-    } else if (this.props.dataAdapter.progressionState === "running") {
+    } else if (this.state.progressionState === "running") {
       text = "pause";
       nextState = "paused";
     }
@@ -83,8 +95,8 @@ export default class Footer extends React.Component<Props, State> {
     return (
       <div className="progression-controls">
         { this.renderProgressionControlOverlay() }
-        <button className="control material-icons" title="play/pause progression" onClick={ () => this.props.onProgressionStateChanged(nextState) }>{ text }</button>
-        <button className="control material-icons" title="reset progression" onClick={ () => this.props.onProgressionReset() }>refresh</button>
+        <button className="control material-icons" title="play/pause progression" onClick={ () => this.onChangeProgressionState(nextState) }>{ text }</button>
+        <button className="control material-icons" title="reset progression" onClick={ () => this.onProgressionReset() }>refresh</button>
       </div>
     );
   }
