@@ -268,10 +268,11 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   }
 
   private updateCurrentlySelectedPoints() {
-    const brushedPoints: any[] = this.getCurrentlyBrushedPoints();
+    const brushedPoints: ScaledCartesianCoordinate[] = this.getCurrentlyBrushedPoints();
+    const brushedData = brushedPoints.map(d => d.values);
 
     if (!!this.props.onBrushedPoints) {
-      this.props.onBrushedPoints(brushedPoints);
+      this.props.onBrushedPoints(brushedData);
     }
     if (!!this.props.onBrushedRegion) {
       // no region was added because brush is empty. Can happen when user clicks on scatter plot
