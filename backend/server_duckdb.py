@@ -175,7 +175,7 @@ def process_random_result(chunk_number, random_result, state):
     send_random_chunk(chunk)
 
 
-def get_inside_selection_at_chunk(chunk):
+def get_items_inside_selection_at_chunk(chunk):
     inb = 0
 
     for k in DIZ_plotted:
@@ -185,13 +185,17 @@ def get_inside_selection_at_chunk(chunk):
     return inb
 
 
+def was_progression_reset_during_pause():
+    while progression_state == PROGRESSTION_STATES["paused"]:
+        eel.sleep(1)
+    if progression_state == PROGRESSTION_STATES["ready"]:
+        return True
+
+    return False
+
+
 def progress_over_dataset(chunk_number, result, random_result, state, query):
     global total_inside_box, IN
-
-    if progression_state == PROGRESSTION_STATES["paused"]:
-        eel.sleep(1)
-    elif progression_state == PROGRESSTION_STATES["ready"]:
-        return None, None
 
     chunk_number += 1
     process_result(chunk_number, result, state)
@@ -203,11 +207,10 @@ def progress_over_dataset(chunk_number, result, random_result, state, query):
     # IMPORTANT: within this waiting period, the backend receives the "in-/outside" information by
     # the frontend, which influences precision/insde calculation below
     eel.sleep(1)
-
-    if progression_state == PROGRESSTION_STATES["ready"]:
+    if was_progression_reset_during_pause():
         return None, None
 
-    recent_inside = get_inside_selection_at_chunk(chunk_number)
+    recent_inside = get_items_inside_selection_at_chunk(chunk_number)
     total_inside_box += recent_inside
     print("chunk:", chunk_number, state, "items in selection:", total_inside_box, "Precision:", recent_inside/chunk_size, recent_inside, distances())
 
@@ -321,10 +324,10 @@ def encodeTestCases(testCases):
     return r
 
 
-
 @eel.expose
 def get_use_cases():
     return encodeTestCases(testCases)
+
 
 @eel.expose
 def send_to_backend_userData(x):
@@ -410,6 +413,7 @@ def send_user_selection(selected_item_ids):
 
     return modifier
 
+
 @eel.expose
 def send_selection_bounds(x_bounds, y_bounds):
     global X1, X2, Y1, Y2
@@ -434,6 +438,7 @@ def send_selection_bounds(x_bounds, y_bounds):
     user_selection_updated=True
     return x_bounds, y_bounds
 
+
 @eel.expose
 def send_selection_bounds_values(x_bounds_val, y_bounds_val):
     global total_inside_box
@@ -441,9 +446,11 @@ def send_selection_bounds_values(x_bounds_val, y_bounds_val):
     print("new selected region received_pixel", x_bounds_val, y_bounds_val)
     return x_bounds_val, y_bounds_val
 
+
 @eel.expose
 def send_user_params(parameters):
     print("new user parameters received")
+
 
 @eel.expose
 def send_progression_state(state):
@@ -460,22 +467,24 @@ def send_progression_state(state):
 
     print("new progression state", progression_state)
 
-def boxData(testCase):
+
+def get_box_data(test_case):
     global user_range
-    qq = str("SELECT * FROM listings WHERE price>="+str(user_range[0])+" and price <=" +str(user_range[1])+" and abovemF<="+str(testCase["boxMaxRange"])+
-             " and abovemF>="+str(testCase["boxMinRange"]) +" and distance>="+str(testCase["boxMinDistance"])+" and distance<="+str(testCase["boxMaxDistance"]))
+    qq = str("SELECT * FROM listings WHERE price>="+str(user_range[0])+" and price <=" +str(user_range[1])+" and abovemF<="+str(test_case["boxMaxRange"])+
+             " and abovemF>="+str(test_case["boxMinRange"]) +" and distance>="+str(test_case["boxMinDistance"])+" and distance<="+str(test_case["boxMaxDistance"]))
     cursor.execute(qq)
     myresult = cursor.fetchall()
     tuplesF=len(myresult)
 
-    qq = str("SELECT * FROM listings WHERE price>="+str(user_range[0])+" and price <=" +str(user_range[1])+" and abovem<="+str(testCase["boxMaxRange"])+
-             " and abovem>="+str(testCase["boxMinRange"]) +" and distance>="+str(testCase["boxMinDistance"])+" and distance<="+str(testCase["boxMaxDistance"]))
+    qq = str("SELECT * FROM listings WHERE price>="+str(user_range[0])+" and price <=" +str(user_range[1])+" and abovem<="+str(test_case["boxMaxRange"])+
+             " and abovem>="+str(test_case["boxMinRange"]) +" and distance>="+str(test_case["boxMinDistance"])+" and distance<="+str(test_case["boxMaxDistance"]))
     cursor.execute(qq)
     myresult = cursor.fetchall()
     tuples=len(myresult)
     return tuples, tuplesF
 
-def loadConfig():
+
+def load_config():
     global float_saving
     global testCases
     s=eval(open("DB_server_config.txt", encoding="UTF8").read())
@@ -485,7 +494,7 @@ def loadConfig():
     print("floatSaving: ", float_saving)
     print("testCases loaded")
     for i in range(len(testCases)):
-        t=boxData(testCases[i])
+        t=get_box_data(testCases[i])
         testCases[i]["tuples"]=t[0]
         testCases[i]["tuplesF"]=t[1]
         print(i+1, testCases[i])
@@ -544,7 +553,7 @@ def distances():
 
 if __name__ == "__main__":
     import sys
-    loadConfig()
+    load_config()
 
     # Uses the production version in the "build" directory if passed a second argument
     start_eel(develop=len(sys.argv) == 1)
