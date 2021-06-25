@@ -19,18 +19,17 @@ PROGRESSTION_STATES = {
 }
 
 # Global variables
-DIZ_plotted={} #a ll plotted points
-IN=[] # cumulated airb&b ID of points plotted in the user box till the actual chunk
+PLOTTED_POINTS={} #a ll plotted points
+ALL_POINTS_IN_SELECTION=[] # cumulated airb&b ID of points plotted in the user box till the actual chunk
+
 user_selection_updated=False # new box
-total_chunk_number=0
 total_inside_box=0 # number of points plotted in the user box till the actual chunk
 tree_ready=False # it is used to interrupt the initial chunking cycle
-chunk_size=100
+chunk_size=100 # number of points retrieved per chunk
 modifier="True" # modify initial query with conditions coming from the tree
 query_att="*" # attributes of the main query
 last_selected_items=[]
-float_saving=None
-double_sending=True
+use_floats_for_savings=None
 
 # progression state can be paused/restarted interactively by the user
 progression_state = PROGRESSTION_STATES["ready"]
@@ -79,32 +78,33 @@ def distance(lat1, long1, lat2, long2):
 def above_m(saving, saving_as_float): # the search is bound to a
     return {
         "neighborhood_min": 5,
-        "saving": saving_as_float if float_saving else saving,
+        "saving": saving_as_float if use_floats_for_savings else saving,
         "alternativeId": 100,
         "extraSteps": 0.1,
         "vicini": 100
     }
 
 
-def build_query(user_range, att, modifier, chunk_size):
-    SELECT = "SELECT "+att+"  "
-    FROM   = "FROM listings "
-    WHERE  = "WHERE price >="+str(user_range[0])+" AND price <="+str(user_range[1])+"  AND listings.id NOT IN (SELECT id from plotted ) "
+def build_query(user_range, att, chunk_size):
+    global modifier
+
+    SELECT = "SELECT "+att
+    FROM   = "FROM listings"
+    WHERE  = "WHERE price >="+str(user_range[0])+" AND price <="+str(user_range[1])+"  AND listings.id NOT IN (SELECT id from plotted)"
+
     return SELECT+" "+FROM+" "+WHERE+" AND "+modifier+" LIMIT "+str(chunk_size)
 
 
 def reset():
-    global user_selection_updated, total_chunk_number, total_inside_box, tree_ready, chunk_size
-    global modifier, query_att, IN, DIZ_plotted
+    global user_selection_updated, total_inside_box, tree_ready, chunk_size
+    global modifier, query_att, ALL_POINTS_IN_SELECTION, PLOTTED_POINTS
 
-    IN = []
-    DIZ_plotted = {}
+    ALL_POINTS_IN_SELECTION = []
+    PLOTTED_POINTS = {}
     user_selection_updated = False
-    total_chunk_number = 0
     total_inside_box = 0
     tree_ready = False
     chunk_size = 100
-    modifier = "True"
     query_att = "*"
 
 
@@ -139,27 +139,25 @@ def mark_ids_plotted(result):
     cursor.execute("INSERT INTO plotted (id) VALUES "+value_string)
 
 
-def process_result(chunk_number, result, state):
-    global DIZ_plotted
-    global total_inside_box
+def send_result_to_frontend(chunk_number, result, state):
+    global PLOTTED_POINTS
 
     chunk = {}
 
     for tuple in result:
-        DIZ_plotted[tuple[0]]=airbnb_tuple_to_dict(tuple, state, chunk_number)
+        PLOTTED_POINTS[tuple[0]]=airbnb_tuple_to_dict(tuple, state, chunk_number)
         chunk[tuple[0]]={
             "chunk": chunk_number,
             "state": state,
-            "values": DIZ_plotted[tuple[0]],
+            "values": PLOTTED_POINTS[tuple[0]],
             "dist2user": tuple[44],
             "aboveM": above_m(tuple[45], tuple[46])
         }
 
     send_chunk(chunk)
-    return chunk_number
 
 
-def process_random_result(chunk_number, random_result, state):
+def send_random_result_to_frontend(chunk_number, random_result, state):
     state = "random_("+state+")"
     chunk = {}
 
@@ -178,8 +176,8 @@ def process_random_result(chunk_number, random_result, state):
 def get_items_inside_selection_at_chunk(chunk):
     inb = 0
 
-    for k in DIZ_plotted:
-        if DIZ_plotted[k]["inside"]==1 and DIZ_plotted[k]["chunk"]==chunk:
+    for k in PLOTTED_POINTS:
+        if PLOTTED_POINTS[k]["inside"]==1 and PLOTTED_POINTS[k]["chunk"]==chunk:
             inb+=1
 
     return inb
@@ -194,13 +192,11 @@ def was_progression_reset_during_pause():
     return False
 
 
-def progress_over_dataset(chunk_number, result, random_result, state, query):
-    global total_inside_box, IN
+def get_next_result(chunk_number, result, random_result, state, query):
+    global total_inside_box, ALL_POINTS_IN_SELECTION
 
-    chunk_number += 1
-    process_result(chunk_number, result, state)
-    if double_sending:
-        process_random_result(chunk_number, random_result, state)
+    send_result_to_frontend(chunk_number, result, state)
+    send_random_result_to_frontend(chunk_number, random_result, state)
 
     mark_ids_plotted(result)
 
@@ -220,15 +216,14 @@ def progress_over_dataset(chunk_number, result, random_result, state, query):
     cursor.execute(query)
     result = cursor.fetchall()
 
-    return chunk_number, result
+    return result
 
 
-def run_steered_progression(query, chunkSize, min_box_items=50):
-    global modifier, DIZ_plotted, tree_ready, total_inside_box, total_chunk_number
-    global progression_state, PROGRESSTION_STATES, double_sending
+def run_steered_progression(base_query, chunkSize, min_box_items=50):
+    global modifier, total_inside_box, progression_state
 
-    double_sending=True
-    chunk=0
+    chunk = 0
+    active_query = base_query
 
     # reset database of plotted points
     cursor.execute("DELETE FROM plotted")
@@ -237,73 +232,71 @@ def run_steered_progression(query, chunkSize, min_box_items=50):
     while progression_state == PROGRESSTION_STATES["ready"]:
         eel.sleep(1)
 
-    if double_sending: #compute the whole results
-        queryA=query.replace("AND True LIMIT 100", "")
-        queryA=query[0: query.find("LIMIT")]
-        cursor.execute(queryA)
-
-        print(queryA, query)
-        my_result_random = cursor.fetchall()
+    # get all items from the dataset to imitate random later on
+    query_for_all_items = active_query[0: active_query.find("LIMIT")]
+    cursor.execute(query_for_all_items)
+    my_result_random = cursor.fetchall()
 
     ####################### NON-STEERING PHASE #####################################################
-    print("Entering LOOP0 - Query:", query, modifier)
+    print("Entering LOOP0 - Query:", active_query, modifier)
     print("c", c)
     state="flushing"
     modifier="True"
-    query=build_query(user_range, query_att, modifier, chunkSize)
-    cursor.execute(query)
+    active_query = build_query(user_range, query_att, chunkSize)
+    cursor.execute(active_query)
     my_result = cursor.fetchall()
 
-    while len(my_result)>0 and (not tree_ready or total_inside_box<min_box_items or len(modifier)<=3) and len(IN) == 0:
-        chunk, my_result = progress_over_dataset(chunk, my_result, my_result_random, state, query)
+    while len(my_result)>0 and (not tree_ready or total_inside_box<min_box_items or len(modifier)<=3) and len(ALL_POINTS_IN_SELECTION) == 0:
+        chunk += 1
+        my_result = get_next_result(chunk, my_result, my_result_random, state, active_query)
         if my_result is None:
             return
 
     ####################### ACTIVATION PHASE #######################################################
-    print("Entering ACTIVATION PHASE - Query:", query, modifier)
+    print("Entering ACTIVATION PHASE - Query:", active_query, modifier)
     print("c", c)
-    print(query)
+    print(active_query)
     total_inside_box=0
     state="collectingData"
 
     while len(my_result)>0 and (not tree_ready or total_inside_box<min_box_items or len(modifier)<=3):
-        chunk, my_result = progress_over_dataset(chunk, my_result, my_result_random, state, query)
+        chunk += 1
+        my_result = get_next_result(chunk, my_result, my_result_random, state, active_query)
         if my_result is None:
             return
 
     print("Exiting ACTIVATION PHASE")
-    total_chunk_number=chunk
 
     ########################## STEERING PHASE ######################################################
     state="usingTree"
-    query=build_query(user_range, query_att, modifier, chunkSize)
-    cursor.execute(query)
+    active_query=build_query(user_range, query_att, chunkSize)
+    cursor.execute(active_query)
     my_result = cursor.fetchall()
-    print("Entering STEERING PHASE - Query: ", query, len(my_result))
+    print("Entering STEERING PHASE - Query: ", active_query, len(my_result))
 
     while len(my_result)>0:
-        chunk, my_result = progress_over_dataset(chunk, my_result, my_result_random, state, query)
+        chunk += 1
+        my_result = get_next_result(chunk, my_result, my_result_random, state, active_query)
         if my_result is None:
             return
 
     print("Exiting STEERING PHASE")
-    total_chunk_number=chunk
 
     ######################### NON-STEERING PHASE ###################################################
     state="flushing"
     modifier="True"
-    query=build_query(user_range, query_att, modifier, chunkSize)
-    cursor.execute(query)
+    active_query=build_query(user_range, query_att, chunkSize)
+    cursor.execute(active_query)
     my_result = cursor.fetchall()
     print("Entering NON-STEERING PHASE 2", tree_ready, "modifier=", modifier)
 
     while len(my_result)>0:
-        chunk, my_result = progress_over_dataset(chunk, my_result, my_result_random, state, query)
+        chunk += 1
+        my_result = get_next_result(chunk, my_result, my_result_random, state, active_query)
         if my_result is None:
             return
 
     print("Exiting NON-STEERING PHASE 2")
-    total_chunk_number=chunk
 
 
 def start_progression():
@@ -311,9 +304,9 @@ def start_progression():
 
     while True:
         reset()
-        sql=build_query(user_range, query_att, modifier, chunk_size)
+        base_query = build_query(user_range, query_att, chunk_size)
         progression_state = PROGRESSTION_STATES["ready"]
-        eel.spawn(run_steered_progression(sql, chunk_size))
+        eel.spawn(run_steered_progression(base_query, chunk_size))
 
 
 def encodeTestCases(testCases):
@@ -372,22 +365,23 @@ def send_to_backend_userData(x):
 
 @eel.expose
 def send_user_selection(selected_item_ids):
+    global PLOTTED_POINTS
+    global ALL_POINTS_IN_SELECTION
     global last_selected_items
-    global DIZ_plotted
     global modifier
     global tree_ready
-    global IN
 
     if len(selected_item_ids)==0:
         return(0)
 
+    print(len(selected_item_ids), "new items received...", selected_item_ids)
+
     last_selected_items=selected_item_ids.copy()
-    print("new", len(selected_item_ids), "items received...", selected_item_ids)
 
     for k in selected_item_ids:
-        DIZ_plotted[k]["inside"]=1
+        PLOTTED_POINTS[k]["inside"]=1
 
-    IN.extend(selected_item_ids)
+    ALL_POINTS_IN_SELECTION.extend(selected_item_ids)
 
     eel.sleep(0.01)
 
@@ -404,7 +398,7 @@ def send_user_selection(selected_item_ids):
     # of_interest = np.array(of_interest_list)
     # features = plotted.loc[:,['zipcode', 'latitude', 'longitude','price']]
     # modifier="("+steer.get_steering_condition(features, of_interest, "sql")+")"
-    modifier="("+sm.getSteeringCondition(DIZ_plotted)+")"
+    modifier="("+sm.getSteeringCondition(PLOTTED_POINTS)+")"
 
     if len(modifier)>3:
         tree_ready=True
@@ -418,7 +412,7 @@ def send_user_selection(selected_item_ids):
 def send_selection_bounds(x_bounds, y_bounds):
     global X1, X2, Y1, Y2
     global total_inside_box
-    global DIZ_plotted
+    global PLOTTED_POINTS
     global user_selection_updated
     global last_selected_items
 
@@ -428,12 +422,12 @@ def send_selection_bounds(x_bounds, y_bounds):
     Y1=y_bounds["yMax"]
     Y2=x_bounds["xMax"]
 
-    total_inside_box=0
-    for k in DIZ_plotted:
-        DIZ_plotted[k]["inside"]=0
-        if k in last_selected_items:
-            DIZ_plotted[k]["inside"]=1
-            total_inside_box+=1
+    # total_inside_box=0
+    # for k in PLOTTED_POINTS:
+    #     PLOTTED_POINTS[k]["inside"]=0
+    #     if k in last_selected_items:
+    #         PLOTTED_POINTS[k]["inside"]=1
+    #         total_inside_box+=1
 
     user_selection_updated=True
     return x_bounds, y_bounds
@@ -442,7 +436,7 @@ def send_selection_bounds(x_bounds, y_bounds):
 @eel.expose
 def send_selection_bounds_values(x_bounds_val, y_bounds_val):
     global total_inside_box
-    global DIZ_plotted
+    global PLOTTED_POINTS
     print("new selected region received_pixel", x_bounds_val, y_bounds_val)
     return x_bounds_val, y_bounds_val
 
@@ -465,7 +459,7 @@ def send_progression_state(state):
     elif state == "done":
         progression_state = PROGRESSTION_STATES["done"]
 
-    print("new progression state", progression_state)
+    print("new progression state", state)
 
 
 def get_box_data(test_case):
@@ -485,13 +479,13 @@ def get_box_data(test_case):
 
 
 def load_config():
-    global float_saving
+    global use_floats_for_savings
     global testCases
     s=eval(open("DB_server_config.txt", encoding="UTF8").read())
-    float_saving=s["floatSaving"]
+    use_floats_for_savings=s["floatSaving"]
     testCases=eval(open("testCases.txt", encoding="UTF8").read())
     print("Configuration loaded")
-    print("floatSaving: ", float_saving)
+    print("floatSaving: ", use_floats_for_savings)
     print("testCases loaded")
     for i in range(len(testCases)):
         t=get_box_data(testCases[i])
@@ -501,7 +495,6 @@ def load_config():
     f=open("testCases.txt", "w", encoding="UTF8")
     print(str(testCases).replace("{", "\n{"), file=f)
     f.close()
-
 
 
 def start_eel(develop):
@@ -540,14 +533,14 @@ def start_eel(develop):
             raise
 
 def distances():
-    global DIZ_plotted
+    global PLOTTED_POINTS
     mind=100
     maxd=0
-    for k in DIZ_plotted:
-        if DIZ_plotted[k]["dist2user"]>maxd and DIZ_plotted[k]["inside"]==1:
-            maxd=DIZ_plotted[k]["dist2user"]
-        if DIZ_plotted[k]["dist2user"]<mind and DIZ_plotted[k]["inside"]==1:
-            mind=DIZ_plotted[k]["dist2user"]
+    for k in PLOTTED_POINTS:
+        if PLOTTED_POINTS[k]["dist2user"]>maxd and PLOTTED_POINTS[k]["inside"]==1:
+            maxd=PLOTTED_POINTS[k]["dist2user"]
+        if PLOTTED_POINTS[k]["dist2user"]<mind and PLOTTED_POINTS[k]["inside"]==1:
+            mind=PLOTTED_POINTS[k]["dist2user"]
     return mind, maxd
 
 
