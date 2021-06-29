@@ -101,16 +101,27 @@ def build_query(chunk_size):
 
 
 def reset():
-    global user_selection_updated, total_inside_box, tree_ready, chunk_size
-    global modifier, query_att, ALL_POINTS_IN_SELECTION, PLOTTED_POINTS
+    global PLOTTED_POINTS, ALL_POINTS_IN_SELECTION, WAIT_INTERVAL
+    global user_selection_updated, total_inside_box, tree_ready, chunk_size, modifier, query_att
+    global last_selected_items, use_floats_for_savings
+    global progression_state
 
-    ALL_POINTS_IN_SELECTION = []
+    print("resetting global state")
+
     PLOTTED_POINTS = {}
-    user_selection_updated = False
-    total_inside_box = 0
-    tree_ready = False
-    chunk_size = 100
-    query_att = "*"
+    ALL_POINTS_IN_SELECTION = []
+    WAIT_INTERVAL = 1
+
+    user_selection_updated=False
+    total_inside_box=0
+    tree_ready=False
+    chunk_size=100
+    modifier="True"
+    query_att="*"
+    last_selected_items=[]
+    use_floats_for_savings=None
+
+    progression_state = PROGRESSTION_STATES["ready"]
 
 
 def airbnb_tuple_to_dict(tuple, state, chunk):
