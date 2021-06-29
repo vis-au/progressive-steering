@@ -54,6 +54,32 @@ class DataAdapter {
     this._cumulativeDataSize.push(data.length + lastLength);
   }
 
+  public addBothData(steeredData: any[], nonSteeredData: any[]) {
+    this._nonSteeringData.push(...nonSteeredData);
+
+    if (this._dimensions.length === 0) {
+      this._dimensions = Object.keys(steeredData[0]).filter(d => d !== "id");
+    }
+
+    if (this.progressionState === 'running') {
+      if (this.unloadBuffer) {
+        this._chunkSize += steeredData.length;
+      } else {
+        this._chunkSize = steeredData.length;
+      }
+      this._data.push(...steeredData);
+      this._trainingStateHistory.push(this._trainingState);
+      this.notifyDataObservers();
+    } else if (this.progressionState === 'paused') {
+      this._chunkSize += steeredData.length;
+      this._data.push(...steeredData);
+      this._trainingStateHistory.push(this._trainingState);
+    }
+
+    const lastLength = this._cumulativeDataSize[this._cumulativeDataSize.length - 1];
+    this._cumulativeDataSize.push(steeredData.length + lastLength);
+  }
+
   public addNonSteeringData(data: any[]) {
     this._nonSteeringData.push(...data);
     this.notifyDataObservers();

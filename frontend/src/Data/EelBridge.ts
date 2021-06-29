@@ -116,6 +116,16 @@ export function sendRandomDataChunk(chunk: any) {
   dataAdapter.addNonSteeringData(serializedChunk);
 }
 
+export function sendBothChunks(steeredChunk: any, nonSteeredChunk: any) {
+  console.log("received new chunk of data:", steeredChunk)
+  const serializedSteeredChunk = serializeChunk(steeredChunk);
+  console.log("received new non-steering chunk of data:", nonSteeredChunk);
+  const serializedNonsteeredChunk = serializeChunk(nonSteeredChunk);
+
+  dataAdapter.trainingState = getTrainingStateFromChunk(serializedSteeredChunk);
+  dataAdapter.addBothData(serializedSteeredChunk, serializedNonsteeredChunk);
+}
+
 /**
  * Send the extent of the dimension mapped to the horizontal axis to the frontend.
  * @param extent minimum and maximum value for the dimension represented on the x axis.
@@ -224,6 +234,7 @@ export function sendProgressionState(newState: ProgressionState) {
 // Make functions acessible to the backend via eel
 window.eel.expose(sendDataChunk, 'send_data_chunk');
 window.eel.expose(sendRandomDataChunk, 'send_random_data_chunk');
+window.eel.expose(sendBothChunks, 'send_both_chunks');
 window.eel.expose(sendXDomain, 'send_x_domain');
 window.eel.expose(sendYDomain, 'send_y_domain');
 window.eel.expose(setXName, 'set_x_name');

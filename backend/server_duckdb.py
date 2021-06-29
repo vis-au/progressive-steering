@@ -19,8 +19,9 @@ PROGRESSTION_STATES = {
 }
 
 # Global variables
-PLOTTED_POINTS={} #a ll plotted points
-ALL_POINTS_IN_SELECTION=[] # cumulated airb&b ID of points plotted in the user box till the actual chunk
+PLOTTED_POINTS = {} # all plotted points
+ALL_POINTS_IN_SELECTION = [] # cumulated airb&b ID of points plotted in the user box till the actual chunk
+WAIT_INTERVAL = 1
 
 user_selection_updated=False # new box
 total_inside_box=0 # number of points plotted in the user box till the actual chunk
@@ -63,6 +64,10 @@ def send_random_chunk(chunk):
     eel.send_random_data_chunk(chunk)
 
 
+def send_both_chunks(steered_chunk, random_chunk):
+    eel.send_both_chunks(steered_chunk, random_chunk)
+
+
 def distance(lat1, long1, lat2, long2):
     degrees_to_radians = math.pi/180.0
     phi1 = (90.0 - lat1)*degrees_to_radians
@@ -85,10 +90,10 @@ def above_m(saving, saving_as_float): # the search is bound to a
     }
 
 
-def build_query(user_range, att, chunk_size):
-    global modifier
+def build_query(chunk_size):
+    global query_att, modifier
 
-    SELECT = "SELECT "+att
+    SELECT = "SELECT "+query_att
     FROM   = "FROM listings"
     WHERE  = "WHERE price >="+str(user_range[0])+" AND price <="+str(user_range[1])+"  AND listings.id NOT IN (SELECT id from plotted)"
 
@@ -135,6 +140,9 @@ def mark_ids_plotted(result):
     value_string = ""
     for i, tuple in enumerate(result):
         value_string += "("+str(tuple[0])+"), " if i < len(result)-1 else "("+str(tuple[0])+");"
+
+    if len(value_string) == 0:
+        return
 
     cursor.execute("INSERT INTO plotted (id) VALUES "+value_string)
 
@@ -183,7 +191,7 @@ def get_items_inside_selection_at_chunk(chunk):
     return inb
 
 
-def was_progression_reset_during_pause():
+def was_progression_reset_during_sleep():
     while progression_state == PROGRESSTION_STATES["paused"]:
         eel.sleep(1)
     if progression_state == PROGRESSTION_STATES["ready"]:
@@ -192,19 +200,50 @@ def was_progression_reset_during_pause():
     return False
 
 
-def get_next_result(chunk_number, result, random_result, state, query):
+def send_both_results_to_frontend(chunk_number, result, random_result, state):
+    global PLOTTED_POINTS
+
+    chunk = {}
+
+    for tuple in result:
+        PLOTTED_POINTS[tuple[0]]=airbnb_tuple_to_dict(tuple, state, chunk_number)
+        chunk[tuple[0]]={
+            "chunk": chunk_number,
+            "state": state,
+            "values": PLOTTED_POINTS[tuple[0]],
+            "dist2user": tuple[44],
+            "aboveM": above_m(tuple[45], tuple[46])
+        }
+
+    random_state = "random_("+state+")"
+    random_chunk = {}
+
+    for tuple in random_result[chunk_number*chunk_size:(chunk_number+1)*chunk_size]:
+        random_chunk[tuple[0]] = {
+            "chunk": chunk_number,
+            "state": random_state,
+            "values": airbnb_tuple_to_dict(tuple, random_state, chunk_number),
+            "dist2user": tuple[44],
+            "aboveM": above_m(tuple[45], tuple[46])
+        }
+
+    send_both_chunks(chunk, random_chunk)
+
+
+def get_next_result(chunk_number, random_result, state, query):
     global total_inside_box, ALL_POINTS_IN_SELECTION
 
-    send_result_to_frontend(chunk_number, result, state)
-    send_random_result_to_frontend(chunk_number, random_result, state)
+    cursor.execute(query)
+    result = cursor.fetchall()
 
+    send_both_results_to_frontend(chunk_number, result, random_result, state)
     mark_ids_plotted(result)
 
     # IMPORTANT: within this waiting period, the backend receives the "in-/outside" information by
     # the frontend, which influences precision/insde calculation below
-    eel.sleep(1)
-    if was_progression_reset_during_pause():
-        return None, None
+    eel.sleep(WAIT_INTERVAL)
+    if was_progression_reset_during_sleep():
+        return None
 
     recent_inside = get_items_inside_selection_at_chunk(chunk_number)
     total_inside_box += recent_inside
@@ -213,17 +252,14 @@ def get_next_result(chunk_number, result, random_result, state, query):
     eel.send_evaluation_metric({"name": "precision", "value": recent_inside/chunk_size})
     eel.send_evaluation_metric({"name": "recall", "value": total_inside_box})
 
-    cursor.execute(query)
-    result = cursor.fetchall()
-
     return result
 
 
-def run_steered_progression(base_query, chunkSize, min_box_items=50):
-    global modifier, total_inside_box, progression_state
+def run_steered_progression(chunk_size, min_box_items=50):
+    global modifier, total_inside_box
 
     chunk = 0
-    active_query = base_query
+    active_query = build_query(chunk_size)
 
     # reset database of plotted points
     cursor.execute("DELETE FROM plotted")
@@ -242,61 +278,66 @@ def run_steered_progression(base_query, chunkSize, min_box_items=50):
     print("c", c)
     state="flushing"
     modifier="True"
-    active_query = build_query(user_range, query_att, chunkSize)
-    cursor.execute(active_query)
-    my_result = cursor.fetchall()
+    active_query = build_query(chunk_size)
+    my_result = []
+    my_result_empty = False
 
-    while len(my_result)>0 and (not tree_ready or total_inside_box<min_box_items or len(modifier)<=3) and len(ALL_POINTS_IN_SELECTION) == 0:
+    while not my_result_empty and (not tree_ready or total_inside_box<min_box_items or len(modifier)<=3) and len(ALL_POINTS_IN_SELECTION) == 0:
+        my_result = get_next_result(chunk, my_result_random, state, active_query)
         chunk += 1
-        my_result = get_next_result(chunk, my_result, my_result_random, state, active_query)
         if my_result is None:
             return
+        my_result_empty = len(my_result) == 0
 
     ####################### ACTIVATION PHASE #######################################################
     print("Entering ACTIVATION PHASE - Query:", active_query, modifier)
-    print("c", c)
     print(active_query)
     total_inside_box=0
     state="collectingData"
+    my_result_empty = False
 
-    while len(my_result)>0 and (not tree_ready or total_inside_box<min_box_items or len(modifier)<=3):
+    while not my_result_empty and (not tree_ready or total_inside_box<min_box_items or len(modifier)<=3):
+        my_result = get_next_result(chunk, my_result_random, state, active_query)
         chunk += 1
-        my_result = get_next_result(chunk, my_result, my_result_random, state, active_query)
         if my_result is None:
             return
+        my_result_empty = len(my_result) == 0
 
     print("Exiting ACTIVATION PHASE")
 
     ########################## STEERING PHASE ######################################################
     state="usingTree"
-    active_query=build_query(user_range, query_att, chunkSize)
-    cursor.execute(active_query)
-    my_result = cursor.fetchall()
-    print("Entering STEERING PHASE - Query: ", active_query, len(my_result))
+    active_query=build_query(chunk_size)
+    print("Entering STEERING PHASE - Query:", active_query, len(my_result))
+    my_result_empty = False
 
-    while len(my_result)>0:
+    while not my_result_empty:
+        my_result = get_next_result(chunk, my_result_random, state, active_query)
         chunk += 1
-        my_result = get_next_result(chunk, my_result, my_result_random, state, active_query)
         if my_result is None:
             return
+        my_result_empty = len(my_result) == 0
 
     print("Exiting STEERING PHASE")
 
     ######################### NON-STEERING PHASE ###################################################
     state="flushing"
     modifier="True"
-    active_query=build_query(user_range, query_att, chunkSize)
-    cursor.execute(active_query)
-    my_result = cursor.fetchall()
-    print("Entering NON-STEERING PHASE 2", tree_ready, "modifier=", modifier)
+    active_query=build_query(chunk_size)
+    print("Entering NON-STEERING PHASE 2", tree_ready, "modifier =", modifier)
+    my_result_empty = False
 
-    while len(my_result)>0:
+    while not my_result_empty:
+        my_result = get_next_result(chunk, my_result_random, state, active_query)
         chunk += 1
-        my_result = get_next_result(chunk, my_result, my_result_random, state, active_query)
         if my_result is None:
             return
+        my_result_empty = len(my_result) == 0
 
     print("Exiting NON-STEERING PHASE 2")
+    print("DONE")
+
+    return
 
 
 def start_progression():
@@ -304,9 +345,8 @@ def start_progression():
 
     while True:
         reset()
-        base_query = build_query(user_range, query_att, chunk_size)
         progression_state = PROGRESSTION_STATES["ready"]
-        eel.spawn(run_steered_progression(base_query, chunk_size))
+        eel.spawn(run_steered_progression(chunk_size))
 
 
 def encodeTestCases(testCases):
