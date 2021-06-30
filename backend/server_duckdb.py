@@ -207,6 +207,8 @@ def was_progression_reset_during_sleep():
         eel.sleep(1)
     if progression_state == PROGRESSTION_STATES["ready"]:
         return True
+    elif progression_state == PROGRESSTION_STATES["done"]:
+        return True
 
     return False
 
@@ -267,17 +269,22 @@ def get_next_result(chunk_number, random_result, state, query):
 
 
 def run_steered_progression(chunk_size, min_box_items=50):
-    global modifier, total_inside_box
+    global progression_state, modifier, total_inside_box
 
     chunk = 0
     active_query = build_query(chunk_size)
 
     # reset database of plotted points
     cursor.execute("DELETE FROM plotted")
+    progression_state = PROGRESSTION_STATES["ready"]
 
     # wait until user starts progression
     while progression_state == PROGRESSTION_STATES["ready"]:
-        eel.sleep(1)
+        eel.sleep(.1)
+        # HACK: if the user reloads the page, the state variable is briefly set to "done" before a
+        # new progression is spawned, causing this function to return, which terminates its "thread"
+        if progression_state == PROGRESSTION_STATES["done"]:
+            return
 
     # get all items from the dataset to imitate random later on
     query_for_all_items = active_query[0: active_query.find("LIMIT")]
@@ -356,8 +363,13 @@ def start_progression():
 
     while True:
         reset()
-        progression_state = PROGRESSTION_STATES["ready"]
+        # HACK: set the state variable to "done" here, in order to terminate all progression
+        # "threads" currently running, ensuring that only a single progression is run over the data.
+        progression_state = PROGRESSTION_STATES["done"]
+        eel.sleep(.1)
         eel.spawn(run_steered_progression(chunk_size))
+        if progression_state == PROGRESSTION_STATES["done"]:
+            return
 
 
 def encodeTestCases(testCases):
