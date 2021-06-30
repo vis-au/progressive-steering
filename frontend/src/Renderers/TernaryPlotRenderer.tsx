@@ -102,6 +102,12 @@ export default class TernaryPlotRenderer extends React.Component<Props, State> {
   }
 
   private getLatestChunk(useNonSteeringData: boolean = false) {
+    // in case the latest chunk is empty (for example as a side-effect of when the steering phase
+    // ends and no points are returned, prevent slice() to return the entire dataset)
+    if  (this.props.chunkSize === 0) {
+      return [];
+    }
+
     let itemCount = this.props.data.length;
 
     if (useNonSteeringData) {
