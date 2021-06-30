@@ -31,6 +31,7 @@ modifier="True" # modify initial query with conditions coming from the tree
 query_att="*" # attributes of the main query
 last_selected_items=[]
 use_floats_for_savings=True
+test_cases={} # preset scenarios of selections in view space (get loaded from testCases.txt)
 
 # progression state can be paused/restarted interactively by the user
 progression_state = PROGRESSTION_STATES["ready"]
@@ -329,17 +330,16 @@ def start_progression():
             return
 
 
-def encodeTestCases(testCases):
-    r={}
-    for i in range(len(testCases)):
-        r["testcase"+str(i+1)]={"name": "case"+str(i+1)+"_"+str(testCases[i]["boxMinRange"])+"_"+str(testCases[i]["boxMaxRange"])+"_"+str(testCases[i]["boxMinDistance"])+"_"+str(testCases[i]["boxMaxDistance"]),
-          "x_bounds":[testCases[i]["boxMinRange"], testCases[i]["boxMaxRange"]], "y_bounds":[testCases[i]["boxMinDistance"], testCases[i]["boxMaxDistance"]]}
-    return r
-
-
 @eel.expose
 def get_use_cases():
-    return encodeTestCases(testCases)
+    use_cases={}
+    for i in range(len(test_cases)):
+        use_cases["testcase"+str(i+1)]={
+            "name": "case"+str(i+1)+"_"+str(test_cases[i]["boxMinRange"])+"_"+str(test_cases[i]["boxMaxRange"])+"_"+str(test_cases[i]["boxMinDistance"])+"_"+str(test_cases[i]["boxMaxDistance"]),
+            "x_bounds":[test_cases[i]["boxMinRange"], test_cases[i]["boxMaxRange"]],
+            "y_bounds":[test_cases[i]["boxMinDistance"], test_cases[i]["boxMaxDistance"]]
+        }
+    return use_cases
 
 
 @eel.expose
@@ -500,20 +500,20 @@ def get_box_data(test_case):
 
 def load_config():
     global use_floats_for_savings
-    global testCases
+    global test_cases
     s=eval(open("DB_server_config.txt", encoding="UTF8").read())
     use_floats_for_savings=s["floatSaving"]
-    testCases=eval(open("testCases.txt", encoding="UTF8").read())
+    test_cases=eval(open("testCases.txt", encoding="UTF8").read())
     print("Configuration loaded")
     print("floatSaving: ", use_floats_for_savings)
     print("testCases loaded")
-    for i in range(len(testCases)):
-        t=get_box_data(testCases[i])
-        testCases[i]["tuples"]=t[0]
-        testCases[i]["tuplesF"]=t[1]
-        print(i+1, testCases[i])
+    for i in range(len(test_cases)):
+        t=get_box_data(test_cases[i])
+        test_cases[i]["tuples"]=t[0]
+        test_cases[i]["tuplesF"]=t[1]
+        print(i+1, test_cases[i])
     f=open("testCases.txt", "w", encoding="UTF8")
-    print(str(testCases).replace("{", "\n{"), file=f)
+    print(str(test_cases).replace("{", "\n{"), file=f)
     f.close()
 
 
