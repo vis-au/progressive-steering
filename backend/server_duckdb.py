@@ -56,15 +56,7 @@ Y1 = -1
 Y2 = -1
 
 
-def send_chunk(chunk):
-    eel.send_data_chunk(chunk)
-
-
-def send_random_chunk(chunk):
-    eel.send_random_data_chunk(chunk)
-
-
-def send_both_chunks(steered_chunk, random_chunk):
+def send_chunks(steered_chunk, random_chunk):
     eel.send_both_chunks(steered_chunk, random_chunk)
 
 
@@ -158,40 +150,6 @@ def mark_ids_plotted(result):
     cursor.execute("INSERT INTO plotted (id) VALUES "+value_string)
 
 
-def send_result_to_frontend(chunk_number, result, state):
-    global PLOTTED_POINTS
-
-    chunk = {}
-
-    for tuple in result:
-        PLOTTED_POINTS[tuple[0]]=airbnb_tuple_to_dict(tuple, state, chunk_number)
-        chunk[tuple[0]]={
-            "chunk": chunk_number,
-            "state": state,
-            "values": PLOTTED_POINTS[tuple[0]],
-            "dist2user": tuple[44],
-            "aboveM": above_m(tuple[45], tuple[46])
-        }
-
-    send_chunk(chunk)
-
-
-def send_random_result_to_frontend(chunk_number, random_result, state):
-    state = "random_("+state+")"
-    chunk = {}
-
-    for tuple in random_result[chunk_number*chunk_size:(chunk_number+1)*chunk_size]:
-        chunk[tuple[0]] = {
-            "chunk": chunk_number,
-            "state": state,
-            "values": airbnb_tuple_to_dict(tuple, state, chunk_number),
-            "dist2user": tuple[44],
-            "aboveM": above_m(tuple[45], tuple[46])
-        }
-
-    send_random_chunk(chunk)
-
-
 def get_items_inside_selection_at_chunk(chunk):
     inb = 0
 
@@ -213,10 +171,11 @@ def was_progression_reset_during_sleep():
     return False
 
 
-def send_both_results_to_frontend(chunk_number, result, random_result, state):
+def send_results_to_frontend(chunk_number, result, random_result, state):
     global PLOTTED_POINTS
 
     chunk = {}
+    random_chunk = {}
 
     for tuple in result:
         PLOTTED_POINTS[tuple[0]]=airbnb_tuple_to_dict(tuple, state, chunk_number)
@@ -228,19 +187,17 @@ def send_both_results_to_frontend(chunk_number, result, random_result, state):
             "aboveM": above_m(tuple[45], tuple[46])
         }
 
-    random_state = "random_("+state+")"
-    random_chunk = {}
-
+    # ensure equal chunk size between random and steered chunk
     for tuple in random_result[len(PLOTTED_POINTS) - len(result) : len(PLOTTED_POINTS)]:
         random_chunk[tuple[0]] = {
             "chunk": chunk_number,
-            "state": random_state,
-            "values": airbnb_tuple_to_dict(tuple, random_state, chunk_number),
+            "state": "random",
+            "values": PLOTTED_POINTS[tuple[0]],
             "dist2user": tuple[44],
             "aboveM": above_m(tuple[45], tuple[46])
         }
 
-    send_both_chunks(chunk, random_chunk)
+    send_chunks(chunk, random_chunk)
 
 
 def get_next_result(chunk_number, random_result, state, query):
@@ -249,7 +206,7 @@ def get_next_result(chunk_number, random_result, state, query):
     cursor.execute(query)
     result = cursor.fetchall()
 
-    send_both_results_to_frontend(chunk_number, result, random_result, state)
+    send_results_to_frontend(chunk_number, result, random_result, state)
     mark_ids_plotted(result)
 
     # IMPORTANT: within this waiting period, the backend receives the "in-/outside" information by
