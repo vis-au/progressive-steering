@@ -1,9 +1,3 @@
 div.heatMapRenderer {
   position: absolute;
 }
-svg.heat-map {
-  position: absolute;
-}
-svg.heat-map.non-steering {
-  right: 0;
-}

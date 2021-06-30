@@ -57,8 +57,8 @@ export class App extends Component<{}, State> {
 
     this.state = {
       selectedPoints: [],
-      highlightLatestPoints: true,
-      showHeatMap: false,
+      highlightLatestPoints: false,
+      showHeatMap: true,
       showDots: true,
       useDeltaHeatMap: true,
       showSideBySideView: false,

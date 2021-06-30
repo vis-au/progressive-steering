@@ -44,10 +44,11 @@
 }
 .evaluationMetric svg.canvas  {
   position: absolute;
-  bottom: 100px;
+  bottom: 75px;
   left: 25px;
   background: white;
   border: 1px solid #ccc;
+  opacity: 0.8;
 }
 .evaluationMetric svg.canvas g.selection-line line {
   stroke: #ccc;

@@ -710,7 +710,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
           nonSteeredData={ this.nonSteeringQuadtree.data() }
           showNonSteeredCanvas={ this.props.showNonSteeringData }
           useDeltaHeatMap={ this.props.useDeltaHeatMap }
-          cellOpacity={ this.props.showDots ? 0.3 : 1 }
+          cellOpacity={ 1 }
         />
       );
     } else {

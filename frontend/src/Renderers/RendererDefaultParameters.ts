@@ -1,6 +1,6 @@
 export const DEFAULT_POINT_RADIUS = 2;
-export const DEFAULT_POINT_COLOR = "rgba(70, 130, 180, 0.3)";
-export const NON_STEERING_POINT_COLOR = "rgba(30, 30, 30, 0.3)";
+export const DEFAULT_POINT_COLOR = "rgba(70, 130, 180, 0.53)";
+export const NON_STEERING_POINT_COLOR = "rgba(30, 30, 30, 0.53)";
 export const DEFAULT_POINT_STROKE_WIDTH = 0;
 export const DEFAULT_POINT_HIGHLIGHTED_STROKE_WIDTH = 5;
 
