@@ -229,7 +229,7 @@ def send_both_results_to_frontend(chunk_number, result, random_result, state):
     random_state = "random_("+state+")"
     random_chunk = {}
 
-    for tuple in random_result[chunk_number*chunk_size:(chunk_number+1)*chunk_size]:
+    for tuple in random_result[len(PLOTTED_POINTS) - len(result) : len(PLOTTED_POINTS)]:
         random_chunk[tuple[0]] = {
             "chunk": chunk_number,
             "state": random_state,
