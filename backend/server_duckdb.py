@@ -30,7 +30,7 @@ chunk_size=100 # number of points retrieved per chunk
 modifier="True" # modify initial query with conditions coming from the tree
 query_att="*" # attributes of the main query
 last_selected_items=[]
-use_floats_for_savings=None
+use_floats_for_savings=True
 
 # progression state can be paused/restarted interactively by the user
 progression_state = PROGRESSTION_STATES["ready"]
@@ -119,7 +119,7 @@ def reset():
     modifier="True"
     query_att="*"
     last_selected_items=[]
-    use_floats_for_savings=None
+    use_floats_for_savings=True
 
     progression_state = PROGRESSTION_STATES["ready"]
 
