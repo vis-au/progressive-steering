@@ -273,7 +273,10 @@ export default class RadVizRenderer extends React.Component<Props, State> {
     });
 
     container.selectAll("*").remove();
-    container.call(radVizGenerator as any);
+
+    if (!useNonSteeringData || this.props.showNonSteeringData) {
+      container.call(radVizGenerator as any);
+    }
 
     const recentChunkIds = this.getLatestChunk().map(d => d.id);
     const recentChunkRadViz = radVizGenerator.data().entries
@@ -289,6 +292,8 @@ export default class RadVizRenderer extends React.Component<Props, State> {
 
     // no need to update if the chunk has not changed
     if (!this.receivedNewData()) {
+      return;
+    } else if (useNonSteeringData && !this.props.showNonSteeringData) {
       return;
     }
 
@@ -353,11 +358,7 @@ export default class RadVizRenderer extends React.Component<Props, State> {
 
   private updatePoints() {
     const steered = this.renderSteeringPoints();
-    const nonSteered: ScaledCartesianCoordinate[] = [];
-
-    if (this.props.showNonSteeringData) {
-      nonSteered.push(...this.renderNonSteeringPoints());
-    }
+    const nonSteered = this.renderNonSteeringPoints();
 
     return { steered, nonSteered };
   }

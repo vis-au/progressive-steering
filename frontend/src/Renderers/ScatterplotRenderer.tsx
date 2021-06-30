@@ -575,17 +575,17 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   private renderPoints(useNonSteeringData: boolean = false): ScaledCartesianCoordinate[] {
     if (this.canvas === null || this.nonSteeringCanvas === null) {
       return [];
-    }
-    if (this.props.dimensionX === null || this.props.dimensionY === null) {
+    } else if (this.props.dimensionX === null || this.props.dimensionY === null) {
       return [];
-    }
-    if (!this.receivedNewData()) {
+    } else if (!this.receivedNewData()) {
       return [];
     }
 
     const scaledChunk = this.getScaledCoordinatesForData(useNonSteeringData);
 
     if (!this.props.showDots) {
+      return scaledChunk;
+    } else if (useNonSteeringData && !this.props.showNonSteeringData) {
       return scaledChunk;
     }
 
@@ -642,11 +642,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
   private updatePoints() {
     const steered = this.renderSteeringPoints();
-    const nonSteered: ScaledCartesianCoordinate[] = [];
+    const nonSteered: ScaledCartesianCoordinate[] = this.renderNonSteeringPoints();
 
-    if (this.props.showNonSteeringData) {
-      nonSteered.push(...this.renderNonSteeringPoints());
-    }
     if (this.props.data.length === 0) {
       this.clearCanvases();
     }
@@ -658,6 +655,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
     // no need to update if the chunk has not changed
     if (!this.receivedNewData()) {
+      return;
+    } else if (useNonSteeringData && !this.props.showNonSteeringData) {
       return;
     }
 

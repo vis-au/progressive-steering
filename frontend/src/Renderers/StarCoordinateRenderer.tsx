@@ -290,6 +290,10 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
 
     const scaledCartesianCoordinates = this.getScaledCartesianCoordinatesForData(useNonSteeringData);
 
+    if (useNonSteeringData && !this.props.showNonSteeringData) {
+      return scaledCartesianCoordinates;
+    }
+
     let context: any = (this.canvas.node() as any).getContext("2d");
     context.fillStyle = DEFAULT_POINT_COLOR;
     context.strokeStyle = DEFAULT_POINT_COLOR;
@@ -315,6 +319,8 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
 
     // no need to update if the chunk has not changed
     if (!this.receivedNewData()) {
+      return;
+    } else if (useNonSteeringData && !this.props.showNonSteeringData) {
       return;
     }
 
@@ -450,11 +456,8 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
 
   private updatePoints() {
     const steered = this.renderSteeringPoints();
-    const nonSteered: ScaledCartesianCoordinate[] = [];
+    const nonSteered = this.renderNonSteeringPoints();
 
-    if (this.props.showNonSteeringData) {
-      nonSteered.push(...this.renderNonSteeringPoints());
-    }
     if (this.props.data.length === 0) {
       this.clearCanvases();
     }
