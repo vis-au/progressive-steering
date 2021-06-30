@@ -217,7 +217,7 @@ def get_next_result(chunk_number, random_result, state, query):
 
     recent_inside = get_items_inside_selection_at_chunk(chunk_number)
     total_inside_box += recent_inside
-    print("chunk:", chunk_number, state, "items in selection:", total_inside_box, "Precision:", recent_inside/chunk_size, recent_inside, distances())
+    print("chunk:", chunk_number, state, "items in selection:", total_inside_box, "Precision:", recent_inside/chunk_size, recent_inside, get_distances_min_max())
 
     eel.send_evaluation_metric({"name": "precision", "value": recent_inside/chunk_size})
     eel.send_evaluation_metric({"name": "recall", "value": total_inside_box})
@@ -552,16 +552,15 @@ def start_eel(develop):
         else:
             raise
 
-def distances():
-    global PLOTTED_POINTS
-    mind=100
-    maxd=0
+def get_distances_min_max():
+    min_dist=100
+    max_dist=0
     for k in PLOTTED_POINTS:
-        if PLOTTED_POINTS[k]["dist2user"]>maxd and PLOTTED_POINTS[k]["inside"]==1:
-            maxd=PLOTTED_POINTS[k]["dist2user"]
-        if PLOTTED_POINTS[k]["dist2user"]<mind and PLOTTED_POINTS[k]["inside"]==1:
-            mind=PLOTTED_POINTS[k]["dist2user"]
-    return mind, maxd
+        if PLOTTED_POINTS[k]["dist2user"]>max_dist and PLOTTED_POINTS[k]["inside"]==1:
+            max_dist=PLOTTED_POINTS[k]["dist2user"]
+        if PLOTTED_POINTS[k]["dist2user"]<min_dist and PLOTTED_POINTS[k]["inside"]==1:
+            min_dist=PLOTTED_POINTS[k]["dist2user"]
+    return min_dist, max_dist
 
 
 if __name__ == "__main__":
