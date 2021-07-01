@@ -4,11 +4,29 @@ import platform
 import steering_module as sm
 import eel
 
-# initialize the database connection
-cursor = duckdb.connect()
-listings_df = cursor.execute("SELECT * FROM read_csv_auto('../data/listings_alt.csv');").fetchdf()
-cursor.register("listings", listings_df)
-cursor.execute("CREATE TABLE plotted(id VARCHAR)")
+WAIT_INTERVAL = 1
+FILE_PATH = "../data/listings_alt.csv"
+TABLE_NAME = "listings"
+
+# user constants
+USER_LAT = 48.85565
+USER_LON = 2.365492
+USER_RANGE = [60, 90]
+USER_DAY = "2020-04-31"
+USER_MAX_DISTANCE = 10 + 1
+c={
+    "lat": USER_LAT,
+    "lon": USER_LON,
+    "range": USER_RANGE,
+    "day": USER_DAY,
+    "MaxDistance": USER_MAX_DISTANCE
+}
+
+# user selection in view coordinates
+X1 = -1
+X2 = -1
+Y1 = -1
+Y2 = -1
 
 # enum of states for progression
 PROGRESSTION_STATES = {
@@ -35,26 +53,12 @@ test_cases={} # preset scenarios of selections in view space (get loaded from te
 # progression state can be paused/restarted interactively by the user
 progression_state = PROGRESSTION_STATES["ready"]
 
-# user constants
-WAIT_INTERVAL = 1
-USER_LAT = 48.85565
-USER_LON = 2.365492
-USER_RANGE = [60, 90]
-USER_DAY = "2020-04-31"
-USER_MAX_DISTANCE = 10 + 1
-c={
-    "lat": USER_LAT,
-    "lon": USER_LON,
-    "range": USER_RANGE,
-    "day": USER_DAY,
-    "MaxDistance": USER_MAX_DISTANCE
-}
 
-# user selection in view coordinates
-X1 = -1
-X2 = -1
-Y1 = -1
-Y2 = -1
+# initialize the database connection
+cursor = duckdb.connect()
+df = cursor.execute("SELECT * FROM read_csv_auto('"+FILE_PATH+"');").fetchdf()
+cursor.register(TABLE_NAME, df)
+cursor.execute("CREATE TABLE plotted(id VARCHAR)")
 
 
 def send_chunks(steered_chunk, random_chunk):
@@ -87,8 +91,8 @@ def build_query(chunk_size):
     global query_att, modifier
 
     SELECT = "SELECT "+query_att
-    FROM   = "FROM listings"
-    WHERE  = "WHERE price >="+str(USER_RANGE[0])+" AND price <="+str(USER_RANGE[1])+"  AND listings.id NOT IN (SELECT id from plotted)"
+    FROM   = "FROM "+TABLE_NAME
+    WHERE  = "WHERE price >="+str(USER_RANGE[0])+" AND price <="+str(USER_RANGE[1])+"  AND "+TABLE_NAME+".id NOT IN (SELECT id from plotted)"
 
     return SELECT+" "+FROM+" "+WHERE+" AND "+modifier+" LIMIT "+str(chunk_size)
 
@@ -483,13 +487,13 @@ def send_progression_state(state):
 
 def get_box_data(test_case):
     global USER_RANGE
-    qq = str("SELECT * FROM listings WHERE price>="+str(USER_RANGE[0])+" and price <=" +str(USER_RANGE[1])+" and abovemF<="+str(test_case["boxMaxRange"])+
+    qq = str("SELECT * FROM "+TABLE_NAME+" WHERE price>="+str(USER_RANGE[0])+" and price <=" +str(USER_RANGE[1])+" and abovemF<="+str(test_case["boxMaxRange"])+
              " and abovemF>="+str(test_case["boxMinRange"]) +" and distance>="+str(test_case["boxMinDistance"])+" and distance<="+str(test_case["boxMaxDistance"]))
     cursor.execute(qq)
     myresult = cursor.fetchall()
     tuplesF=len(myresult)
 
-    qq = str("SELECT * FROM listings WHERE price>="+str(USER_RANGE[0])+" and price <=" +str(USER_RANGE[1])+" and abovem<="+str(test_case["boxMaxRange"])+
+    qq = str("SELECT * FROM "+TABLE_NAME+" WHERE price>="+str(USER_RANGE[0])+" and price <=" +str(USER_RANGE[1])+" and abovem<="+str(test_case["boxMaxRange"])+
              " and abovem>="+str(test_case["boxMinRange"]) +" and distance>="+str(test_case["boxMinDistance"])+" and distance<="+str(test_case["boxMaxDistance"]))
     cursor.execute(qq)
     myresult = cursor.fetchall()
