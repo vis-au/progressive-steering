@@ -19,9 +19,8 @@ PROGRESSTION_STATES = {
 }
 
 # Global variables
-PLOTTED_POINTS = {} # all plotted points
-ALL_POINTS_IN_SELECTION = [] # cumulated airb&b ID of points plotted in the user box till the actual chunk
-WAIT_INTERVAL = 1
+plotted_points = {} # all plotted points
+selected_points = [] # cumulated airb&b ID of points plotted in the user box till the actual chunk
 
 user_selection_updated=False # new box
 total_inside_box=0 # number of points plotted in the user box till the actual chunk
@@ -36,18 +35,19 @@ test_cases={} # preset scenarios of selections in view space (get loaded from te
 # progression state can be paused/restarted interactively by the user
 progression_state = PROGRESSTION_STATES["ready"]
 
-# user data for test
-user_lat = 48.85565
-user_lon = 2.365492
-user_range = [60, 90]
-user_day = "2020-04-31"
-user_max_distance = 10 + 1
+# user constants
+WAIT_INTERVAL = 1
+USER_LAT = 48.85565
+USER_LON = 2.365492
+USER_RANGE = [60, 90]
+USER_DAY = "2020-04-31"
+USER_MAX_DISTANCE = 10 + 1
 c={
-    "lat": user_lat,
-    "lon": user_lon,
-    "range": user_range,
-    "day": user_day,
-    "MaxDistance": user_max_distance
+    "lat": USER_LAT,
+    "lon": USER_LON,
+    "range": USER_RANGE,
+    "day": USER_DAY,
+    "MaxDistance": USER_MAX_DISTANCE
 }
 
 # user selection in view coordinates
@@ -88,22 +88,21 @@ def build_query(chunk_size):
 
     SELECT = "SELECT "+query_att
     FROM   = "FROM listings"
-    WHERE  = "WHERE price >="+str(user_range[0])+" AND price <="+str(user_range[1])+"  AND listings.id NOT IN (SELECT id from plotted)"
+    WHERE  = "WHERE price >="+str(USER_RANGE[0])+" AND price <="+str(USER_RANGE[1])+"  AND listings.id NOT IN (SELECT id from plotted)"
 
     return SELECT+" "+FROM+" "+WHERE+" AND "+modifier+" LIMIT "+str(chunk_size)
 
 
 def reset():
-    global PLOTTED_POINTS, ALL_POINTS_IN_SELECTION, WAIT_INTERVAL
+    global plotted_points, selected_points
     global user_selection_updated, total_inside_box, tree_ready, chunk_size, modifier, query_att
     global last_selected_items, use_floats_for_savings
     global progression_state
 
     print("resetting global state")
 
-    PLOTTED_POINTS = {}
-    ALL_POINTS_IN_SELECTION = []
-    WAIT_INTERVAL = 1
+    plotted_points = {}
+    selected_points = []
 
     user_selection_updated=False
     total_inside_box=0
@@ -154,8 +153,8 @@ def mark_ids_plotted(result):
 def get_items_inside_selection_at_chunk(chunk):
     inb = 0
 
-    for k in PLOTTED_POINTS:
-        if PLOTTED_POINTS[k]["inside"]==1 and PLOTTED_POINTS[k]["chunk"]==chunk:
+    for k in plotted_points:
+        if plotted_points[k]["inside"]==1 and plotted_points[k]["chunk"]==chunk:
             inb+=1
 
     return inb
@@ -173,27 +172,27 @@ def was_progression_reset_during_sleep():
 
 
 def send_results_to_frontend(chunk_number, result, random_result, state):
-    global PLOTTED_POINTS
+    global plotted_points
 
     chunk = {}
     random_chunk = {}
 
     for tuple in result:
-        PLOTTED_POINTS[tuple[0]]=airbnb_tuple_to_dict(tuple, state, chunk_number)
+        plotted_points[tuple[0]]=airbnb_tuple_to_dict(tuple, state, chunk_number)
         chunk[tuple[0]]={
             "chunk": chunk_number,
             "state": state,
-            "values": PLOTTED_POINTS[tuple[0]],
+            "values": plotted_points[tuple[0]],
             "dist2user": tuple[44],
             "aboveM": above_m(tuple[45], tuple[46])
         }
 
     # ensure equal chunk size between random and steered chunk
-    for tuple in random_result[len(PLOTTED_POINTS) - len(result) : len(PLOTTED_POINTS)]:
+    for tuple in random_result[len(plotted_points) - len(result) : len(plotted_points)]:
         random_chunk[tuple[0]] = {
             "chunk": chunk_number,
             "state": "random",
-            "values": PLOTTED_POINTS[tuple[0]],
+            "values": airbnb_tuple_to_dict(tuple, state, chunk_number),
             "dist2user": tuple[44],
             "aboveM": above_m(tuple[45], tuple[46])
         }
@@ -202,7 +201,7 @@ def send_results_to_frontend(chunk_number, result, random_result, state):
 
 
 def get_next_result(chunk_number, random_result, state, query):
-    global total_inside_box, ALL_POINTS_IN_SELECTION
+    global total_inside_box, selected_points
 
     cursor.execute(query)
     result = cursor.fetchall()
@@ -258,7 +257,7 @@ def run_steered_progression(chunk_size, min_box_items=50):
     my_result = []
     my_result_empty = False
 
-    while not my_result_empty and (not tree_ready or total_inside_box<min_box_items or len(modifier)<=3) and len(ALL_POINTS_IN_SELECTION) == 0:
+    while not my_result_empty and (not tree_ready or total_inside_box<min_box_items or len(modifier)<=3) and len(selected_points) == 0:
         my_result = get_next_result(chunk, my_result_random, state, active_query)
         chunk += 1
         if my_result is None:
@@ -344,31 +343,31 @@ def get_use_cases():
 
 @eel.expose
 def send_to_backend_userData(x):
-  global user_lat
-  global user_lon
-  global user_range
-  global user_day
-  global user_max_distance
+  global USER_LAT
+  global USER_LON
+  global USER_RANGE
+  global USER_DAY
+  global USER_MAX_DISTANCE
   c={"lat": 48.85565, "lon": 2.365492, "range": [60, 90], "day": "2020-04-31", "MaxDistance":10+1}
   print("received user selection", c)
 
-  user_lat=x["lat"]
-  user_lon=x["lon"]
-  user_range=x["moneyRange"]
-  user_day=x["day"]
-  user_max_distance=x["userMaxDistance"]
+  USER_LAT=x["lat"]
+  USER_LON=x["lon"]
+  USER_RANGE=x["moneyRange"]
+  USER_DAY=x["day"]
+  USER_MAX_DISTANCE=x["userMaxDistance"]
 
-  user_lat=c["lat"]
-  user_lon=c["lon"]
-  user_range=c["range"]
-  user_day=c["day"]
-  user_max_distance=c["MaxDistance"]
+  USER_LAT=c["lat"]
+  USER_LON=c["lon"]
+  USER_RANGE=c["range"]
+  USER_DAY=c["day"]
+  USER_MAX_DISTANCE=c["MaxDistance"]
 
   # send parameters to frontend before sending data
   eel.send_city("Paris")
   eel.set_x_name("Saving opportunity")
   eel.set_y_name("Distance")
-  eel.send_dimension_total_extent({"name": "Saving opportunity", "min": -1, "max": 2+user_range[1]-user_range[0]})
+  eel.send_dimension_total_extent({"name": "Saving opportunity", "min": -1, "max": 2+USER_RANGE[1]-USER_RANGE[0]})
   eel.send_dimension_total_extent({"name": "Distance", "min": 0, "max": 10})
   eel.send_dimension_total_extent({"name": "price", "min": 50, "max": 95})
   eel.send_dimension_total_extent({"name": "cleaning_fee", "min": 0, "max": 325})
@@ -385,8 +384,8 @@ def send_to_backend_userData(x):
 
 @eel.expose
 def send_user_selection(selected_item_ids):
-    global PLOTTED_POINTS
-    global ALL_POINTS_IN_SELECTION
+    global plotted_points
+    global selected_points
     global last_selected_items
     global modifier
     global tree_ready
@@ -399,9 +398,9 @@ def send_user_selection(selected_item_ids):
     last_selected_items=selected_item_ids.copy()
 
     for k in selected_item_ids:
-        PLOTTED_POINTS[k]["inside"]=1
+        plotted_points[k]["inside"]=1
 
-    ALL_POINTS_IN_SELECTION.extend(selected_item_ids)
+    selected_points.extend(selected_item_ids)
 
     eel.sleep(0.01)
 
@@ -418,7 +417,7 @@ def send_user_selection(selected_item_ids):
     # of_interest = np.array(of_interest_list)
     # features = plotted.loc[:,['zipcode', 'latitude', 'longitude','price']]
     # modifier="("+steer.get_steering_condition(features, of_interest, "sql")+")"
-    modifier="("+sm.getSteeringCondition(PLOTTED_POINTS)+")"
+    modifier="("+sm.getSteeringCondition(plotted_points)+")"
 
     if len(modifier)>3:
         tree_ready=True
@@ -432,7 +431,7 @@ def send_user_selection(selected_item_ids):
 def send_selection_bounds(x_bounds, y_bounds):
     global X1, X2, Y1, Y2
     global total_inside_box
-    global PLOTTED_POINTS
+    global plotted_points
     global user_selection_updated
     global last_selected_items
 
@@ -456,7 +455,7 @@ def send_selection_bounds(x_bounds, y_bounds):
 @eel.expose
 def send_selection_bounds_values(x_bounds_val, y_bounds_val):
     global total_inside_box
-    global PLOTTED_POINTS
+    global plotted_points
     print("new selected region received_pixel", x_bounds_val, y_bounds_val)
     return x_bounds_val, y_bounds_val
 
@@ -483,14 +482,14 @@ def send_progression_state(state):
 
 
 def get_box_data(test_case):
-    global user_range
-    qq = str("SELECT * FROM listings WHERE price>="+str(user_range[0])+" and price <=" +str(user_range[1])+" and abovemF<="+str(test_case["boxMaxRange"])+
+    global USER_RANGE
+    qq = str("SELECT * FROM listings WHERE price>="+str(USER_RANGE[0])+" and price <=" +str(USER_RANGE[1])+" and abovemF<="+str(test_case["boxMaxRange"])+
              " and abovemF>="+str(test_case["boxMinRange"]) +" and distance>="+str(test_case["boxMinDistance"])+" and distance<="+str(test_case["boxMaxDistance"]))
     cursor.execute(qq)
     myresult = cursor.fetchall()
     tuplesF=len(myresult)
 
-    qq = str("SELECT * FROM listings WHERE price>="+str(user_range[0])+" and price <=" +str(user_range[1])+" and abovem<="+str(test_case["boxMaxRange"])+
+    qq = str("SELECT * FROM listings WHERE price>="+str(USER_RANGE[0])+" and price <=" +str(USER_RANGE[1])+" and abovem<="+str(test_case["boxMaxRange"])+
              " and abovem>="+str(test_case["boxMinRange"]) +" and distance>="+str(test_case["boxMinDistance"])+" and distance<="+str(test_case["boxMaxDistance"]))
     cursor.execute(qq)
     myresult = cursor.fetchall()
@@ -555,11 +554,11 @@ def start_eel(develop):
 def get_distances_min_max():
     min_dist=100
     max_dist=0
-    for k in PLOTTED_POINTS:
-        if PLOTTED_POINTS[k]["dist2user"]>max_dist and PLOTTED_POINTS[k]["inside"]==1:
-            max_dist=PLOTTED_POINTS[k]["dist2user"]
-        if PLOTTED_POINTS[k]["dist2user"]<min_dist and PLOTTED_POINTS[k]["inside"]==1:
-            min_dist=PLOTTED_POINTS[k]["dist2user"]
+    for k in plotted_points:
+        if plotted_points[k]["dist2user"]>max_dist and plotted_points[k]["inside"]==1:
+            max_dist=plotted_points[k]["dist2user"]
+        if plotted_points[k]["dist2user"]<min_dist and plotted_points[k]["inside"]==1:
+            min_dist=plotted_points[k]["dist2user"]
     return min_dist, max_dist
 
 
