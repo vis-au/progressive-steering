@@ -41,11 +41,11 @@ export function getYDimension() {
 // functions
 const dataAdapter = getEelDataAdapter();
 
-function getTrainingStateFromChunk(chunk: any): TrainingState {
+function getTrainingStateFromChunk(chunk: any): TrainingState | null {
   if (chunk.length !== undefined && chunk.length > 0) {
     return chunk[0].status as TrainingState;
   } else {
-    return "collectingData";
+    return null;
   }
 }
 
@@ -102,8 +102,12 @@ function serializeChunk(chunk: any) {
 export function sendDataChunk(chunk: any) {
   console.log("received new chunk of data:", chunk)
   const serializedChunk = serializeChunk(chunk);
-  dataAdapter.trainingState = getTrainingStateFromChunk(serializedChunk);
-  dataAdapter.addData(serializedChunk);
+  const trainingState = getTrainingStateFromChunk(serializedChunk);
+
+  if (trainingState !== null) {
+    dataAdapter.trainingState = trainingState;
+    dataAdapter.addData(serializedChunk);
+  }
 }
 
 /**
@@ -122,8 +126,12 @@ export function sendBothChunks(steeredChunk: any, nonSteeredChunk: any) {
   console.log("received new non-steering chunk of data:", nonSteeredChunk);
   const serializedNonsteeredChunk = serializeChunk(nonSteeredChunk);
 
-  dataAdapter.trainingState = getTrainingStateFromChunk(serializedSteeredChunk);
-  dataAdapter.addBothData(serializedSteeredChunk, serializedNonsteeredChunk);
+  const trainingState = getTrainingStateFromChunk(serializedSteeredChunk);
+
+  if (trainingState !== null) {
+    dataAdapter.trainingState = trainingState;
+    dataAdapter.addBothData(serializedSteeredChunk, serializedNonsteeredChunk);
+  }
 }
 
 /**
