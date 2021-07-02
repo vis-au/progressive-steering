@@ -9,17 +9,12 @@ FILE_PATH = "../data/listings_alt.csv"
 TABLE_NAME = "listings"
 
 # user constants
-USER_LAT = 48.85565
-USER_LON = 2.365492
-USER_RANGE = [60, 90]
-USER_DAY = "2020-04-31"
-USER_MAX_DISTANCE = 10 + 1
-c={
-    "lat": USER_LAT,
-    "lon": USER_LON,
-    "range": USER_RANGE,
-    "day": USER_DAY,
-    "MaxDistance": USER_MAX_DISTANCE
+USER_PARAMETERS={
+    "lat": 48.85565,
+    "lon": 2.365492,
+    "range": [60, 90],
+    "day": "2020-04-31",
+    "MaxDistance": 10 + 1
 }
 
 # user selection in view coordinates
@@ -92,7 +87,7 @@ def build_query(chunk_size):
 
     SELECT = "SELECT "+query_att
     FROM   = "FROM "+TABLE_NAME
-    WHERE  = "WHERE price >="+str(USER_RANGE[0])+" AND price <="+str(USER_RANGE[1])+"  AND "+TABLE_NAME+".id NOT IN (SELECT id from plotted)"
+    WHERE  = "WHERE price >="+str(USER_PARAMETERS["range"][0])+" AND price <="+str(USER_PARAMETERS["range"][1])+"  AND "+TABLE_NAME+".id NOT IN (SELECT id from plotted)"
 
     return SELECT+" "+FROM+" "+WHERE+" AND "+modifier+" LIMIT "+str(chunk_size)
 
@@ -135,7 +130,6 @@ def airbnb_tuple_to_dict(tuple, state, chunk):
         "cleaning_fee": tuple[18],
         "minimum_nights": tuple[21],
         "maximum_nights": tuple[22],
-        # "dist2user": distance(user_lat, user_lon, tuple[10], tuple[11]),
         "dist2user": tuple[44],
         "aboveM": above_m(tuple[45], tuple[46]),
         "chunk": chunk,
@@ -254,7 +248,7 @@ def run_steered_progression(chunk_size, min_box_items=50):
 
     ####################### NON-STEERING PHASE #####################################################
     print("Entering LOOP0 - Query:", active_query, modifier)
-    print("c", c)
+    print("user parameters:", USER_PARAMETERS)
     state="flushing"
     modifier="True"
     active_query = build_query(chunk_size)
@@ -346,32 +340,21 @@ def get_use_cases():
 
 
 @eel.expose
-def send_to_backend_userData(x):
-  global USER_LAT
-  global USER_LON
-  global USER_RANGE
-  global USER_DAY
-  global USER_MAX_DISTANCE
-  c={"lat": 48.85565, "lon": 2.365492, "range": [60, 90], "day": "2020-04-31", "MaxDistance":10+1}
-  print("received user selection", c)
+def send_to_backend_userData(user_data):
+  print("received user selection", user_data)
 
-  USER_LAT=x["lat"]
-  USER_LON=x["lon"]
-  USER_RANGE=x["moneyRange"]
-  USER_DAY=x["day"]
-  USER_MAX_DISTANCE=x["userMaxDistance"]
+  # store user parameters
+  USER_PARAMETERS["lat"] = user_data["lat"]
+  USER_PARAMETERS["lon"] = user_data["lon"]
+  USER_PARAMETERS["range"] = user_data["moneyRange"]
+  USER_PARAMETERS["day"] = user_data["day"]
+  USER_PARAMETERS["MaxDistance"] = user_data["userMaxDistance"]
 
-  USER_LAT=c["lat"]
-  USER_LON=c["lon"]
-  USER_RANGE=c["range"]
-  USER_DAY=c["day"]
-  USER_MAX_DISTANCE=c["MaxDistance"]
-
-  # send parameters to frontend before sending data
+  # send progression parameters to frontend before sending data
   eel.send_city("Paris")
   eel.set_x_name("Saving opportunity")
   eel.set_y_name("Distance")
-  eel.send_dimension_total_extent({"name": "Saving opportunity", "min": -1, "max": 2+USER_RANGE[1]-USER_RANGE[0]})
+  eel.send_dimension_total_extent({"name": "Saving opportunity", "min": -1, "max": 2+USER_PARAMETERS["range"][1]-USER_PARAMETERS["range"][0]})
   eel.send_dimension_total_extent({"name": "Distance", "min": 0, "max": 10})
   eel.send_dimension_total_extent({"name": "price", "min": 50, "max": 95})
   eel.send_dimension_total_extent({"name": "cleaning_fee", "min": 0, "max": 325})
@@ -383,6 +366,7 @@ def send_to_backend_userData(x):
   eel.send_dimension_total_extent({"name": "latitude", "min": 48.8, "max": 49})
   eel.send_dimension_total_extent({"name": "zipcode", "min": 74400, "max": 750011})
 
+  # TODO: it seems counter-intuitive that this function would also start the progression.
   start_progression()
 
 
@@ -445,13 +429,6 @@ def send_selection_bounds(x_bounds, y_bounds):
     Y1=y_bounds["yMax"]
     Y2=x_bounds["xMax"]
 
-    # total_inside_box=0
-    # for k in PLOTTED_POINTS:
-    #     PLOTTED_POINTS[k]["inside"]=0
-    #     if k in last_selected_items:
-    #         PLOTTED_POINTS[k]["inside"]=1
-    #         total_inside_box+=1
-
     user_selection_updated=True
     return x_bounds, y_bounds
 
@@ -486,14 +463,13 @@ def send_progression_state(state):
 
 
 def get_box_data(test_case):
-    global USER_RANGE
-    qq = str("SELECT * FROM "+TABLE_NAME+" WHERE price>="+str(USER_RANGE[0])+" and price <=" +str(USER_RANGE[1])+" and abovemF<="+str(test_case["boxMaxRange"])+
+    qq = str("SELECT * FROM "+TABLE_NAME+" WHERE price>="+str(USER_PARAMETERS["range"][0])+" and price <=" +str(USER_PARAMETERS["range"][1])+" and abovemF<="+str(test_case["boxMaxRange"])+
              " and abovemF>="+str(test_case["boxMinRange"]) +" and distance>="+str(test_case["boxMinDistance"])+" and distance<="+str(test_case["boxMaxDistance"]))
     cursor.execute(qq)
     myresult = cursor.fetchall()
     tuplesF=len(myresult)
 
-    qq = str("SELECT * FROM "+TABLE_NAME+" WHERE price>="+str(USER_RANGE[0])+" and price <=" +str(USER_RANGE[1])+" and abovem<="+str(test_case["boxMaxRange"])+
+    qq = str("SELECT * FROM "+TABLE_NAME+" WHERE price>="+str(USER_PARAMETERS["range"][0])+" and price <=" +str(USER_PARAMETERS["range"][1])+" and abovem<="+str(test_case["boxMaxRange"])+
              " and abovem>="+str(test_case["boxMinRange"]) +" and distance>="+str(test_case["boxMinDistance"])+" and distance<="+str(test_case["boxMaxDistance"]))
     cursor.execute(qq)
     myresult = cursor.fetchall()
