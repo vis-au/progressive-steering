@@ -22,6 +22,7 @@ interface Props {
   stepsBeforePaddingGrows: number,
   includeDimensions: string[],
   selectedScenarioPreset: ScenarioPreset | null,
+  useLassoSelection: boolean,
   onRendererChanged: (event: React.ChangeEvent<HTMLInputElement>) => void,
   onBrushedPoints: (brushedPoints: any[]) => void,
   onBrushedRegion: (region: number[][]) => void,
@@ -132,6 +133,7 @@ export default class MainView extends React.Component<Props, State> {
         highlightLastChunk={ this.props.highlightLatestPoints }
         showHeatMap={ this.props.showHeatMap }
         showDots={ this.props.showDots }
+        useLassoSelection={ this.props.useLassoSelection }
         useDeltaHeatMap={ this.props.useDeltaHeatMap }
         showNonSteeringData={ this.props.showSideBySideView }
         presetSelection={ this.props.selectedScenarioPreset }

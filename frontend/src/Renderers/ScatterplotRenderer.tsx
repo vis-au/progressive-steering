@@ -11,8 +11,7 @@ import "./ScatterplotRenderer.css";
 import { polygonContains } from 'd3';
 
 interface State {
-  brushedRegions: [[number, number], [number, number]][],
-  useLasso: boolean
+  brushedRegions: [[number, number], [number, number]][]
 }
 interface Props {
   width: number,
@@ -22,6 +21,7 @@ interface Props {
   extents: Map<string, [number, number]>,
   data: any[],
   nonSteeringData: any[],
+  useLassoSelection: boolean,
   trainingState: TrainingState,
   presetSelection: ScenarioPreset | null,
   showNonSteeringData: boolean,
@@ -39,6 +39,8 @@ interface Props {
 
 export default class ScatterplotRenderer extends React.Component<Props, State> {
   private brush: any;
+
+  private lassoBrush: any;
   private selection: any;
   private lassoSelection: [number, number][];
 
@@ -67,6 +69,10 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       .on("brush", this.onRectBrush.bind(this))
       .on("end", this.onBrushEnd.bind(this));
 
+    this.lassoBrush = lasso()
+      .on("start lasso", this.onLassoBrush.bind(this))
+      .on("end", this.onBrushEnd.bind(this)) as any;
+
     this.svg = null;
     this.canvas = null;
     this.nonSteeringCanvas = null;
@@ -92,8 +98,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       .range([0, this.props.height]);
 
     this.state = {
-      brushedRegions: [],
-      useLasso: true
+      brushedRegions: []
     };
   }
 
@@ -165,11 +170,11 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   private getCurrentlyBrushedPoints(useNonSteeringData: boolean = false) {
     const extent = this.state.brushedRegions[this.state.brushedRegions.length - 1];
 
-    if (!extent && !this.state.useLasso) {
+    if (!extent && !this.props.useLassoSelection) {
       return [];
     }
 
-    const currentlyBrushedPoints = this.state.useLasso
+    const currentlyBrushedPoints = this.props.useLassoSelection
       ? this.getPointsInLasso(useNonSteeringData ? this.nonSteeringQuadtree.data() : this.quadtree.data())
       : this.getPointsInBox(extent, useNonSteeringData);
 
@@ -217,14 +222,14 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   }
 
   private getNewPointsInCurrentSelection(newPoints: ScaledCartesianCoordinate[], useNonSteeringData: boolean = false) {
-    if (!this.state.useLasso && (this.selection === null || this.selection.length === 0)) {
+    if (!this.props.useLassoSelection && (this.selection === null || this.selection.length === 0)) {
       return [];
     }
     if (this.props.dimensionX === null || this.props.dimensionY === null) {
       return [];
     }
 
-    return this.state.useLasso
+    return this.props.useLassoSelection
       ? this.getPointsInLasso(newPoints).map(d => d.values)
       : this.getNewValuesInRect(newPoints, useNonSteeringData);
   }
@@ -308,7 +313,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       if (this.state.brushedRegions.length === 0) {
         return;
       }
-      if (!this.state.useLasso) {
+      if (!this.props.useLassoSelection) {
         this.props.onBrushedRegion(this.state.brushedRegions[this.state.brushedRegions.length - 1]);
       }
     }
@@ -354,6 +359,9 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   }
 
   private onLassoBrush(polygon: [number, number][]) {
+    if (!this.props.useLassoSelection) {
+      return;
+    }
     if (this.svg === null) {
       return;
     }
@@ -373,7 +381,10 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   }
 
   private onBrushEnd(event: any) {
-    if (!this.state.useLasso) {
+    if (!this.props.useLassoSelection) {
+      if (!event.selection) {
+        return;
+      }
       this.addCurrentSelectionToBrushedRegions(event);
     }
     this.updateCurrentlySelectedPoints();
@@ -807,30 +818,41 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     );
   }
 
+  private updateSelectionMethod() {
+    if (this.svg === null) {
+      return;
+    }
+
+    if (this.props.useLassoSelection) {
+      this.svg.select("g.brush").remove();
+
+      this.svg.call(this.lassoBrush);
+    } else {
+      this.svg.select("path.lasso").remove();
+
+      this.svg.append("g")
+        .attr("class", "brush")
+        .call(this.brush)
+
+      this.svg.select("g.brush").append("text")
+        .attr("fill", "black")
+        .attr("transform", "translate(0, 10)");
+    }
+  }
+
   public componentDidMount() {
     this.svg = d3.select("svg.axisCanvas");
     this.canvas = d3.select("canvas.scatterplotCanvas");
     this.nonSteeringCanvas = d3.select("canvas.nonSteeringCanvas");
     this.nonSteeringSVG = d3.select("svg.nonSteeringAxesCanvas");
 
-    const lassoBrush = lasso()
-      .on("start lasso", this.onLassoBrush.bind(this))
-      .on("end", this.onBrushEnd.bind(this)) as any;
-
     this.svg
       .append("defs").append("style").text(`
         .selected {r: 2.5; fill: red}
         .lasso { fill-rule: evenodd; fill-opacity: 0.1; stroke-width: 1.5; stroke: #000; }
       `);
-    this.svg.call(lassoBrush);
 
-    // this.svg.append("g")
-    //   .attr("class", "brush")
-    //   .call(this.brush)
-
-    this.svg.select("g.brush").append("text")
-      .attr("fill", "black")
-      .attr("transform", "translate(0, 10)");
+    this.updateSelectionMethod();
   }
 
   public componentDidUpdate(prevProps: Props) {
@@ -847,6 +869,10 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       this.svg.append("g")
         .attr("class", "brush")
         .call(this.brush);
+    }
+
+    if (prevProps.useLassoSelection !== this.props.useLassoSelection) {
+      this.updateSelectionMethod()
     }
   }
 }

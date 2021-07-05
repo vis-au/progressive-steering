@@ -18,6 +18,7 @@ const DEFAULT_UNSELECTED_DIMENSIONS = ["cleaning_fee", "price", "accommodates"];
 
 interface State {
   selectedPoints: any[],
+  useLassoSelection: boolean,
   highlightLatestPoints: boolean,
   showHeatMap: boolean,
   showDots: boolean,
@@ -57,6 +58,7 @@ export class App extends Component<{}, State> {
 
     this.state = {
       selectedPoints: [],
+      useLassoSelection: false,
       highlightLatestPoints: false,
       showHeatMap: true,
       showDots: true,
@@ -234,6 +236,7 @@ export class App extends Component<{}, State> {
           showSideBySideView={ this.state.showSideBySideView }
           stepsBeforePaddingGrows={ this.state.stepsBeforePaddingGrows }
           useDeltaHeatMap={ this.state.useDeltaHeatMap }
+          useLassoSelection={ this.state.useLassoSelection }
           onBrushedPoints={ this.onBrushedPoints.bind(this) }
           onBrushedRegion={ this.onBrushedRegion.bind(this) }
           onNewNonSteeredPointsInSelection={ this.onNewNonSteeredPointsInSelection.bind(this) }
@@ -259,6 +262,16 @@ export class App extends Component<{}, State> {
 
       </div>
     );
+  }
+
+  public componentDidMount() {
+    window.addEventListener("keypress", (e: KeyboardEvent) => {
+
+      console.log(e, e.key)
+      if (e.key === "l") {
+        this.setState({ useLassoSelection: !this.state.useLassoSelection });
+      }
+    });
   }
 }
 
