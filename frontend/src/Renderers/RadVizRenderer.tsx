@@ -142,7 +142,7 @@ export default class RadVizRenderer extends React.Component<Props, State> {
     return true;
   }
 
-  private onBrushEnd() {
+  private onBrushEnd(event: any) {
     if (this.canvas === null) {
       return;
     }
@@ -152,7 +152,7 @@ export default class RadVizRenderer extends React.Component<Props, State> {
     const centerX = this.radVizGenerator.center().x;
     const centerY = this.radVizGenerator.center().y;
 
-    this.selection = d3.event.selection || null;
+    this.selection = event.selection || null;
 
     if (this.selection === null) {
       this.setState({

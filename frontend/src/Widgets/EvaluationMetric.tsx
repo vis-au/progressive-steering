@@ -61,14 +61,14 @@ export default class EvaluationMetric extends React.Component<Props, State> {
     this.setState({ isCursorVisible: true });
   }
 
-  private onMouseMove(event: any, asdf: any, sdfg: any) {
-    if (!d3.event) {
+  private onMouseMove(event: any) {
+    if (!event) {
       return;
     }
 
     const mousePosition = {
-      x: d3.event.layerX,
-      y: d3.event.layerY
+      x: event.layerX,
+      y: event.layerY
     };
 
     const chunkIndex = Math.round(this.scaleX.invert(mousePosition.x - DEFAULT_HORIZONTAL_PADDING/2));

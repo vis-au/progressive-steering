@@ -45,13 +45,13 @@ export default class Histogram extends React.Component<Props, State> {
       .on("end", this.onBrushEnd.bind(this));
   }
 
-  private onBrush() {
+  private onBrush(event: any) {
     // "empty" filters or whenever the brush is destroyed by clicking
-    if (!(d3.event.selection instanceof Array)) {
+    if (!(event.selection instanceof Array)) {
       return;
     }
 
-    const [x0, x1] = d3.event.selection;
+    const [x0, x1] = event.selection;
 
     this.selection = [ this.scale.invert(x0 - DEFAULT_MARGIN), this.scale.invert(x1 - DEFAULT_MARGIN) ];
   }

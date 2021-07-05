@@ -142,14 +142,14 @@ export default class StarCoordinateRenderer extends React.Component<Props, State
     return true;
   }
 
-  private onBrushEnd() {
+  private onBrushEnd(event: any) {
     if (this.canvas === null) {
       return;
     } else if (this.props.onBrushedPoints === undefined) {
       return;
     }
 
-    this.selection = d3.event.selection || null;
+    this.selection = event.selection || null;
 
     if (this.selection === null) {
       this.setState({
