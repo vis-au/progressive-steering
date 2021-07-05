@@ -23,8 +23,8 @@
   flex-wrap: nowrap;
   justify-content: flex-start;
   align-items: center;
-  justify-content: center;
   padding: 0.05rem 0.75rem 0.2rem;
+  width: 120px;
 }
 .footer .training-state-indicator .indicator {
   width: 0.75rem;

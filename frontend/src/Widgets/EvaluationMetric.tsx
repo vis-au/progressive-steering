@@ -23,11 +23,18 @@ const DEFAULT_HEIGHT = 75;
 const DEFAULT_VERTICAL_PADDING = 30;
 const DEFAULT_HORIZONTAL_PADDING = 75;
 const INDICATOR_LINE_WIDTH = 5;
+const SPARKLINE_WIDTH = 30;
+const SPARKLINE_HEIGHT = 20;
+const SPARKLINE_PADDING = 4;
+const SPARKLINE_WINDOW = 10;
 
 export default class EvaluationMetric extends React.Component<Props, State> {
   private scaleX = d3.scaleLinear().range([0, DEFAULT_WIDTH]);
   private scaleY = d3.scaleLinear().domain([0, 1]).range([DEFAULT_HEIGHT, 0]);
+  private sparklineScaleX = d3.scaleLinear().range([0, SPARKLINE_WIDTH]);
+  private sparklineScaleY = d3.scaleLinear().domain([0, 1]);
   private lineGenerator: d3.Line<[number, number]> = d3.line().curve(d3.curveStep);
+  private sparklineGenerator = d3.line().curve(d3.curveStep);
 
   constructor(props: Props) {
     super(props);
@@ -35,6 +42,13 @@ export default class EvaluationMetric extends React.Component<Props, State> {
     this.lineGenerator
       .x((d, i) => this.scaleX(i))
       .y(d => this.scaleY(d[1]));
+
+    this.sparklineGenerator
+      .x((d, i) => this.sparklineScaleX(i))
+      .y(d => this.sparklineScaleY(d[1]));
+
+    this.sparklineScaleY
+      .range([SPARKLINE_HEIGHT - SPARKLINE_PADDING / 2, SPARKLINE_PADDING / 2]);
 
     this.state = {
       isCursorVisible: true,
@@ -118,6 +132,23 @@ export default class EvaluationMetric extends React.Component<Props, State> {
       .attr("cy", this.scaleY(this.props.values[this.props.values.length - 1]));
   }
 
+  private updateSparkline() {
+    const svg = d3.select(`#${this.getCanvasSelector()}-sparkline`);
+    svg.selectAll("*").remove();
+
+    const content = svg.append("g")
+      .attr("class", "content");
+
+    const totalValues = this.props.values.length;
+    const windowSize = Math.min(totalValues, SPARKLINE_WINDOW);
+    const valueWindow = this.props.values.slice(totalValues - windowSize, totalValues);
+    this.sparklineScaleX.domain([0, windowSize]);
+
+    content.append("path")
+      .attr("class", "sparkline")
+      .attr("d", () => this.sparklineGenerator(valueWindow.map((d, i) => [i, d])));
+  }
+
   private updateStatusIndicator() {
     const container = d3.select(`#${this.getCanvasSelector()}`).select("g.content");
     container.selectAll("g.state-indicator");
@@ -138,6 +169,7 @@ export default class EvaluationMetric extends React.Component<Props, State> {
     const minY = d3.min(this.props.values) || 0;
     const maxY = d3.max(this.props.values) || 1;
     this.scaleY.domain([minY, maxY]);
+    this.sparklineScaleY.domain(this.scaleY.domain());
   }
 
   private renderSelectionLine() {
@@ -178,11 +210,11 @@ export default class EvaluationMetric extends React.Component<Props, State> {
           <i className="icon material-icons">
             {
               this.props.canvasVisible ? "expand_less" : "expand_more"
-
             }
           </i>
-          { this.props.label }:
+          { this.props.label }
         </span>
+        <svg id={ `${this.getCanvasSelector()}-sparkline` } className="sparkline" width={ SPARKLINE_WIDTH } height={ SPARKLINE_HEIGHT }></svg>
         <span className="value">{ this.props.values[this.props.values.length - 1] }</span>
         <svg id={ this.getCanvasSelector() } className={ `canvas ${canvasLabel}` } width={ DEFAULT_WIDTH + DEFAULT_HORIZONTAL_PADDING } height={ DEFAULT_HEIGHT + DEFAULT_VERTICAL_PADDING }>
 
@@ -195,6 +227,7 @@ export default class EvaluationMetric extends React.Component<Props, State> {
   public componentDidUpdate(previousProps: Props) {
     this.updateScales();
     this.updateTimeSeries();
+    this.updateSparkline();
     this.updateStatusIndicator();
     this.updateAxes();
   }

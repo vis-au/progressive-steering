@@ -38,10 +38,12 @@
   font-size: 18px;
   font-weight: bold;
 }
+
 .evaluationMetric svg {
   shape-rendering: auto;
   text-rendering: optimizeLegibility;
 }
+
 .evaluationMetric svg.canvas  {
   position: absolute;
   bottom: 75px;
@@ -63,6 +65,24 @@
 }
 .evaluationMetric svg.canvas circle.endpoint {
   fill: #333;
+}
+
+.evaluationMetric svg.sparkline {
+  background: transparent;
+}
+.evaluationMetric.active svg.sparkline {
+  background: transparent;
+}
+.evaluationMetric svg.sparkline path.sparkline {
+  fill: none;
+  stroke: #333;
+  stroke-width: 1.5px;
+}
+.evaluationMetric.active svg.sparkline path.sparkline {
+  stroke: white;
+}
+.evaluationMetric.active svg.sparkline text.label {
+  fill: #fff;
 }
 
 

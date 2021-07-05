@@ -46,7 +46,7 @@ export class App extends Component<{}, State> {
     const dummyData = {
       'lat': 48.85565,
       'lon': 2.365492,
-      'moneyRange': [30, 70],
+      'moneyRange': [60, 90],
       'day': "2020-04-31",
       "userMaxDistance": 10
     };
