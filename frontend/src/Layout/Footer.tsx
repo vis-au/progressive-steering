@@ -134,7 +134,7 @@ export default class Footer extends React.Component<Props, State> {
       <Toggle
         id="highlight-latest-point-toggle"
         checked={ this.props.highlightLatestPoints }
-        disabled={ !this.props.showDots }
+        disabled={ false }
         label="highlight last chunk"
         icon="track_changes"
         onChange={ this.props.onHighlightLatestPointChanged }
