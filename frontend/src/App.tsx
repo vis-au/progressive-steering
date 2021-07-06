@@ -306,6 +306,9 @@ export class App extends Component<{}, State> {
       } else if (e.key === "Tab") {
         this.setState({ showSideBySideView: !this.state.showSideBySideView });
         e.preventDefault();
+      } else if (e.key === "Backspace") {
+        this.onProgressionReset();
+        e.preventDefault();
       }
     });
   }
