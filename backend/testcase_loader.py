@@ -1,13 +1,13 @@
 preset_test_cases={} # preset scenarios of selections in view space (get loaded from testCases.txt)
 
 def get_box_data(test_case, USER_PARAMETERS, cursor):
-    qq = str("SELECT * FROM listings WHERE price>="+str(USER_PARAMETERS["price"][0])+" and price <=" +str(USER_PARAMETERS["price"][1])+" and abovemF<="+str(test_case["boxMaxRange"])+
+    qq = str("SELECT * FROM listings WHERE price>=60 and price<=90 and abovemF<="+str(test_case["boxMaxRange"])+
              " and abovemF>="+str(test_case["boxMinRange"]) +" and distance>="+str(test_case["boxMinDistance"])+" and distance<="+str(test_case["boxMaxDistance"]))
     cursor.execute(qq)
     myresult = cursor.fetchall()
     tuplesF=len(myresult)
 
-    qq = str("SELECT * FROM listings WHERE price>="+str(USER_PARAMETERS["price"][0])+" and price <=" +str(USER_PARAMETERS["price"][1])+" and abovem<="+str(test_case["boxMaxRange"])+
+    qq = str("SELECT * FROM listings WHERE price>=60 and price<=90 and abovem<="+str(test_case["boxMaxRange"])+
              " and abovem>="+str(test_case["boxMinRange"]) +" and distance>="+str(test_case["boxMinDistance"])+" and distance<="+str(test_case["boxMaxDistance"]))
     cursor.execute(qq)
     myresult = cursor.fetchall()

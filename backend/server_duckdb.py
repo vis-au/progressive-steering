@@ -4,6 +4,7 @@ import platform
 import steering_module as sm
 
 from testcase_loader import load_config, get_test_cases
+from use_cases.airbnb import send_airbnb_info, airbnb_tuple_to_dict, get_airbnb_user_parameters
 
 WAIT_INTERVAL = 1
 FILE_PATH = "../data/listings_alt.csv"
@@ -11,14 +12,8 @@ TABLE_NAME = "listings"
 X_ENCODING = "Saving opportunity"
 Y_ENCODING = "Distance"
 
-# // default dimensions used for scatter plot layout
-# let DEFAULT_X_DIMENSION = "Saving opportunity";
-# let DEFAULT_Y_DIMENSION = "Distance";
-
 # user constants
-USER_PARAMETERS={
-    "price": [60, 90]
-}
+user_parameters={}
 
 # enum of states for progression
 PROGRESSTION_STATES = {
@@ -56,6 +51,11 @@ def send_chunks(steered_chunk, random_chunk):
     eel.send_both_chunks(steered_chunk, random_chunk)
 
 
+def send_statistics_to_frontend(precision, total_inside_box):
+    eel.send_evaluation_metric({"name": "precision", "value": precision})
+    eel.send_evaluation_metric({"name": "recall", "value": total_inside_box})
+
+
 def build_query(chunk_size):
   global query_att, modifier
 
@@ -63,9 +63,9 @@ def build_query(chunk_size):
   FROM   = "FROM "+TABLE_NAME
   WHERE = "WHERE "+TABLE_NAME+".id NOT IN (SELECT id from plotted)"
 
-  for p in USER_PARAMETERS:
+  for p in user_parameters:
       param = str(p)
-      value = USER_PARAMETERS[p]
+      value = user_parameters[p]
 
       if isinstance(value, list):
           min_value = str(value[0])
@@ -102,26 +102,16 @@ def reset():
     progression_state = PROGRESSTION_STATES["ready"]
 
 
-def airbnb_tuple_to_dict(tuple, state, chunk):
-    return {
-        "host_id": tuple[0],
-        "zipcode": tuple[7],
-        "latitude": tuple[10],
-        "longitude": tuple[11],
-        "accommodates": tuple[12],
-        "bathrooms": tuple[13],
-        "bedrooms": tuple[14],
-        "beds": tuple[15],
-        "price": tuple[16],
-        "cleaning_fee": tuple[18],
-        "minimum_nights": tuple[21],
-        "maximum_nights": tuple[22],
-        Y_ENCODING: tuple[44],
-        X_ENCODING: tuple[46],
-        "chunk": chunk,
-        "state": state,
-        "inside": 0
-    }
+def tuple_to_dict(tuple, state, chunk_number):
+    # first apply the data specific properties using a custom function
+    transformed_dict = airbnb_tuple_to_dict(tuple, X_ENCODING, Y_ENCODING)
+
+    # then add the required properties
+    transformed_dict["chunk"] = chunk_number
+    transformed_dict["state"] = state
+    transformed_dict["inside"] = 0
+
+    return transformed_dict
 
 
 def mark_ids_plotted(result):
@@ -163,7 +153,7 @@ def send_results_to_frontend(chunk_number, result, random_result, state):
     random_chunk = {}
 
     for tuple in result:
-        plotted_points[tuple[0]]=airbnb_tuple_to_dict(tuple, state, chunk_number)
+        plotted_points[tuple[0]]=tuple_to_dict(tuple, state, chunk_number)
         chunk[tuple[0]]={
             "chunk": chunk_number,
             "state": state,
@@ -177,7 +167,7 @@ def send_results_to_frontend(chunk_number, result, random_result, state):
         random_chunk[tuple[0]] = {
             "chunk": chunk_number,
             "state": "random",
-            "values": airbnb_tuple_to_dict(tuple, state, chunk_number),
+            "values": tuple_to_dict(tuple, state, chunk_number),
             X_ENCODING: tuple[46],
             Y_ENCODING: tuple[44]
         }
@@ -202,10 +192,10 @@ def get_next_result(chunk_number, random_result, state, query):
 
     recent_inside = get_items_inside_selection_at_chunk(chunk_number)
     total_inside_box += recent_inside
-    print("chunk:", chunk_number, state, "items in selection:", total_inside_box, "Precision:", recent_inside/chunk_size, recent_inside, get_distances_min_max())
+    precision = recent_inside/chunk_size
+    print("chunk:", chunk_number, state, "in selection:", total_inside_box, "Precision:", precision)
 
-    eel.send_evaluation_metric({"name": "precision", "value": recent_inside/chunk_size})
-    eel.send_evaluation_metric({"name": "recall", "value": total_inside_box})
+    send_statistics_to_frontend(precision, total_inside_box)
 
     return result
 
@@ -235,7 +225,7 @@ def run_steered_progression(chunk_size, min_box_items=50):
 
     ####################### NON-STEERING PHASE #####################################################
     print("Entering NON-STEERING PHASE 1 - Query:", active_query, modifier)
-    print("user parameters:", USER_PARAMETERS)
+    print("user parameters:", user_parameters)
     state="flushing"
     modifier="True"
     active_query = build_query(chunk_size)
@@ -320,39 +310,25 @@ def get_use_cases():
 
 
 def save_as_user_parameters(user_data):
-#   USER_PARAMETERS["latitude"] = user_data["lat"]
-#   USER_PARAMETERS["longitude"] = user_data["lon"]
-  USER_PARAMETERS["price"] = user_data["moneyRange"]
-  # user_data for distance contains only one value, but that one is a maximum, so make it a range
-  USER_PARAMETERS["distance"] = [0, user_data["userMaxDistance"]]
+  global user_parameters
+  user_parameters = get_airbnb_user_parameters(user_data)
 
 
 def send_info_to_frontend():
-  eel.send_city("Paris")
   eel.set_x_name(X_ENCODING)
   eel.set_y_name(Y_ENCODING)
 
-  eel.send_dimension_total_extent({"name": "Saving opportunity", "min": -1, "max": 32})
-  eel.send_dimension_total_extent({"name": "Distance", "min": 0, "max": 10})
-  eel.send_dimension_total_extent({"name": "price", "min": 50, "max": 95})
-  eel.send_dimension_total_extent({"name": "cleaning_fee", "min": 0, "max": 325})
-  eel.send_dimension_total_extent({"name": "bedrooms", "min": 0, "max": 4})
-  eel.send_dimension_total_extent({"name": "bathrooms", "min": 0, "max": 4})
-  eel.send_dimension_total_extent({"name": "beds", "min": 0, "max": 5})
-  eel.send_dimension_total_extent({"name": "accommodates", "min": 0, "max": 5})
-  eel.send_dimension_total_extent({"name": "longitude", "min": 2.2, "max": 2.5})
-  eel.send_dimension_total_extent({"name": "latitude", "min": 48.8, "max": 49})
-  eel.send_dimension_total_extent({"name": "zipcode", "min": 74400, "max": 750011})
+  eel.send_dimension_total_extent({"name": Y_ENCODING, "min": -1, "max": 32})
+  eel.send_dimension_total_extent({"name": X_ENCODING, "min": 0, "max": 10})
+
+  send_airbnb_info(eel)
 
 
 @eel.expose
 def send_to_backend_userData(user_data):
   print("received user selection", user_data)
 
-  # store user parameters
   save_as_user_parameters(user_data)
-
-  # send progression parameters to frontend before sending data
   send_info_to_frontend()
 
   # TODO: it seems counter-intuitive that this function would also start the progression.
@@ -447,20 +423,10 @@ def start_eel(develop):
         else:
             raise
 
-def get_distances_min_max():
-    min_dist=100
-    max_dist=0
-    for k in plotted_points:
-        if plotted_points[k][Y_ENCODING]>max_dist and plotted_points[k]["inside"]==1:
-            max_dist=plotted_points[k][Y_ENCODING]
-        if plotted_points[k][Y_ENCODING]<min_dist and plotted_points[k]["inside"]==1:
-            min_dist=plotted_points[k][Y_ENCODING]
-    return min_dist, max_dist
-
 
 if __name__ == "__main__":
     import sys
-    load_config(USER_PARAMETERS, cursor)
+    load_config(user_parameters, cursor)
 
     # Uses the production version in the "build" directory if passed a second argument
     start_eel(develop=len(sys.argv) == 1)
