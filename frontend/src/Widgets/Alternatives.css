@@ -1,0 +1,46 @@
+.alternatives {
+  position: absolute;
+  left: 15px;
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+  visibility: hidden;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+.alternatives h2 {
+  font-size: 15px;
+  margin-right: 10px;
+}
+.alternatives .option {
+  background: #efefef;
+  border: 1px solid transparent;
+  font-size: 13px;
+  border-radius: 3px;
+  margin: 1.5rem 0.25rem;
+  padding: 0.1rem 0.5rem 0.15rem;
+}
+.alternatives .option:hover {
+  background-color: #ddd;
+}
+.alternatives .option.active {
+  color: #fff;
+  background: #333;
+}
+.alternatives .option.active:hover {
+  background: #555;
+}
+.alternatives .option input {
+  display: none;
+}
+.alternatives .option label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  cursor: pointer;
+}
+.alternatives .option label .icon {
+  margin-right: 5px;
+  font-size: 14px;
+}
