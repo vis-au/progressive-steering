@@ -1,7 +1,9 @@
+import eel
 import duckdb
 import platform
 import steering_module as sm
-import eel
+
+from testcase_loader import load_config, get_test_cases
 
 WAIT_INTERVAL = 1
 FILE_PATH = "../data/listings_alt.csv"
@@ -9,11 +11,7 @@ TABLE_NAME = "listings"
 
 # user constants
 USER_PARAMETERS={
-    "lat": 48.85565,
-    "lon": 2.365492,
-    "range": [60, 90],
-    "day": "2020-04-31",
-    "MaxDistance": 10 + 1
+    "price": [60, 90]
 }
 
 # enum of states for progression
@@ -36,7 +34,6 @@ modifier="True" # modify initial query with conditions coming from the tree
 query_att="*" # attributes of the main query
 last_selected_items=[]
 use_floats_for_savings=True
-test_cases={} # preset scenarios of selections in view space (get loaded from testCases.txt)
 
 # progression state can be paused/restarted interactively by the user
 progression_state = PROGRESSTION_STATES["ready"]
@@ -64,13 +61,26 @@ def above_m(saving, saving_as_float): # the search is bound to a
 
 
 def build_query(chunk_size):
-    global query_att, modifier
+  global query_att, modifier
 
-    SELECT = "SELECT "+query_att
-    FROM   = "FROM "+TABLE_NAME
-    WHERE  = "WHERE price >="+str(USER_PARAMETERS["range"][0])+" AND price <="+str(USER_PARAMETERS["range"][1])+"  AND "+TABLE_NAME+".id NOT IN (SELECT id from plotted)"
+  SELECT = "SELECT "+query_att
+  FROM   = "FROM "+TABLE_NAME
+  WHERE = "WHERE "+TABLE_NAME+".id NOT IN (SELECT id from plotted)"
 
-    return SELECT+" "+FROM+" "+WHERE+" AND "+modifier+" LIMIT "+str(chunk_size)
+  for p in USER_PARAMETERS:
+      param = str(p)
+      value = USER_PARAMETERS[p]
+
+      if isinstance(value, list):
+          min_value = str(value[0])
+          max_value = str(value[1])
+          WHERE += " AND "+param+" >= "+min_value+" AND "+param+" < "+max_value
+      elif isinstance(value, str):
+          WHERE += " AND "+param+" = "+value
+      elif isinstance(value, (int, float, complex)):
+          WHERE += " AND "+param+" = "+str(value)
+
+  return SELECT+" "+FROM+" "+WHERE+" AND "+modifier+" LIMIT "+str(chunk_size)
 
 
 def reset():
@@ -228,7 +238,7 @@ def run_steered_progression(chunk_size, min_box_items=50):
     my_result_random = cursor.fetchall()
 
     ####################### NON-STEERING PHASE #####################################################
-    print("Entering LOOP0 - Query:", active_query, modifier)
+    print("Entering NON-STEERING PHASE 1 - Query:", active_query, modifier)
     print("user parameters:", USER_PARAMETERS)
     state="flushing"
     modifier="True"
@@ -310,32 +320,22 @@ def start_progression():
 
 @eel.expose
 def get_use_cases():
-    use_cases={}
-    for i in range(len(test_cases)):
-        use_cases["testcase"+str(i+1)]={
-            "name": "case"+str(i+1)+"_"+str(test_cases[i]["boxMinRange"])+"_"+str(test_cases[i]["boxMaxRange"])+"_"+str(test_cases[i]["boxMinDistance"])+"_"+str(test_cases[i]["boxMaxDistance"]),
-            "x_bounds":[test_cases[i]["boxMinRange"], test_cases[i]["boxMaxRange"]],
-            "y_bounds":[test_cases[i]["boxMinDistance"], test_cases[i]["boxMaxDistance"]]
-        }
-    return use_cases
+    return get_test_cases()
 
 
-@eel.expose
-def send_to_backend_userData(user_data):
-  print("received user selection", user_data)
+def save_as_user_parameters(user_data):
+#   USER_PARAMETERS["latitude"] = user_data["lat"]
+#   USER_PARAMETERS["longitude"] = user_data["lon"]
+  USER_PARAMETERS["price"] = user_data["moneyRange"]
+  # user_data for distance contains only one value, but that one is a maximum, so make it a range
+  USER_PARAMETERS["distance"] = [0, user_data["userMaxDistance"]]
 
-  # store user parameters
-  USER_PARAMETERS["lat"] = user_data["lat"]
-  USER_PARAMETERS["lon"] = user_data["lon"]
-  USER_PARAMETERS["range"] = user_data["moneyRange"]
-  USER_PARAMETERS["day"] = user_data["day"]
-  USER_PARAMETERS["MaxDistance"] = user_data["userMaxDistance"]
 
-  # send progression parameters to frontend before sending data
+def send_info_to_frontend():
   eel.send_city("Paris")
   eel.set_x_name("Saving opportunity")
   eel.set_y_name("Distance")
-  eel.send_dimension_total_extent({"name": "Saving opportunity", "min": -1, "max": 2+USER_PARAMETERS["range"][1]-USER_PARAMETERS["range"][0]})
+  eel.send_dimension_total_extent({"name": "Saving opportunity", "min": -1, "max": 2+USER_PARAMETERS["price"][1]-USER_PARAMETERS["price"][0]})
   eel.send_dimension_total_extent({"name": "Distance", "min": 0, "max": 10})
   eel.send_dimension_total_extent({"name": "price", "min": 50, "max": 95})
   eel.send_dimension_total_extent({"name": "cleaning_fee", "min": 0, "max": 325})
@@ -346,6 +346,17 @@ def send_to_backend_userData(user_data):
   eel.send_dimension_total_extent({"name": "longitude", "min": 2.2, "max": 2.5})
   eel.send_dimension_total_extent({"name": "latitude", "min": 48.8, "max": 49})
   eel.send_dimension_total_extent({"name": "zipcode", "min": 74400, "max": 750011})
+
+
+@eel.expose
+def send_to_backend_userData(user_data):
+  print("received user selection", user_data)
+
+  # store user parameters
+  save_as_user_parameters(user_data)
+
+  # send progression parameters to frontend before sending data
+  send_info_to_frontend()
 
   # TODO: it seems counter-intuitive that this function would also start the progression.
   start_progression()
@@ -417,40 +428,6 @@ def send_progression_state(state):
     print("new progression state", state)
 
 
-def get_box_data(test_case):
-    qq = str("SELECT * FROM "+TABLE_NAME+" WHERE price>="+str(USER_PARAMETERS["range"][0])+" and price <=" +str(USER_PARAMETERS["range"][1])+" and abovemF<="+str(test_case["boxMaxRange"])+
-             " and abovemF>="+str(test_case["boxMinRange"]) +" and distance>="+str(test_case["boxMinDistance"])+" and distance<="+str(test_case["boxMaxDistance"]))
-    cursor.execute(qq)
-    myresult = cursor.fetchall()
-    tuplesF=len(myresult)
-
-    qq = str("SELECT * FROM "+TABLE_NAME+" WHERE price>="+str(USER_PARAMETERS["range"][0])+" and price <=" +str(USER_PARAMETERS["range"][1])+" and abovem<="+str(test_case["boxMaxRange"])+
-             " and abovem>="+str(test_case["boxMinRange"]) +" and distance>="+str(test_case["boxMinDistance"])+" and distance<="+str(test_case["boxMaxDistance"]))
-    cursor.execute(qq)
-    myresult = cursor.fetchall()
-    tuples=len(myresult)
-    return tuples, tuplesF
-
-
-def load_config():
-    global use_floats_for_savings
-    global test_cases
-    s=eval(open("DB_server_config.txt", encoding="UTF8").read())
-    use_floats_for_savings=s["floatSaving"]
-    test_cases=eval(open("testCases.txt", encoding="UTF8").read())
-    print("Configuration loaded")
-    print("floatSaving: ", use_floats_for_savings)
-    print("testCases loaded")
-    for i in range(len(test_cases)):
-        t=get_box_data(test_cases[i])
-        test_cases[i]["tuples"]=t[0]
-        test_cases[i]["tuplesF"]=t[1]
-        print(i+1, test_cases[i])
-    f=open("testCases.txt", "w", encoding="UTF8")
-    print(str(test_cases).replace("{", "\n{"), file=f)
-    f.close()
-
-
 def start_eel(develop):
     """Start Eel with either production or development configuration."""
 
@@ -499,7 +476,7 @@ def get_distances_min_max():
 
 if __name__ == "__main__":
     import sys
-    load_config()
+    load_config(USER_PARAMETERS, cursor)
 
     # Uses the production version in the "build" directory if passed a second argument
     start_eel(develop=len(sys.argv) == 1)
