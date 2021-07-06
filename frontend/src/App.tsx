@@ -98,8 +98,10 @@ export class App extends Component<{}, State> {
   }
 
   private onBrushedRegion(region: number[][]) {
-    console.log(`user selected region from [${region[0]}] to [${region[1]}]. Updating steering ...`);
-    this.dataAdapter.selectRegion(region);
+    // no longer necessary to send the bounds of the region to the backend, since the backend is
+    // oblivious to the shape of the selection.
+    // console.log(`user selected region from [${region[0]}] to [${region[1]}]. Updating steering ...`);
+    // this.dataAdapter.selectRegion(region);
   }
 
   private onNewPointsInSelection(newPoints: any[], allPoints?: any[]) {

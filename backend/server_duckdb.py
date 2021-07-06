@@ -1,5 +1,4 @@
 import duckdb
-import math
 import platform
 import steering_module as sm
 import eel
@@ -16,12 +15,6 @@ USER_PARAMETERS={
     "day": "2020-04-31",
     "MaxDistance": 10 + 1
 }
-
-# user selection in view coordinates
-X1 = -1
-X2 = -1
-Y1 = -1
-Y2 = -1
 
 # enum of states for progression
 PROGRESSTION_STATES = {
@@ -58,18 +51,6 @@ cursor.execute("CREATE TABLE plotted(id VARCHAR)")
 
 def send_chunks(steered_chunk, random_chunk):
     eel.send_both_chunks(steered_chunk, random_chunk)
-
-
-def distance(lat1, long1, lat2, long2):
-    degrees_to_radians = math.pi/180.0
-    phi1 = (90.0 - lat1)*degrees_to_radians
-    phi2 = (90.0 - lat2)*degrees_to_radians
-    theta1 = long1*degrees_to_radians
-    theta2 = long2*degrees_to_radians
-    cos = (math.sin(phi1)*math.sin(phi2)*math.cos(theta1 - theta2) +
-    math.cos(phi1)*math.cos(phi2))
-    arc = math.acos( cos )
-    return int(arc * 6371*1000)/1000
 
 
 def above_m(saving, saving_as_float): # the search is bound to a
@@ -413,32 +394,6 @@ def send_user_selection(selected_item_ids):
         modifier="True"
 
     return modifier
-
-
-@eel.expose
-def send_selection_bounds(x_bounds, y_bounds):
-    global X1, X2, Y1, Y2
-    global total_inside_box
-    global plotted_points
-    global user_selection_updated
-    global last_selected_items
-
-    print("new selected region received bounds", x_bounds, y_bounds)
-    X1=x_bounds["xMin"]
-    X2=y_bounds["yMin"]
-    Y1=y_bounds["yMax"]
-    Y2=x_bounds["xMax"]
-
-    user_selection_updated=True
-    return x_bounds, y_bounds
-
-
-@eel.expose
-def send_selection_bounds_values(x_bounds_val, y_bounds_val):
-    global total_inside_box
-    global plotted_points
-    print("new selected region received_pixel", x_bounds_val, y_bounds_val)
-    return x_bounds_val, y_bounds_val
 
 
 @eel.expose

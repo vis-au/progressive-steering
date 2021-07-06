@@ -227,6 +227,7 @@ export function sendUserSelection(ids: string[]) {
 }
 
 export function sendUserSelectionBounds(xMin: number, xMax: number, yMin: number, yMax: number) {
+  // TODO: legacy function that is no longer required by the current eel architecture
   window.eel.send_selection_bounds({xMin, xMax}, {yMin, yMax});
 }
 
