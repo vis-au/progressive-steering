@@ -6,6 +6,10 @@
   position: relative;
 }
 
+.mainView .alternatives {
+  visibility: hidden;
+  opacity: 0;
+}
 .mainView:hover .alternatives {
   visibility: visible;
   opacity: 1;
