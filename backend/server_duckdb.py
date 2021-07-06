@@ -8,6 +8,12 @@ from testcase_loader import load_config, get_test_cases
 WAIT_INTERVAL = 1
 FILE_PATH = "../data/listings_alt.csv"
 TABLE_NAME = "listings"
+X_ENCODING = "Saving opportunity"
+Y_ENCODING = "Distance"
+
+# // default dimensions used for scatter plot layout
+# let DEFAULT_X_DIMENSION = "Saving opportunity";
+# let DEFAULT_Y_DIMENSION = "Distance";
 
 # user constants
 USER_PARAMETERS={
@@ -48,16 +54,6 @@ cursor.execute("CREATE TABLE plotted(id VARCHAR)")
 
 def send_chunks(steered_chunk, random_chunk):
     eel.send_both_chunks(steered_chunk, random_chunk)
-
-
-def above_m(saving, saving_as_float): # the search is bound to a
-    return {
-        "neighborhood_min": 5,
-        "saving": saving_as_float if use_floats_for_savings else saving,
-        "alternativeId": 100,
-        "extraSteps": 0.1,
-        "vicini": 100
-    }
 
 
 def build_query(chunk_size):
@@ -109,7 +105,6 @@ def reset():
 def airbnb_tuple_to_dict(tuple, state, chunk):
     return {
         "host_id": tuple[0],
-        "state": state,
         "zipcode": tuple[7],
         "latitude": tuple[10],
         "longitude": tuple[11],
@@ -121,9 +116,10 @@ def airbnb_tuple_to_dict(tuple, state, chunk):
         "cleaning_fee": tuple[18],
         "minimum_nights": tuple[21],
         "maximum_nights": tuple[22],
-        "dist2user": tuple[44],
-        "aboveM": above_m(tuple[45], tuple[46]),
+        Y_ENCODING: tuple[44],
+        X_ENCODING: tuple[46],
         "chunk": chunk,
+        "state": state,
         "inside": 0
     }
 
@@ -172,8 +168,8 @@ def send_results_to_frontend(chunk_number, result, random_result, state):
             "chunk": chunk_number,
             "state": state,
             "values": plotted_points[tuple[0]],
-            "dist2user": tuple[44],
-            "aboveM": above_m(tuple[45], tuple[46])
+            X_ENCODING: tuple[46],
+            Y_ENCODING: tuple[44]
         }
 
     # ensure equal chunk size between random and steered chunk
@@ -182,8 +178,8 @@ def send_results_to_frontend(chunk_number, result, random_result, state):
             "chunk": chunk_number,
             "state": "random",
             "values": airbnb_tuple_to_dict(tuple, state, chunk_number),
-            "dist2user": tuple[44],
-            "aboveM": above_m(tuple[45], tuple[46])
+            X_ENCODING: tuple[46],
+            Y_ENCODING: tuple[44]
         }
 
     send_chunks(chunk, random_chunk)
@@ -333,9 +329,10 @@ def save_as_user_parameters(user_data):
 
 def send_info_to_frontend():
   eel.send_city("Paris")
-  eel.set_x_name("Saving opportunity")
-  eel.set_y_name("Distance")
-  eel.send_dimension_total_extent({"name": "Saving opportunity", "min": -1, "max": 2+USER_PARAMETERS["price"][1]-USER_PARAMETERS["price"][0]})
+  eel.set_x_name(X_ENCODING)
+  eel.set_y_name(Y_ENCODING)
+
+  eel.send_dimension_total_extent({"name": "Saving opportunity", "min": -1, "max": 32})
   eel.send_dimension_total_extent({"name": "Distance", "min": 0, "max": 10})
   eel.send_dimension_total_extent({"name": "price", "min": 50, "max": 95})
   eel.send_dimension_total_extent({"name": "cleaning_fee", "min": 0, "max": 325})
@@ -384,19 +381,6 @@ def send_user_selection(selected_item_ids):
 
     eel.sleep(0.01)
 
-    # FIXME: the code below can be used together with the generalized steering module that uses
-    #        pandas and numpy instead of dicts
-    # plotted_list = []
-    # of_interest_list = []
-
-    # for id in DIZ_plotted:
-    #     plotted_list.append(DIZ_plotted[id])
-    #     of_interest_list.append(1 if id in IN else 0)
-
-    # plotted = pd.DataFrame(plotted_list)
-    # of_interest = np.array(of_interest_list)
-    # features = plotted.loc[:,['zipcode', 'latitude', 'longitude','price']]
-    # modifier="("+steer.get_steering_condition(features, of_interest, "sql")+")"
     modifier="("+sm.getSteeringCondition(plotted_points)+")"
 
     if len(modifier)>3:
@@ -467,10 +451,10 @@ def get_distances_min_max():
     min_dist=100
     max_dist=0
     for k in plotted_points:
-        if plotted_points[k]["dist2user"]>max_dist and plotted_points[k]["inside"]==1:
-            max_dist=plotted_points[k]["dist2user"]
-        if plotted_points[k]["dist2user"]<min_dist and plotted_points[k]["inside"]==1:
-            min_dist=plotted_points[k]["dist2user"]
+        if plotted_points[k][Y_ENCODING]>max_dist and plotted_points[k]["inside"]==1:
+            max_dist=plotted_points[k][Y_ENCODING]
+        if plotted_points[k][Y_ENCODING]<min_dist and plotted_points[k]["inside"]==1:
+            min_dist=plotted_points[k][Y_ENCODING]
     return min_dist, max_dist
 
 
