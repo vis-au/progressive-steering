@@ -67,7 +67,7 @@ export class App extends Component<{}, State> {
       selectedScenarioPreset: null,
       stepsBeforePaddingGrows: STEPS_BEFORE_PADDING_GROWS,
       activeRenderer: "Scatter Plot",
-      activeBrushMode: "lasso",
+      activeBrushMode: "box",
       remainingDimensions: DEFAULT_UNSELECTED_DIMENSIONS,
       includeDimensions: DEFAULT_SELECTED_DIMENSIONS
     };
