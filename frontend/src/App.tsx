@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-import { eel, ScenarioPreset } from './Data/EelBridge';
+import { eel, ProgressionState, ScenarioPreset } from './Data/EelBridge';
 import { getEelDataAdapter, EelDataAdapter } from './Data/DataAdapter';
 import { Renderer } from './Renderers/Renderers';
 import Header from './Layout/Header';
@@ -18,6 +18,7 @@ const DEFAULT_UNSELECTED_DIMENSIONS = ["cleaning_fee", "price", "accommodates"];
 
 
 interface State {
+  progressionState: ProgressionState,
   selectedPoints: any[],
   highlightLatestPoints: boolean,
   showHeatMap: boolean,
@@ -58,6 +59,7 @@ export class App extends Component<{}, State> {
     this.dataAdapter.dimensions.push(...DEFAULT_SELECTED_DIMENSIONS.concat(DEFAULT_UNSELECTED_DIMENSIONS));
 
     this.state = {
+      progressionState: "ready",
       selectedPoints: [],
       highlightLatestPoints: false,
       showHeatMap: true,
@@ -194,6 +196,19 @@ export class App extends Component<{}, State> {
     this.setState({ activeBrushMode: brushMode as BrushMode });
   }
 
+  private onProgressionReset() {
+    this.onChangeProgressionState("ready");
+    this.dataAdapter.reset();
+  }
+
+  private onChangeProgressionState(newState: ProgressionState) {
+    this.dataAdapter.progressionState = newState;
+
+    this.setState({
+      progressionState: newState
+    });
+  }
+
   private updateDimensions() {
     const numberDimensions = this.state.includeDimensions.length + this.state.remainingDimensions.length;
     const hasReceivedData = this.dataAdapter.dimensions.length > 0;
@@ -250,6 +265,7 @@ export class App extends Component<{}, State> {
         />
 
         <Footer
+          progressionState={ this.state.progressionState }
           dataAdapter={ this.dataAdapter }
           highlightLatestPoints={ this.state.highlightLatestPoints }
           showHeatMap={ this.state.showHeatMap }
@@ -257,6 +273,8 @@ export class App extends Component<{}, State> {
           showSideBySideView={ this.state.showSideBySideView }
           useDeltaHeatMap={ this.state.useDeltaHeatMap }
           stepsBeforePaddingGrows={ this.state.stepsBeforePaddingGrows }
+          onProgressionReset={ this.onProgressionReset.bind(this) }
+          onChangeProgressionState={ this.onChangeProgressionState.bind(this) }
           onHighlightLatestPointChanged={ this.onHighlightLatestPointChanged.bind(this) }
           onShowHeatMapChanged={ this.onShowHeatMapChanged.bind(this) }
           onShowDotsChanged={ this.onShowDotsChanged.bind(this) }
