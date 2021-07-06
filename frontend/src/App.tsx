@@ -61,7 +61,7 @@ export class App extends Component<{}, State> {
     this.state = {
       progressionState: "ready",
       selectedPoints: [],
-      highlightLatestPoints: false,
+      highlightLatestPoints: true,
       showHeatMap: true,
       showDots: true,
       useDeltaHeatMap: true,

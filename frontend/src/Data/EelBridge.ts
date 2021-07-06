@@ -12,6 +12,8 @@ export type ChunkType = {
   aboveM: any,
   chunk: number,
   dist2user: number,
+  Distance: number,
+  "Saving opportunity": number,
   values: any[]
 }
 
@@ -75,15 +77,16 @@ function serializeChunk(chunk: any) {
   const ids = Object.keys(chunk);
 
   ids.forEach(id => {
-    // const datum: any = {};
-
-    // DEFAULT_DIMENSIONS.forEach((dimension, i) => {
-    //   datum[dimension] = chunk[id].values[i];
-    // });
     let datum = { ...chunk[id].values };
 
-    datum["Saving opportunity"] = chunk[id].aboveM.saving;
-    datum["Distance"] = chunk[id].dist2user;
+    datum[DEFAULT_X_DIMENSION] = chunk[id][DEFAULT_X_DIMENSION] === undefined
+      ? chunk[id].aboveM.saving
+      : chunk[id][DEFAULT_X_DIMENSION]
+
+    datum[DEFAULT_Y_DIMENSION] = chunk[id][DEFAULT_Y_DIMENSION] === undefined
+      ? chunk[id].dist2user
+      : chunk[id][DEFAULT_Y_DIMENSION]
+
     datum["status"] = chunk[id].state;
     datum["id"] = +id;
 
