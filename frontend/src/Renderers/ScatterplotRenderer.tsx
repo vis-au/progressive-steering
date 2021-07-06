@@ -135,7 +135,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.scaleY.domain([rangeY[1], rangeY[0]]);
   }
 
-  private updatePaddedBrushSize() {
+  private updatePaddedBrushSize(latestChunk: ScaledCartesianCoordinate[]) {
     if (this.svg === null) {
       return;
     } else if (!this.receivedNewData()) {
@@ -144,7 +144,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       return;
     }
 
-    const currentlySelectedPoints = this.getNewPointsInCurrentSelection(this.getLatestChunk());
+    const currentlySelectedPoints = this.getNewPointsInCurrentSelection(latestChunk);
 
     if (currentlySelectedPoints.length <= MIN_SELECTION_THRESHOLD) {
       this.stepsWithoutHit = this.stepsWithoutHit + 1;
@@ -234,13 +234,12 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
       : this.getNewValuesInRect(newPoints, useNonSteeringData);
   }
 
-  private updateNewPointsInCurrentSelection(newPoints: ScaledCartesianCoordinate[]) {
+  private updateNewPointsInCurrentSelection(newPoints: ScaledCartesianCoordinate[], newNonSteeredPoints: ScaledCartesianCoordinate[]) {
     const newPointsInSelection = this.getNewPointsInCurrentSelection(newPoints);
     const allPointsInSelection = this.getCurrentlyBrushedPoints().map(d => d.values);
 
-    const newNonSteeredPoints = this.getLatestChunk(true);
     const newNonSteeredPointsInSelection = this.getNewPointsInCurrentSelection(newNonSteeredPoints, true);
-    const allNonSteeredPointsInSelection = this.getCurrentlyBrushedPoints(true);
+    const allNonSteeredPointsInSelection = this.getCurrentlyBrushedPoints(true).map(d => d.values);
 
     if (newPointsInSelection.length > 0 && !!this.props.onNewPointsInSelection) {
       this.props.onNewPointsInSelection(newPointsInSelection, allPointsInSelection);
@@ -609,8 +608,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     }
 
     this.quadtree.addAll(steeredChunk);
-    this.updateNewPointsInCurrentSelection(steeredChunk);
     this.nonSteeringQuadtree.addAll(nonSteeredChunk);
+    this.updateNewPointsInCurrentSelection(steeredChunk, nonSteeredChunk);
   }
 
   private getScaledCoordinatesForData(useNonSteeringData: boolean) {
@@ -786,7 +785,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.updateQuadtrees(scaledData.steered, scaledData.nonSteered);
     // this.renderDensityPlots();
     this.renderPresetSelection();
-    this.updatePaddedBrushSize();
+    this.updatePaddedBrushSize(scaledData.steered);
 
     this.lastChunk = this.getLatestChunk();
     const canvasWidth = this.getCanvasWidth();
