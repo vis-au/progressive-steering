@@ -288,15 +288,24 @@ export class App extends Component<{}, State> {
   }
 
   public componentDidMount() {
-    window.addEventListener("keypress", (e: KeyboardEvent) => {
-
-      console.log(e, e.key)
-      if (e.key === "l") {
+    window.addEventListener("keydown", (e: KeyboardEvent) => {
+      if (e.key === " ") {
+        if (this.state.progressionState === "running") {
+          this.onChangeProgressionState("paused");
+        } else if (this.state.progressionState === "paused") {
+          this.onChangeProgressionState("running");
+        } else if (this.state.progressionState === "ready") {
+          this.onChangeProgressionState("running");
+        }
+      } else if (e.ctrlKey) {
         if (this.state.activeBrushMode === "lasso") {
           this.setState({ activeBrushMode: "box" });
         } else {
           this.setState({ activeBrushMode: "lasso" });
         }
+      } else if (e.key === "Tab") {
+        this.setState({ showSideBySideView: !this.state.showSideBySideView });
+        e.preventDefault();
       }
     });
   }
