@@ -6,6 +6,7 @@ svg.recentNonSteeredPointsCanvas,
 canvas.scatterplotCanvas,
 canvas.nonSteeringCanvas {
   position: absolute;
+  cursor: crosshair;
 }
 
 svg.densityCanvas rect.selection {
