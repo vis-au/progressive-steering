@@ -6,46 +6,7 @@
   position: relative;
 }
 
-.renderer-tabs {
-  position: absolute;
-  left: 15px;
-  display: flex;
-  flex-direction: row;
-  justify-content: start;
-  visibility: hidden;
-  align-items: center;
-  opacity: 0;
-  transition: opacity 0.1s ease;
-}
-.mainView:hover .renderer-tabs {
+.mainView:hover .alternatives {
   visibility: visible;
   opacity: 1;
-}
-.renderer-tabs h2 {
-  font-size: 15px;
-  margin-right: 10px;
-}
-.renderer-tabs .renderer-tab {
-  background: #efefef;
-  border: 1px solid transparent;
-  font-size: 13px;
-  border-radius: 3px;
-  margin: 1.5rem 0.25rem;
-  padding: 0.1rem 0.5rem 0.15rem;
-}
-.renderer-tabs .renderer-tab:hover {
-  background-color: #ddd;
-}
-.renderer-tabs .renderer-tab.active {
-  color: #fff;
-  background: #333;
-}
-.renderer-tabs .renderer-tab.active:hover {
-  background: #555;
-}
-.renderer-tabs .renderer-tab input {
-  display: none;
-}
-.renderer-tabs .renderer-tab label {
-  cursor: pointer;
 }

@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 
-import { eel, ScenarioPreset, ProgressionState } from './Data/EelBridge';
+import { eel, ScenarioPreset } from './Data/EelBridge';
 import { getEelDataAdapter, EelDataAdapter } from './Data/DataAdapter';
 import { Renderer } from './Renderers/Renderers';
 import Header from './Layout/Header';
 import MainView from './Layout/MainView';
 import Footer from './Layout/Footer';
+import { BrushMode } from './Renderers/BrushMode';
 
 import './App.css';
 
@@ -18,7 +19,6 @@ const DEFAULT_UNSELECTED_DIMENSIONS = ["cleaning_fee", "price", "accommodates"];
 
 interface State {
   selectedPoints: any[],
-  useLassoSelection: boolean,
   highlightLatestPoints: boolean,
   showHeatMap: boolean,
   showDots: boolean,
@@ -27,6 +27,7 @@ interface State {
   selectedScenarioPreset: ScenarioPreset | null,
   stepsBeforePaddingGrows: number,
   activeRenderer: Renderer,
+  activeBrushMode: BrushMode,
   remainingDimensions: string[],
   includeDimensions: string[]
 }
@@ -58,7 +59,6 @@ export class App extends Component<{}, State> {
 
     this.state = {
       selectedPoints: [],
-      useLassoSelection: false,
       highlightLatestPoints: false,
       showHeatMap: true,
       showDots: true,
@@ -67,6 +67,7 @@ export class App extends Component<{}, State> {
       selectedScenarioPreset: null,
       stepsBeforePaddingGrows: STEPS_BEFORE_PADDING_GROWS,
       activeRenderer: "Scatter Plot",
+      activeBrushMode: "lasso",
       remainingDimensions: DEFAULT_UNSELECTED_DIMENSIONS,
       includeDimensions: DEFAULT_SELECTED_DIMENSIONS
     };
@@ -169,8 +170,7 @@ export class App extends Component<{}, State> {
     });
   }
 
-  private onRendererChanged(event: React.ChangeEvent<HTMLInputElement>) {
-    const renderer = event.target.value as Renderer;
+  private onRendererChanged(renderer: string) {
     const includeDimensions = this.state.includeDimensions;
     const remainingDimensions = this.state.remainingDimensions;
 
@@ -186,8 +186,12 @@ export class App extends Component<{}, State> {
     this.setState({
       includeDimensions,
       remainingDimensions,
-      activeRenderer: renderer
+      activeRenderer: renderer as Renderer
     });
+  }
+
+  private onBrushModeChanged(brushMode: string) {
+    this.setState({ activeBrushMode: brushMode as BrushMode });
   }
 
   private updateDimensions() {
@@ -228,6 +232,7 @@ export class App extends Component<{}, State> {
         <MainView
           dataAdapter={ this.dataAdapter }
           activeRenderer={ this.state.activeRenderer }
+          activeBrushMode={ this.state.activeBrushMode }
           highlightLatestPoints={ this.state.highlightLatestPoints }
           includeDimensions={ this.state.includeDimensions }
           selectedScenarioPreset={ this.state.selectedScenarioPreset }
@@ -236,12 +241,12 @@ export class App extends Component<{}, State> {
           showSideBySideView={ this.state.showSideBySideView }
           stepsBeforePaddingGrows={ this.state.stepsBeforePaddingGrows }
           useDeltaHeatMap={ this.state.useDeltaHeatMap }
-          useLassoSelection={ this.state.useLassoSelection }
           onBrushedPoints={ this.onBrushedPoints.bind(this) }
           onBrushedRegion={ this.onBrushedRegion.bind(this) }
           onNewNonSteeredPointsInSelection={ this.onNewNonSteeredPointsInSelection.bind(this) }
           onNewPointsInSelection={ this.onNewPointsInSelection.bind(this) }
           onRendererChanged={ this.onRendererChanged.bind(this) }
+          onBrushModeChanged={ this.onBrushModeChanged.bind(this) }
         />
 
         <Footer
@@ -269,7 +274,11 @@ export class App extends Component<{}, State> {
 
       console.log(e, e.key)
       if (e.key === "l") {
-        this.setState({ useLassoSelection: !this.state.useLassoSelection });
+        if (this.state.activeBrushMode === "lasso") {
+          this.setState({ activeBrushMode: "box" });
+        } else {
+          this.setState({ activeBrushMode: "lasso" });
+        }
       }
     });
   }

@@ -2,17 +2,20 @@ import * as React from 'react';
 
 import { EelDataAdapter, getPOIs } from '../Data/DataAdapter';
 import { getXDimension, getYDimension, ScenarioPreset } from '../Data/EelBridge';
+import { BrushMode } from '../Renderers/BrushMode';
 import RadVizRenderer from '../Renderers/RadVizRenderer';
 import { Renderer } from '../Renderers/Renderers';
 import ScatterplotRenderer from '../Renderers/ScatterplotRenderer';
 import StarCoordinateRenderer from '../Renderers/StarCoordinateRenderer';
 import TernaryPlotRenderer from '../Renderers/TernaryPlotRenderer';
+import Alternatives from '../Widgets/Alternatives';
 import MapViewRenderer, { POI } from '../Widgets/MapViewer';
 
 import './MainView.css';
 
 interface Props {
   activeRenderer: Renderer,
+  activeBrushMode: BrushMode,
   dataAdapter: EelDataAdapter,
   showSideBySideView: boolean,
   highlightLatestPoints: boolean,
@@ -22,8 +25,8 @@ interface Props {
   stepsBeforePaddingGrows: number,
   includeDimensions: string[],
   selectedScenarioPreset: ScenarioPreset | null,
-  useLassoSelection: boolean,
-  onRendererChanged: (event: React.ChangeEvent<HTMLInputElement>) => void,
+  onRendererChanged: (renderer: string) => void,
+  onBrushModeChanged: (brushMode: string) => void,
   onBrushedPoints: (brushedPoints: any[]) => void,
   onBrushedRegion: (region: number[][]) => void,
   onNewPointsInSelection: (newPoints: any[], allPoints?: any[]) => void,
@@ -33,33 +36,47 @@ interface State {
 }
 
 const RENDERER_LABELS: Renderer[] = ["Scatter Plot", "Star Coordinates", "RadViz", "Ternary"];
+const BRUSH_MODES: BrushMode[] = ["box", "lasso"];
 
 export default class MainView extends React.Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
 
-  private renderRendererTab(renderer: Renderer) {
-    const isActive = this.props.activeRenderer === renderer ? "active" : "inactive";
-
-    return (
-      <div className={ `renderer-tab ${isActive}` } key={ renderer } title={ `use ${renderer} layout.` }>
-        <input
-          type="radio"
-          id={ `renderer-${renderer}` }
-          className="renderer-tab"
-          radioGroup="renderer-tabs-123"
-          onChange={ this.props.onRendererChanged }
-          checked={ this.props.activeRenderer === renderer }
-          value={ renderer }/>
-        <label htmlFor={ `renderer-${renderer}` }>{ renderer }</label>
-      </div>
-    );
+    this.state = {
+      brushMode: "lasso"
+    };
   }
 
   private renderDataRendererTabs() {
     return (
-      <div className="renderer-tabs">
-        <h2>View </h2>
-        { RENDERER_LABELS.map(this.renderRendererTab.bind(this)) }
-      </div>
+      <Alternatives
+        id="renderer"
+        title="Renderer"
+        x={ 15 }
+        y={ 0 }
+        options={ RENDERER_LABELS }
+        activeOption={ this.props.activeRenderer }
+        onChange={ this.props.onRendererChanged }
+      />
+    );
+  }
+
+  private renderBrushModeSelection() {
+    if (this.props.activeRenderer !== "Scatter Plot") {
+      return;
+    }
+
+    return (
+      <Alternatives
+        id="brushmode"
+        title="Brush"
+        x={ 475 }
+        y={ 0 }
+        options={ BRUSH_MODES }
+        icons={ ["crop_square", "gesture" ]}
+        activeOption={ this.props.activeBrushMode }
+        onChange={ this.props.onBrushModeChanged }
+      />
     );
   }
 
@@ -133,7 +150,7 @@ export default class MainView extends React.Component<Props, State> {
         highlightLastChunk={ this.props.highlightLatestPoints }
         showHeatMap={ this.props.showHeatMap }
         showDots={ this.props.showDots }
-        useLassoSelection={ this.props.useLassoSelection }
+        useLassoSelection={ this.props.activeBrushMode === "lasso" }
         useDeltaHeatMap={ this.props.useDeltaHeatMap }
         showNonSteeringData={ this.props.showSideBySideView }
         presetSelection={ this.props.selectedScenarioPreset }
@@ -166,6 +183,7 @@ export default class MainView extends React.Component<Props, State> {
       <div className="mainView" style={ {minHeight: height} }>
         { this.renderDataRenderer(width, height) }
         { this.renderDataRendererTabs() }
+        { this.renderBrushModeSelection() }
         { this.renderMapRenderer(width, height) }
       </div>
     );
