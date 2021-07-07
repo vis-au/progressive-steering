@@ -83,8 +83,8 @@ export default class Footer extends React.Component<Props, State> {
     return (
       <div className="progression-controls">
         { this.renderProgressionControlOverlay() }
-        <button className="control material-icons" title="play/pause progression" onClick={ () => this.props.onChangeProgressionState(nextState) }>{ text }</button>
-        <button className="control material-icons" title="reset progression" onClick={ () => this.props.onProgressionReset() }>refresh</button>
+        <button className="control material-icons" title="play/pause progression [SPACE]" onClick={ () => this.props.onChangeProgressionState(nextState) }>{ text }</button>
+        <button className="control material-icons" title="reset progression [BACKSPACE]" onClick={ () => this.props.onProgressionReset() }>refresh</button>
       </div>
     );
   }
