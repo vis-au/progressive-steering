@@ -8,11 +8,8 @@ from use_cases.use_case import UseCase
 from testcase_loader import load_preset_scenarios, get_test_cases
 
 WAIT_INTERVAL = 1
-FILE_PATH = ""
-TABLE_NAME = ""
-X_ENCODING = ""
-Y_ENCODING = ""
 
+# contains information about the particular use case and is populated by load_use_case() on launch
 USE_CASE: UseCase = None
 
 # user constants
@@ -61,8 +58,8 @@ def build_query(chunk_size):
   global query_att, modifier
 
   SELECT = "SELECT "+query_att
-  FROM   = "FROM "+TABLE_NAME
-  WHERE = "WHERE "+TABLE_NAME+".id NOT IN (SELECT id from plotted)"
+  FROM   = "FROM "+USE_CASE.table_name
+  WHERE = "WHERE "+USE_CASE.table_name+".id NOT IN (SELECT id from plotted)"
 
   for p in user_parameters:
       param = str(p)
@@ -159,8 +156,8 @@ def send_results_to_frontend(chunk_number, result, random_result, state):
             "chunk": chunk_number,
             "state": state,
             "values": plotted_points[tuple[0]],
-            X_ENCODING: tuple[46],
-            Y_ENCODING: tuple[44]
+            USE_CASE.x_encoding: tuple[46],
+            USE_CASE.y_encoding: tuple[44]
         }
 
     # ensure equal chunk size between random and steered chunk
@@ -169,8 +166,8 @@ def send_results_to_frontend(chunk_number, result, random_result, state):
             "chunk": chunk_number,
             "state": "random",
             "values": tuple_to_dict(tuple, state, chunk_number),
-            X_ENCODING: tuple[46],
-            Y_ENCODING: tuple[44]
+            USE_CASE.x_encoding: tuple[46],
+            USE_CASE.y_encoding: tuple[44]
         }
 
     send_chunks(chunk, random_chunk)
@@ -317,16 +314,16 @@ def save_as_user_parameters(user_data):
 
 def send_info_to_frontend():
   # send general information to the frontend
-  eel.set_x_name(X_ENCODING)
-  eel.set_y_name(Y_ENCODING)
+  eel.set_x_name(USE_CASE.x_encoding)
+  eel.set_y_name(USE_CASE.y_encoding)
 
-  lower_x = df[X_ENCODING].min() - 1
-  upper_x = df[X_ENCODING].max() + 1
-  lower_y = df[Y_ENCODING].min() - 1
-  upper_y = df[Y_ENCODING].max() + 1
+  lower_x = df[USE_CASE.x_encoding].min() - 1
+  upper_x = df[USE_CASE.x_encoding].max() + 1
+  lower_y = df[USE_CASE.y_encoding].min() - 1
+  upper_y = df[USE_CASE.y_encoding].max() + 1
 
-  eel.send_dimension_total_extent({"name": X_ENCODING, "min": lower_x, "max": upper_x})
-  eel.send_dimension_total_extent({"name": Y_ENCODING, "min": lower_y, "max": upper_y})
+  eel.send_dimension_total_extent({"name": USE_CASE.x_encoding, "min": lower_x, "max": upper_x})
+  eel.send_dimension_total_extent({"name": USE_CASE.y_encoding, "min": lower_y, "max": upper_y})
 
   # also send use case specific bounds to the frontend
   USE_CASE.send_info(eel)
@@ -435,23 +432,28 @@ def start_eel(develop):
 
 
 def load_use_case(use_case: UseCase):
-    global USE_CASE, df, FILE_PATH, TABLE_NAME, X_ENCODING, Y_ENCODING
+    global USE_CASE, df
 
     USE_CASE = use_case
-    FILE_PATH = use_case.file_path
-    TABLE_NAME = use_case.table_name
-    X_ENCODING = use_case.x_encoding
-    Y_ENCODING = use_case.y_encoding
 
-    df = cursor.execute("SELECT * FROM read_csv_auto('"+FILE_PATH+"');").fetchdf()
-    cursor.register(TABLE_NAME, df)
+    df = cursor.execute("SELECT * FROM read_csv_auto('"+USE_CASE.file_path+"');").fetchdf()
+    cursor.register(USE_CASE.table_name, df)
     cursor.execute("CREATE TABLE plotted(id VARCHAR)")
 
 
 if __name__ == "__main__":
     import sys
-    load_use_case(UseCaseAirbnb())
+
+    known_use_cases = ["airbnb"]
+    use_case_label = sys.argv[1] if len(sys.argv) > 1 else "airbnb"
+    if use_case_label not in known_use_cases:
+        raise Exception("Unknown use case. Please provide one of the following use cases: "+str(known_use_cases))
+
+    # while we do not have other use cases, this will default to the airbnb use case
+    use_case = UseCaseAirbnb() if use_case_label == "airbnb" else UseCaseAirbnb()
+
+    load_use_case(use_case)
     load_preset_scenarios(cursor)
 
     # Uses the production version in the "build" directory if passed a second argument
-    start_eel(develop=len(sys.argv) == 1)
+    start_eel(develop=len(sys.argv) <= 2)
