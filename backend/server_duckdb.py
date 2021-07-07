@@ -155,9 +155,7 @@ def send_results_to_frontend(chunk_number, result, random_result, state):
         chunk[tuple[0]]={
             "chunk": chunk_number,
             "state": state,
-            "values": plotted_points[tuple[0]],
-            USE_CASE.x_encoding: tuple[46],
-            USE_CASE.y_encoding: tuple[44]
+            "values": plotted_points[tuple[0]]
         }
 
     # ensure equal chunk size between random and steered chunk
@@ -165,9 +163,7 @@ def send_results_to_frontend(chunk_number, result, random_result, state):
         random_chunk[tuple[0]] = {
             "chunk": chunk_number,
             "state": "random",
-            "values": tuple_to_dict(tuple, state, chunk_number),
-            USE_CASE.x_encoding: tuple[46],
-            USE_CASE.y_encoding: tuple[44]
+            "values": tuple_to_dict(tuple, state, chunk_number)
         }
 
     send_chunks(chunk, random_chunk)
@@ -317,13 +313,13 @@ def send_info_to_frontend():
   eel.set_x_name(USE_CASE.x_encoding)
   eel.set_y_name(USE_CASE.y_encoding)
 
-  lower_x = df[USE_CASE.x_encoding].min() - 1
-  upper_x = df[USE_CASE.x_encoding].max() + 1
-  lower_y = df[USE_CASE.y_encoding].min() - 1
-  upper_y = df[USE_CASE.y_encoding].max() + 1
+  min_x = df[USE_CASE.x_encoding].min()
+  max_x = df[USE_CASE.x_encoding].max()
+  min_y = df[USE_CASE.y_encoding].min()
+  max_y = df[USE_CASE.y_encoding].max()
 
-  eel.send_dimension_total_extent({"name": USE_CASE.x_encoding, "min": lower_x, "max": upper_x})
-  eel.send_dimension_total_extent({"name": USE_CASE.y_encoding, "min": lower_y, "max": upper_y})
+  eel.send_dimension_total_extent({"name": USE_CASE.x_encoding, "min": min_x, "max": max_x})
+  eel.send_dimension_total_extent({"name": USE_CASE.y_encoding, "min": min_y, "max": max_y})
 
   # also send use case specific bounds to the frontend
   USE_CASE.send_info(eel)
@@ -395,27 +391,15 @@ def send_progression_state(state):
     print("new progression state", state)
 
 
-def start_eel(develop):
-    """Start Eel with either production or development configuration."""
+def start_eel():
+    """Start Eel with development configuration."""
 
-    print(develop)
-
-    if develop:
-        directory = "../frontend/src"
-        app = None
-        page = {"port": 3000}
-    else:
-        directory = "build"
-        app = "chrome-app"
-        page = "index.html"
-
-
+    directory = "../frontend/src"
+    page = {"port": 3000}
     eel.init(directory, [".tsx", ".ts", ".jsx", ".js", ".html"])
-
     print("Backend launched successfully. Waiting for requests ...")
 
     # These will be queued until the first connection is made, but won"t be repeated on a page reload
-
     eel_kwargs = dict(
         host="localhost",
         port=8080,
@@ -456,4 +440,4 @@ if __name__ == "__main__":
     load_preset_scenarios(cursor)
 
     # Uses the production version in the "build" directory if passed a second argument
-    start_eel(develop=len(sys.argv) <= 2)
+    start_eel()

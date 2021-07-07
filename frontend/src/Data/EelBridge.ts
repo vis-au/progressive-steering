@@ -8,15 +8,6 @@ eel.set_host( 'ws://localhost:8080' );
 // type of a selection
 export type SelectionSize = { name: string, min: number, max: number };
 
-export type ChunkType = {
-  aboveM: any,
-  chunk: number,
-  dist2user: number,
-  Distance: number,
-  "Saving opportunity": number,
-  values: any[]
-}
-
 export type ScenarioPreset = {
   x_bounds: [number, number],
   y_bounds: [number, number],
@@ -24,12 +15,11 @@ export type ScenarioPreset = {
 };
 
 export type ProgressionState = 'ready' | 'running' | 'paused' | 'done';
-
 export type TrainingState = 'collectingData' | 'usingTree' | 'flushing';
 
 // default dimensions used for scatter plot layout
-let DEFAULT_X_DIMENSION = "Saving opportunity";
-let DEFAULT_Y_DIMENSION = "Distance";
+let DEFAULT_X_DIMENSION = "";
+let DEFAULT_Y_DIMENSION = "";
 
 export function getXDimension() {
   return DEFAULT_X_DIMENSION;
@@ -79,13 +69,15 @@ function serializeChunk(chunk: any) {
   ids.forEach(id => {
     let datum = { ...chunk[id].values };
 
-    datum[DEFAULT_X_DIMENSION] = chunk[id][DEFAULT_X_DIMENSION] === undefined
+    // legacy: if server was started with DB_server.py, the x and y dimensions are not encoded in
+    // values
+    datum[DEFAULT_X_DIMENSION] = chunk[id].values[DEFAULT_X_DIMENSION] === undefined
       ? chunk[id].aboveM.saving
-      : chunk[id][DEFAULT_X_DIMENSION]
+      : chunk[id].values[DEFAULT_X_DIMENSION]
 
-    datum[DEFAULT_Y_DIMENSION] = chunk[id][DEFAULT_Y_DIMENSION] === undefined
+    datum[DEFAULT_Y_DIMENSION] = chunk[id].values[DEFAULT_Y_DIMENSION] === undefined
       ? chunk[id].dist2user
-      : chunk[id][DEFAULT_Y_DIMENSION]
+      : chunk[id].values[DEFAULT_Y_DIMENSION]
 
     datum["status"] = chunk[id].state;
     datum["id"] = +id;
@@ -177,6 +169,8 @@ export function sendDimensionTotalExtent(message: {name: string, min: number, ma
     dataAdapter.dimensions.push(name);
   }
 
+  console.log(name, min, max)
+
   return;
 }
 
@@ -186,7 +180,7 @@ export function sendDimensionTotalExtent(message: {name: string, min: number, ma
  */
 export function setXName(xName: string) {
   DEFAULT_X_DIMENSION = xName;
-  console.log("new x domain:", xName);
+  console.log("received dimension for x encoding:", xName);
   return;
 }
 
@@ -196,7 +190,7 @@ export function setXName(xName: string) {
  */
 export function setYName(yName: string) {
   DEFAULT_Y_DIMENSION = yName;
-  console.log("new y domain:", yName);
+  console.log("received dimension for x encoding:", yName);
   return;
 }
 
