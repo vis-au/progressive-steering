@@ -1,16 +1,19 @@
 import eel
 import duckdb
 import platform
-import steering_module as sm
 
-from testcase_loader import load_config, get_test_cases
-from use_cases.airbnb import send_airbnb_info, airbnb_tuple_to_dict, get_airbnb_user_parameters
+import steering_module as sm
+from use_cases.airbnb import UseCaseAirbnb
+from use_cases.use_case import UseCase
+from testcase_loader import load_preset_scenarios, get_test_cases
 
 WAIT_INTERVAL = 1
-FILE_PATH = "../data/listings_alt.csv"
-TABLE_NAME = "listings"
-X_ENCODING = "Saving opportunity"
-Y_ENCODING = "Distance"
+FILE_PATH = ""
+TABLE_NAME = ""
+X_ENCODING = ""
+Y_ENCODING = ""
+
+USE_CASE: UseCase = None
 
 # user constants
 user_parameters={}
@@ -42,9 +45,7 @@ progression_state = PROGRESSTION_STATES["ready"]
 
 # initialize the database connection
 cursor = duckdb.connect()
-df = cursor.execute("SELECT * FROM read_csv_auto('"+FILE_PATH+"');").fetchdf()
-cursor.register(TABLE_NAME, df)
-cursor.execute("CREATE TABLE plotted(id VARCHAR)")
+df = None
 
 
 def send_chunks(steered_chunk, random_chunk):
@@ -104,7 +105,7 @@ def reset():
 
 def tuple_to_dict(tuple, state, chunk_number):
     # first apply the data specific properties using a custom function
-    transformed_dict = airbnb_tuple_to_dict(tuple, X_ENCODING, Y_ENCODING)
+    transformed_dict = USE_CASE.get_dict_for_use_case(tuple)
 
     # then add the required properties
     transformed_dict["chunk"] = chunk_number
@@ -311,17 +312,26 @@ def get_use_cases():
 
 def save_as_user_parameters(user_data):
   global user_parameters
-  user_parameters = get_airbnb_user_parameters(user_data)
+  user_parameters = USE_CASE.get_user_parameters(user_data)
 
 
 def send_info_to_frontend():
+  # send general information to the frontend
   eel.set_x_name(X_ENCODING)
   eel.set_y_name(Y_ENCODING)
 
-  eel.send_dimension_total_extent({"name": Y_ENCODING, "min": -1, "max": 32})
-  eel.send_dimension_total_extent({"name": X_ENCODING, "min": 0, "max": 10})
+  lower_x = df[X_ENCODING].min() - 1
+  upper_x = df[X_ENCODING].max() + 1
+  lower_y = df[Y_ENCODING].min() - 1
+  upper_y = df[Y_ENCODING].max() + 1
 
-  send_airbnb_info(eel)
+  eel.send_dimension_total_extent({"name": X_ENCODING, "min": lower_x, "max": upper_x})
+  eel.send_dimension_total_extent({"name": Y_ENCODING, "min": lower_y, "max": upper_y})
+
+  # also send use case specific bounds to the frontend
+  USE_CASE.send_info(eel)
+
+  return
 
 
 @eel.expose
@@ -424,9 +434,24 @@ def start_eel(develop):
             raise
 
 
+def load_use_case(use_case: UseCase):
+    global USE_CASE, df, FILE_PATH, TABLE_NAME, X_ENCODING, Y_ENCODING
+
+    USE_CASE = use_case
+    FILE_PATH = use_case.file_path
+    TABLE_NAME = use_case.table_name
+    X_ENCODING = use_case.x_encoding
+    Y_ENCODING = use_case.y_encoding
+
+    df = cursor.execute("SELECT * FROM read_csv_auto('"+FILE_PATH+"');").fetchdf()
+    cursor.register(TABLE_NAME, df)
+    cursor.execute("CREATE TABLE plotted(id VARCHAR)")
+
+
 if __name__ == "__main__":
     import sys
-    load_config(user_parameters, cursor)
+    load_use_case(UseCaseAirbnb())
+    load_preset_scenarios(cursor)
 
     # Uses the production version in the "build" directory if passed a second argument
     start_eel(develop=len(sys.argv) == 1)
