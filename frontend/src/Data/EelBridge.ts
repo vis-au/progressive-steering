@@ -80,7 +80,7 @@ function serializeChunk(chunk: any) {
       : chunk[id].values[DEFAULT_Y_DIMENSION]
 
     datum["status"] = chunk[id].state;
-    datum["id"] = +id;
+    datum["id"] = id;
 
     datum = addTernaryProperties(datum);
 
