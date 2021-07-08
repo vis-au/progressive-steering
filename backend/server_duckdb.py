@@ -457,10 +457,16 @@ def get_numeric_columns():
   return numeric_columns
 
 
-def load_use_case(use_case: UseCase):
+def load_use_case(use_case_label: str):
     global USE_CASE, df
 
-    USE_CASE = use_case
+    # while we do not have other use cases, this will default to the airbnb use case
+    USE_CASE = UseCaseAirbnb()
+
+    if use_case_label == "airbnb":
+        USE_CASE = UseCaseAirbnb()
+    elif use_case_label == "spotify":
+        USE_CASE = UseCaseSpotify()
 
     df = cursor.execute("SELECT * FROM read_csv_auto('"+USE_CASE.file_path+"');").fetchdf()
     numeric_columns = get_numeric_columns()
@@ -481,15 +487,7 @@ if __name__ == "__main__":
     if use_case_label not in known_use_cases:
         raise Exception("Unknown use case. Please provide one of the following use cases: "+str(known_use_cases))
 
-    # while we do not have other use cases, this will default to the airbnb use case
-    use_case = UseCaseAirbnb()
-
-    if use_case_label == "airbnb":
-        use_case = UseCaseAirbnb()
-    elif use_case_label == "spotify":
-        use_case = UseCaseSpotify()
-
-    load_use_case(use_case)
+    load_use_case(use_case_label)
 
     if use_case_label == "airbnb":
         load_preset_scenarios(cursor)
