@@ -102,7 +102,7 @@ def reset():
 
 def tuple_to_dict(tuple, state, chunk_number):
     # first apply the data specific properties using a custom function
-    transformed_dict = USE_CASE.get_dict_for_use_case(tuple)
+    transformed_dict = USE_CASE.get_dict_for_use_case(tuple, df)
 
     # then add the required properties
     transformed_dict["chunk"] = chunk_number
@@ -322,7 +322,7 @@ def send_info_to_frontend():
   eel.send_dimension_total_extent({"name": USE_CASE.y_encoding, "min": min_y, "max": max_y})
 
   # also send use case specific bounds to the frontend
-  USE_CASE.send_info(eel)
+  USE_CASE.send_info(eel, df)
 
   return
 

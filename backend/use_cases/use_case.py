@@ -1,3 +1,7 @@
+import pandas as pd
+import eel
+from typing import List
+
 class UseCase():
   def __init__(self, file_path, table_name, x_encoding, y_encoding):
     self.file_path = file_path
@@ -15,7 +19,7 @@ class UseCase():
     return {}
 
 
-  def get_dict_for_use_case(self, tuple):
+  def get_dict_for_use_case(self, tuple: List[float], df: pd.DataFrame):
     '''
     Describes the transformation of a tuple from the airbnb data to the format required by the
     duckdb server. The returned dict is required to encode the x and y dimensions.
@@ -26,7 +30,7 @@ class UseCase():
     }
 
 
-  def send_info(self, eel):
+  def send_info(self, eel: eel, df: pd.DataFrame):
     '''
     Sends value ranges to the frontend for all dimensions that are included by the
     airbnb_tuple_to_dict() function above.
