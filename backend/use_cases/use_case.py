@@ -3,11 +3,12 @@ import eel
 from typing import List
 
 class UseCase():
-  def __init__(self, file_path, table_name, x_encoding, y_encoding):
+  def __init__(self, file_path, table_name, x_encoding, y_encoding, training_features=[]):
     self.file_path = file_path
     self.table_name = table_name
     self.x_encoding = x_encoding
     self.y_encoding = y_encoding
+    self.feature_columns = training_features
     return None
 
 

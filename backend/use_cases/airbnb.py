@@ -5,6 +5,7 @@ FILE_PATH = "../data/listings_alt.csv"
 TABLE_NAME = "listings"
 X_ENCODING = "Saving opportunity"
 Y_ENCODING = "Distance"
+TRAINING_FEATURES = ['zipcode', 'latitude', 'longitude','price']
 
 
 def distance(lat1, long1, lat2, long2):
@@ -21,7 +22,7 @@ def distance(lat1, long1, lat2, long2):
 
 class UseCaseAirbnb(UseCase):
   def __init__(self):
-    super().__init__(FILE_PATH, TABLE_NAME, X_ENCODING, Y_ENCODING)
+    super().__init__(FILE_PATH, TABLE_NAME, X_ENCODING, Y_ENCODING, TRAINING_FEATURES)
     return None
 
 
@@ -33,7 +34,7 @@ class UseCaseAirbnb(UseCase):
     }
 
 
-  def get_dict_for_use_case(self, tuple):
+  def get_dict_for_use_case(self, tuple, _):
     return {
         "accommodates": tuple[12],
         "bathrooms": tuple[13],
@@ -49,7 +50,7 @@ class UseCaseAirbnb(UseCase):
     }
 
 
-  def send_info(self, eel):
+  def send_info(self, eel, _):
     eel.send_dimension_total_extent({"name": "accommodates", "min": 0, "max": 5})
     eel.send_dimension_total_extent({"name": "bathrooms", "min": 0, "max": 4})
     eel.send_dimension_total_extent({"name": "bedrooms", "min": 0, "max": 4})
