@@ -1,16 +1,22 @@
 import eel
 import duckdb
 import platform
+import pandas as pd
+import numpy as np
 
-import steering_module as sm
-from use_cases.airbnb import UseCaseAirbnb
+import steering_duckdb as steer
 from use_cases.use_case import UseCase
+from use_cases.spotify import UseCaseSpotify
+from use_cases.airbnb import UseCaseAirbnb
 from testcase_loader import load_preset_scenarios, get_test_cases
 
 WAIT_INTERVAL = 1
 
 # contains information about the particular use case and is populated by load_use_case() on launch
 USE_CASE: UseCase = None
+
+# we reorder the columns when loading the data such that a unique id sits at position 0
+ID_COLUMN_INDEX = 0
 
 # user constants
 user_parameters={}
@@ -40,9 +46,9 @@ use_floats_for_savings=True
 progression_state = PROGRESSTION_STATES["ready"]
 
 
-# initialize the database connection
+# initialize the database connection and an empty dataframe
 cursor = duckdb.connect()
-df = None
+df: pd.DataFrame = None
 
 
 def send_chunks(steered_chunk, random_chunk):
@@ -115,7 +121,7 @@ def tuple_to_dict(tuple, state, chunk_number):
 def mark_ids_plotted(result):
     value_string = ""
     for i, tuple in enumerate(result):
-        value_string += "("+str(tuple[0])+"), " if i < len(result)-1 else "("+str(tuple[0])+");"
+        value_string += "('"+str(tuple[ID_COLUMN_INDEX])+"'), " if i < len(result)-1 else "('"+str(tuple[ID_COLUMN_INDEX])+"');"
 
     if len(value_string) == 0:
         return
@@ -127,7 +133,7 @@ def get_items_inside_selection_at_chunk(chunk):
     inb = 0
 
     for k in plotted_points:
-        if plotted_points[k]["inside"]==1 and plotted_points[k]["chunk"]==chunk:
+        if plotted_points[str(k)]["inside"]==1 and plotted_points[str(k)]["chunk"]==chunk:
             inb+=1
 
     return inb
@@ -151,16 +157,16 @@ def send_results_to_frontend(chunk_number, result, random_result, state):
     random_chunk = {}
 
     for tuple in result:
-        plotted_points[tuple[0]]=tuple_to_dict(tuple, state, chunk_number)
-        chunk[tuple[0]]={
+        plotted_points[str(tuple[ID_COLUMN_INDEX])]=tuple_to_dict(tuple, state, chunk_number)
+        chunk[tuple[ID_COLUMN_INDEX]]={
             "chunk": chunk_number,
             "state": state,
-            "values": plotted_points[tuple[0]]
+            "values": plotted_points[str(tuple[ID_COLUMN_INDEX])]
         }
 
     # ensure equal chunk size between random and steered chunk
     for tuple in random_result[len(plotted_points) - len(result) : len(plotted_points)]:
-        random_chunk[tuple[0]] = {
+        random_chunk[tuple[ID_COLUMN_INDEX]] = {
             "chunk": chunk_number,
             "state": "random",
             "values": tuple_to_dict(tuple, state, chunk_number)
@@ -338,13 +344,44 @@ def send_to_backend_userData(user_data):
   start_progression()
 
 
+def update_steering_modifier():
+    global modifier
+    global tree_ready
+    global USE_CASE
+
+    plotted_list = []
+    of_interest_list = []
+
+    for id in plotted_points:
+        plotted_list.append(plotted_points[str(id)])
+        of_interest_list.append(1 if id in selected_points else 0)
+
+    plotted_df = pd.DataFrame(plotted_list)
+    of_interest_np = np.array(of_interest_list)
+
+    if len(USE_CASE.feature_columns) == 0:
+        feature_names = get_numeric_columns()
+        feature_names.remove(USE_CASE.x_encoding)
+        feature_names.remove(USE_CASE.y_encoding)
+    else:
+        feature_names = USE_CASE.feature_columns
+
+    features = plotted_df.loc[:, feature_names]
+    modifier="("+steer.get_steering_condition(features, of_interest_np, "sql")+")"
+
+    if len(modifier)>3:
+        tree_ready=True
+    else:
+        modifier="True"
+
+    return modifier
+
+
 @eel.expose
 def send_user_selection(selected_item_ids):
     global plotted_points
     global selected_points
     global last_selected_items
-    global modifier
-    global tree_ready
 
     if len(selected_item_ids)==0:
         return(0)
@@ -354,20 +391,13 @@ def send_user_selection(selected_item_ids):
     last_selected_items=selected_item_ids.copy()
 
     for k in selected_item_ids:
-        plotted_points[k]["inside"]=1
+        plotted_points[str(k)]["inside"]=1
 
     selected_points.extend(selected_item_ids)
 
     eel.sleep(0.01)
 
-    modifier="("+sm.getSteeringCondition(plotted_points)+")"
-
-    if len(modifier)>3:
-        tree_ready=True
-    else:
-        modifier="True"
-
-    return modifier
+    update_steering_modifier()
 
 
 @eel.expose
@@ -415,12 +445,30 @@ def start_eel():
             raise
 
 
+def get_numeric_columns():
+  numeric_columns = []
+  numeric_types = [np.float32, np.float64, np.int32, np.int64]
+
+  for col in df.columns:
+    # avoid having duplicate id column, even if it's numeric
+    if df[col].dtype in numeric_types and col != "id":
+      numeric_columns.append(col)
+
+  return numeric_columns
+
+
 def load_use_case(use_case: UseCase):
     global USE_CASE, df
 
     USE_CASE = use_case
 
     df = cursor.execute("SELECT * FROM read_csv_auto('"+USE_CASE.file_path+"');").fetchdf()
+    numeric_columns = get_numeric_columns()
+
+    # put id column first to match ID_COLUMN_INDEX, except for airbnb use case, which requires all
+    # columns to be available because of index-based column access
+    df = df if isinstance(USE_CASE, UseCaseAirbnb) else df[["id"] + numeric_columns]
+
     cursor.register(USE_CASE.table_name, df)
     cursor.execute("CREATE TABLE plotted(id VARCHAR)")
 
@@ -428,16 +476,23 @@ def load_use_case(use_case: UseCase):
 if __name__ == "__main__":
     import sys
 
-    known_use_cases = ["airbnb"]
+    known_use_cases = ["airbnb", "spotify"]
     use_case_label = sys.argv[1] if len(sys.argv) > 1 else "airbnb"
     if use_case_label not in known_use_cases:
         raise Exception("Unknown use case. Please provide one of the following use cases: "+str(known_use_cases))
 
     # while we do not have other use cases, this will default to the airbnb use case
-    use_case = UseCaseAirbnb() if use_case_label == "airbnb" else UseCaseAirbnb()
+    use_case = UseCaseAirbnb()
+
+    if use_case_label == "airbnb":
+        use_case = UseCaseAirbnb()
+    elif use_case_label == "spotify":
+        use_case = UseCaseSpotify()
 
     load_use_case(use_case)
-    load_preset_scenarios(cursor)
+
+    if use_case_label == "airbnb":
+        load_preset_scenarios(cursor)
 
     # Uses the production version in the "build" directory if passed a second argument
     start_eel()
