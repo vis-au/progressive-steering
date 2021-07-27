@@ -74,7 +74,7 @@ def build_query(chunk_size):
       if isinstance(value, list):
           min_value = str(value[0])
           max_value = str(value[1])
-          WHERE += " AND "+param+" >= "+min_value+" AND "+param+" < "+max_value
+          WHERE += " AND "+param+" >= "+min_value+" AND "+param+" <= "+max_value
       elif isinstance(value, str):
           WHERE += " AND "+param+" = "+value
       elif isinstance(value, (int, float, complex)):
