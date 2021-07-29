@@ -812,7 +812,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
           <g className="axes"></g>
           { this.renderBrushedRegions() }
           { this.renderPointsInSelectionLabel() }
-          { this.renderPaddedBrush() }
+          {/* { this.renderPaddedBrush() } */}
           { this.renderUnsetDimensionsWarning() }
         </svg>
       </div>

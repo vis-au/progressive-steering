@@ -70,7 +70,7 @@ export default class MainView extends React.Component<Props, State> {
       <Alternatives
         id="brushmode"
         title="Brush"
-        x={ 475 }
+        x={ 15 }
         y={ 0 }
         options={ BRUSH_MODES }
         icons={ ["crop_square", "gesture" ]}
@@ -182,7 +182,7 @@ export default class MainView extends React.Component<Props, State> {
     return (
       <div className="mainView" style={ {minHeight: height} }>
         { this.renderDataRenderer(width, height) }
-        { this.renderDataRendererTabs() }
+        {/* { this.renderDataRendererTabs() } */}
         { this.renderBrushModeSelection() }
         { this.renderMapRenderer(width, height) }
       </div>
