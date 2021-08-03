@@ -175,7 +175,7 @@ export default class Footer extends React.Component<Props, State> {
         id="show-sidebyside-toggle"
         checked={ this.props.showSideBySideView }
         disabled={ false }
-        label="side-by-syde"
+        label="side-by-side"
         icon="compare_arrows"
         onChange={ this.props.onShowSideBySideViewChanged }
       />
