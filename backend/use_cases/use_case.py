@@ -20,6 +20,14 @@ class UseCase():
     return {}
 
 
+  def transform_df(self, df):
+    '''
+    Describes the transformation function over the dataframe, for example right after it was loaded
+    from disk. Defaults to the identity function.
+    '''
+    return df
+
+
   def get_dict_for_use_case(self, tuple: List[float], df: pd.DataFrame):
     '''
     Describes the transformation of a tuple from the airbnb data to the format required by the

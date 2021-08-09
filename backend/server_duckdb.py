@@ -6,8 +6,9 @@ import numpy as np
 
 import steering_duckdb as steer
 from use_cases.use_case import UseCase
-from use_cases.spotify import UseCaseSpotify
 from use_cases.airbnb import UseCaseAirbnb
+from use_cases.spotify import UseCaseSpotify
+from use_cases.nyc_taxis import UseCaseTaxis
 from testcase_loader import load_preset_scenarios, get_test_cases
 
 WAIT_INTERVAL = 1
@@ -52,6 +53,7 @@ df: pd.DataFrame = None
 
 
 def send_chunks(steered_chunk, random_chunk):
+    print(steered_chunk, random_chunk)
     eel.send_both_chunks(steered_chunk, random_chunk)
 
 
@@ -158,7 +160,7 @@ def send_results_to_frontend(chunk_number, result, random_result, state):
 
     for tuple in result:
         plotted_points[str(tuple[ID_COLUMN_INDEX])]=tuple_to_dict(tuple, state, chunk_number)
-        chunk[tuple[ID_COLUMN_INDEX]]={
+        chunk[str(tuple[ID_COLUMN_INDEX])]={
             "chunk": chunk_number,
             "state": state,
             "values": plotted_points[str(tuple[ID_COLUMN_INDEX])]
@@ -474,6 +476,10 @@ def load_use_case(use_case_label: str):
     # put id column first to match ID_COLUMN_INDEX, except for airbnb use case, which requires all
     # columns to be available because of index-based column access
     df = df if isinstance(USE_CASE, UseCaseAirbnb) else df[["id"] + numeric_columns]
+
+    # apply transformations to the dataframe, for example generating random ids or correcting its
+    # default data types before the progression starts.
+    df = USE_CASE.transform_df(df)
 
     cursor.register(USE_CASE.table_name, df)
     cursor.execute("CREATE TABLE plotted(id VARCHAR)")
