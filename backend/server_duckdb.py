@@ -469,6 +469,8 @@ def load_use_case(use_case_label: str):
         USE_CASE = UseCaseAirbnb()
     elif use_case_label == "spotify":
         USE_CASE = UseCaseSpotify()
+    elif use_case_label == "taxis":
+        USE_CASE = UseCaseTaxis()
 
     df = cursor.execute("SELECT * FROM read_csv_auto('"+USE_CASE.file_path+"');").fetchdf()
     numeric_columns = get_numeric_columns()
@@ -488,7 +490,7 @@ def load_use_case(use_case_label: str):
 if __name__ == "__main__":
     import sys
 
-    known_use_cases = ["airbnb", "spotify"]
+    known_use_cases = ["airbnb", "spotify", "taxis"]
     use_case_label = sys.argv[1] if len(sys.argv) > 1 else "airbnb"
     if use_case_label not in known_use_cases:
         raise Exception("Unknown use case. Please provide one of the following use cases: "+str(known_use_cases))
