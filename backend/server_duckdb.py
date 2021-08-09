@@ -16,6 +16,13 @@ WAIT_INTERVAL = 1
 # contains information about the particular use case and is populated by load_use_case() on launch
 USE_CASE: UseCase = None
 
+# enum of the use case presets
+USE_CASE_PRESETS = {
+    "airbnb": UseCaseAirbnb,
+    "spotify": UseCaseSpotify,
+    "taxis": UseCaseTaxis
+}
+
 # we reorder the columns when loading the data such that a unique id sits at position 0
 ID_COLUMN_INDEX = 0
 
@@ -462,15 +469,8 @@ def get_numeric_columns():
 def load_use_case(use_case_label: str):
     global USE_CASE, df
 
-    # while we do not have other use cases, this will default to the airbnb use case
-    USE_CASE = UseCaseAirbnb()
-
-    if use_case_label == "airbnb":
-        USE_CASE = UseCaseAirbnb()
-    elif use_case_label == "spotify":
-        USE_CASE = UseCaseSpotify()
-    elif use_case_label == "taxis":
-        USE_CASE = UseCaseTaxis()
+    # load the constructor from the global enum and create the use case object
+    USE_CASE = USE_CASE_PRESETS[use_case_label]()
 
     df = cursor.execute("SELECT * FROM read_csv_auto('"+USE_CASE.file_path+"');").fetchdf()
     numeric_columns = get_numeric_columns()
@@ -490,7 +490,8 @@ def load_use_case(use_case_label: str):
 if __name__ == "__main__":
     import sys
 
-    known_use_cases = ["airbnb", "spotify", "taxis"]
+    # ensure that the label provided as a script parameter is valid
+    known_use_cases = list(USE_CASE_PRESETS.keys())
     use_case_label = sys.argv[1] if len(sys.argv) > 1 else "airbnb"
     if use_case_label not in known_use_cases:
         raise Exception("Unknown use case. Please provide one of the following use cases: "+str(known_use_cases))
