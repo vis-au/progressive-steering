@@ -31,19 +31,28 @@ class UseCase():
   def get_dict_for_use_case(self, tuple: List[float], df: pd.DataFrame):
     '''
     Describes the transformation of a tuple from the airbnb data to the format required by the
-    duckdb server. The returned dict is required to encode the x and y dimensions.
+    duckdb server. The returned dict is required to encode the x and y dimensions. Defaults to a
+    simple conversion from tuple to dict.
     '''
-    return {
-        self.x_encoding: tuple[-1],
-        self.y_encoding: tuple[-1],
-    }
+    result = {}
+
+    for i, col in enumerate(df.columns):
+      result[col] = tuple[i]
+
+    return result
 
 
   def send_info(self, eel: eel, df: pd.DataFrame):
     '''
     Sends value ranges to the frontend for all dimensions that are included by the
-    airbnb_tuple_to_dict() function above.
+    airbnb_tuple_to_dict() function above. Defaults to loading min/max from the dataframe for all
+    dimensions and sending those.
     '''
-    # eel.send_dimension_total_extent({"name": "accommodates", "min": 0, "max": 5})
-
-    return True
+    for col in df.columns:
+      min = df[col].min()
+      max = df[col].max()
+      eel.send_dimension_total_extent({
+        "name": col,
+        "min": min,
+        "max": max
+      })
