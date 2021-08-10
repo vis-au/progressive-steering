@@ -26,9 +26,6 @@ USE_CASE_PRESETS = {
 # we reorder the columns when loading the data such that a unique id sits at position 0
 ID_COLUMN_INDEX = 0
 
-# user constants
-user_parameters={}
-
 # enum of states for progression
 PROGRESSTION_STATES = {
     "ready": 0,
@@ -36,6 +33,9 @@ PROGRESSTION_STATES = {
     "paused": 2,
     "done": 3
 }
+
+# user constants
+user_parameters={}
 
 # Global variables
 plotted_points = {} # all plotted points
@@ -60,7 +60,6 @@ df: pd.DataFrame = None
 
 
 def send_chunks(steered_chunk, random_chunk):
-    print(steered_chunk, random_chunk)
     eel.send_both_chunks(steered_chunk, random_chunk)
 
 
@@ -368,6 +367,8 @@ def update_steering_modifier():
     plotted_df = pd.DataFrame(plotted_list)
     of_interest_np = np.array(of_interest_list)
 
+    # if the use case specifies feature columns, use those, otherwise use all columns except the
+    # ones used for x and y encoding in view (to avoid just trivial training).
     if len(USE_CASE.feature_columns) == 0:
         feature_names = get_numeric_columns()
         feature_names.remove(USE_CASE.x_encoding)
@@ -473,15 +474,16 @@ def load_use_case(use_case_label: str):
     USE_CASE = USE_CASE_PRESETS[use_case_label]()
 
     df = cursor.execute("SELECT * FROM read_csv_auto('"+USE_CASE.file_path+"');").fetchdf()
+
+    # apply use case-specific transformations to the dataframe, for example generating random ids or
+    # correcting its default data types before the progression starts.
+    df = USE_CASE.transform_df(df)
+
     numeric_columns = get_numeric_columns()
 
     # put id column first to match ID_COLUMN_INDEX, except for airbnb use case, which requires all
     # columns to be available because of index-based column access
     df = df if isinstance(USE_CASE, UseCaseAirbnb) else df[["id"] + numeric_columns]
-
-    # apply transformations to the dataframe, for example generating random ids or correcting its
-    # default data types before the progression starts.
-    df = USE_CASE.transform_df(df)
 
     cursor.register(USE_CASE.table_name, df)
     cursor.execute("CREATE TABLE plotted(id VARCHAR)")
