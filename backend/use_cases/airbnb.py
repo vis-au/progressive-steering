@@ -34,23 +34,23 @@ class UseCaseAirbnb(UseCase):
     }
 
 
-  def get_dict_for_use_case(self, tuple, _):
+  def get_dict_for_use_case(self, tuple, column_names):
     return {
-        "accommodates": tuple[12],
-        "bathrooms": tuple[13],
-        "bedrooms": tuple[14],
-        "beds": tuple[15],
-        "cleaning_fee": tuple[18],
-        "latitude": tuple[10],
-        "longitude": tuple[11],
-        "price": tuple[16],
-        "zipcode": tuple[7],
-        self.x_encoding: tuple[46],
-        self.y_encoding: tuple[44], # distance()
+        "accommodates": tuple[column_names.index("accommodates")],
+        "bathrooms": tuple[column_names.index("bathrooms")],
+        "bedrooms": tuple[column_names.index("bedrooms")],
+        "beds": tuple[column_names.index("beds")],
+        "cleaning_fee": tuple[column_names.index("cleaning_fee")],
+        "latitude": tuple[column_names.index("latitude")],
+        "longitude": tuple[column_names.index("longitude")],
+        "price": tuple[column_names.index("price")],
+        "zipcode": tuple[column_names.index("zipcode")],
+        self.x_encoding: tuple[column_names.index(self.x_encoding)],
+        self.y_encoding: tuple[column_names.index(self.y_encoding)], # distance()
     }
 
 
-  def send_info(self, eel, _):
+  def send_info(self, eel, column_names, cursor):
     eel.send_dimension_total_extent({"name": "accommodates", "min": 0, "max": 5})
     eel.send_dimension_total_extent({"name": "bathrooms", "min": 0, "max": 4})
     eel.send_dimension_total_extent({"name": "bedrooms", "min": 0, "max": 4})
@@ -60,3 +60,5 @@ class UseCaseAirbnb(UseCase):
     eel.send_dimension_total_extent({"name": "longitude", "min": 2.2, "max": 2.5})
     eel.send_dimension_total_extent({"name": "price", "min": 50, "max": 95})
     eel.send_dimension_total_extent({"name": "zipcode", "min": 74400, "max": 750011})
+    eel.send_dimension_total_extent({"name": "Saving opportunity", "min": -1, "max": 32})
+    eel.send_dimension_total_extent({"name": "Distance", "min": 0, "max": 10})

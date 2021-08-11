@@ -1,6 +1,5 @@
-import pandas as pd
 import eel
-from typing import List
+from typing import Any, List
 
 class UseCase():
   def __init__(self, file_path, table_name, x_encoding, y_encoding, training_features=[]):
@@ -20,37 +19,51 @@ class UseCase():
     return {}
 
 
-  def transform_df(self, df):
+  def get_pk_columns(self):
     '''
-    Describes the transformation function over the dataframe, for example right after it was loaded
-    from disk. Defaults to the identity function.
+    Returns the columns of the data that make up the primary key of the dataset.
+    Use this whenever the data does not contain a column named 'id'. If more than one column are
+    supplied, they are concatenated in the CREATE query.
     '''
-    return df
+    return ["id"]
 
 
-  def get_dict_for_use_case(self, tuple: List[float], df: pd.DataFrame):
+  def get_additional_columns(self):
     '''
-    Describes the transformation of a tuple from the airbnb data to the format required by the
-    duckdb server. The returned dict is required to encode the x and y dimensions. Defaults to a
-    simple conversion from tuple to dict.
+    Per default, the server retrieves only numerical columns. This function returns additional
+    columns that should be included in the result set.
+    '''
+    return []
+
+
+  def get_dict_for_use_case(self, tuple: List[float], column_names: List[str]):
+    '''
+    Describes the transformation of a tuple retrieved from the data to the format expected by the
+    client. The returned dict is required to encode the x and y dimensions. Defaults to a
+    simple conversion from tuple to dict. Takes a duckdb cursor as parameter to get SQL access on
+    the data.
     '''
     result = {}
 
-    for i, col in enumerate(df.columns):
+    for i, col in enumerate(column_names):
       result[col] = tuple[i]
 
     return result
 
 
-  def send_info(self, eel: eel, df: pd.DataFrame):
+  def send_info(self, eel: eel, column_names: List[str], cursor: Any):
     '''
     Sends value ranges to the frontend for all dimensions that are included by the
-    airbnb_tuple_to_dict() function above. Defaults to loading min/max from the dataframe for all
-    dimensions and sending those.
+    get_dict_for_use_case() function above. Defaults to loading min/max from the database for all
+    dimensions and sending those over eel. Takes a duckdb cursor as attribute to get SQL access on
+    the data.
     '''
-    for col in df.columns:
-      min = df[col].min()
-      max = df[col].max()
+
+    for col in column_names:
+      query = f"SELECT MIN({col}),MAX({col}) FROM {self.table_name};"
+      min_max_tuple = cursor.execute(query).fetchall()[0]
+      min = min_max_tuple[0]
+      max = min_max_tuple[1]
       eel.send_dimension_total_extent({
         "name": col,
         "min": min,

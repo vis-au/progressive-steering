@@ -1,4 +1,3 @@
-import time
 import platform
 import eel
 import duckdb
@@ -42,22 +41,20 @@ user_parameters={}
 plotted_points = {} # all plotted points
 selected_points = [] # cumulated airb&b ID of points plotted in the user box till the actual chunk
 
-user_selection_updated=False # new box
-total_inside_box=0 # number of points plotted in the user box till the actual chunk
-tree_ready=False # it is used to interrupt the initial chunking cycle
-chunk_size=100 # number of points retrieved per chunk
-modifier="True" # modify initial query with conditions coming from the tree
-query_att="*" # attributes of the main query
-last_selected_items=[]
+user_selection_updated = False # new box
+total_inside_box = 0 # number of points plotted in the user box till the actual chunk
+tree_ready = False # it is used to interrupt the initial chunking cycle
+chunk_size = 100 # number of points retrieved per chunk
+modifier = "True" # modify initial query with conditions coming from the tree
+last_selected_items = []
+numeric_columns = [] # list of all columns containing numeric values
 use_floats_for_savings=True
 
 # progression state can be paused/restarted interactively by the user
 progression_state = PROGRESSTION_STATES["ready"]
 
-
-# initialize the database connection and an empty dataframe
+# initialize the database connection
 cursor = duckdb.connect()
-df: pd.DataFrame = None
 
 
 def send_chunks(steered_chunk, random_chunk):
@@ -70,9 +67,10 @@ def send_statistics_to_frontend(precision, total_inside_box):
 
 
 def build_query(chunk_size):
-  global query_att, modifier
+  global modifier
 
-  SELECT = "SELECT "+query_att
+  include_columns = numeric_columns + USE_CASE.get_additional_columns()
+  SELECT = 'SELECT id,"'+'","'.join(include_columns)+'"'
   FROM   = "FROM "+USE_CASE.table_name
   WHERE = "WHERE "+USE_CASE.table_name+".id NOT IN (SELECT id from plotted)"
 
@@ -94,8 +92,8 @@ def build_query(chunk_size):
 
 def reset():
     global plotted_points, selected_points
-    global user_selection_updated, total_inside_box, tree_ready, chunk_size, modifier, query_att
-    global last_selected_items, use_floats_for_savings
+    global user_selection_updated, total_inside_box, tree_ready, chunk_size, modifier
+    global last_selected_items, use_floats_for_savings, numeric_columns
     global progression_state
 
     print("resetting global state")
@@ -108,16 +106,18 @@ def reset():
     tree_ready=False
     chunk_size=100
     modifier="True"
-    query_att="*"
     last_selected_items=[]
+    numeric_columns = get_numeric_columns()
     use_floats_for_savings=True
 
     progression_state = PROGRESSTION_STATES["ready"]
 
 
 def tuple_to_dict(tuple, state, chunk_number):
-    # first apply the data specific properties using a custom function
-    transformed_dict = USE_CASE.get_dict_for_use_case(tuple, df)
+    # first use the use-case-specific transform function to generate the dict that is send to the
+    # frontend from the touple
+    include_columns = numeric_columns + USE_CASE.get_additional_columns()
+    transformed_dict = USE_CASE.get_dict_for_use_case(tuple, ["id"]+include_columns)
 
     # then add the required properties
     transformed_dict["chunk"] = chunk_number
@@ -189,6 +189,7 @@ def get_next_result(chunk_number, random_result, state, query):
 
     cursor.execute(query)
     result = cursor.fetchall()
+    print("asdfasdfasdfasdfasdf", result)
 
     send_results_to_frontend(chunk_number, result, random_result, state)
     mark_ids_plotted(result)
@@ -328,16 +329,8 @@ def send_info_to_frontend():
   eel.set_x_name(USE_CASE.x_encoding)
   eel.set_y_name(USE_CASE.y_encoding)
 
-  min_x = df[USE_CASE.x_encoding].min()
-  max_x = df[USE_CASE.x_encoding].max()
-  min_y = df[USE_CASE.y_encoding].min()
-  max_y = df[USE_CASE.y_encoding].max()
-
-  eel.send_dimension_total_extent({"name": USE_CASE.x_encoding, "min": min_x, "max": max_x})
-  eel.send_dimension_total_extent({"name": USE_CASE.y_encoding, "min": min_y, "max": max_y})
-
   # also send use case specific bounds to the frontend
-  USE_CASE.send_info(eel, df)
+  USE_CASE.send_info(eel, numeric_columns, cursor)
 
   return
 
@@ -371,9 +364,12 @@ def update_steering_modifier():
     # if the use case specifies feature columns, use those, otherwise use all columns except the
     # ones used for x and y encoding in view (to avoid just trivial training).
     if len(USE_CASE.feature_columns) == 0:
-        feature_names = get_numeric_columns()
-        feature_names.remove(USE_CASE.x_encoding)
-        feature_names.remove(USE_CASE.y_encoding)
+        feature_names = numeric_columns.copy()
+
+        if USE_CASE.x_encoding in feature_names:
+            feature_names.remove(USE_CASE.x_encoding)
+        if USE_CASE.y_encoding in feature_names:
+            feature_names.remove(USE_CASE.y_encoding)
     else:
         feature_names = USE_CASE.feature_columns
 
@@ -457,51 +453,62 @@ def start_eel():
 
 
 def get_numeric_columns():
-  numeric_columns = []
-  numeric_types = [np.float32, np.float64, np.int32, np.int64]
+    if USE_CASE is None:
+        return
 
-  for col in df.columns:
-    # avoid having duplicate id column, even if it's numeric
-    if df[col].dtype in numeric_types and col != "id":
-      numeric_columns.append(col)
+    # see https://duckdb.org/docs/sql/data_types/overview
+    numeric_types = ["BIGINT", "DOUBLE", "HUGEINT", "INTEGER", "REAL", "SMALLINT", "TINYINT"]
+    numeric_columns = []
 
-  return numeric_columns
+    response = cursor.execute(f"DESCRIBE {USE_CASE.table_name};").fetchall()
+
+    all_column_names = map(lambda t: t[0], response)
+    all_column_types = map(lambda t: t[1], response)
+    all_columns = list(zip(all_column_names, all_column_types))
+
+    for col in all_columns:
+        # avoid having duplicate id column, even if it's numeric
+        if col[1] in numeric_types and col[0] != "id":
+            numeric_columns.append(col[0])
+
+    return numeric_columns
 
 
-def load_df_from_disk():
-    global df
-
+def register_dataset_as_view():
     print("importing data from "+USE_CASE.file_path+" ...")
-    start = time.time()
-    if USE_CASE.file_path.find(".csv") > 0:
-        df = cursor.execute("SELECT * FROM read_csv_auto('"+USE_CASE.file_path+"');").fetchdf()
-    elif USE_CASE.file_path.find(".parquet") > 0:
-        df = cursor.execute("SELECT * FROM '"+USE_CASE.file_path+"';").fetchdf()
-    end = time.time()
-    print(end-start)
 
-    return df
+    table = USE_CASE.table_name
+    path = USE_CASE.file_path
+
+    if USE_CASE.file_path.find(".csv") > 0:
+        path = "read_csv_auto('"+path+"')"
+    elif USE_CASE.file_path.find(".parquet") > 0:
+        path = "parquet_scan('"+path+"')"
+
+    id_columns = USE_CASE.get_pk_columns()
+
+    if len(id_columns) == 1 and id_columns[0] == "id":
+        query = f"CREATE VIEW {table} AS SELECT * FROM {path};"
+    else:
+        subquery_id = f"CONCAT({','.join(id_columns)}) as id,"
+        query = f"CREATE VIEW {table} AS SELECT {subquery_id} * FROM {path};"
+
+    cursor.execute(query)
 
 
 def load_use_case(use_case_label: str):
-    global USE_CASE, df
+    global USE_CASE, numeric_columns
 
     # load the constructor from the global enum and create the use case object
     USE_CASE = USE_CASE_PRESETS[use_case_label]()
 
-    df = load_df_from_disk()
+    # create a view on the dataset linked in the use case, on which all queries are run
+    register_dataset_as_view()
 
-    # apply use case-specific transformations to the dataframe, for example generating random ids or
-    # correcting its default data types before the progression starts.
-    df = USE_CASE.transform_df(df)
-
+    # update the list of numeric columns that are retrieved for every chunk
     numeric_columns = get_numeric_columns()
 
-    # put id column first to match ID_COLUMN_INDEX, except for airbnb use case, which requires all
-    # columns to be available because of index-based column access
-    df = df if isinstance(USE_CASE, UseCaseAirbnb) else df[["id"] + numeric_columns]
-
-    cursor.register(USE_CASE.table_name, df)
+    # also create new empty table for plotted ids
     cursor.execute("CREATE TABLE plotted(id VARCHAR)")
 
 
