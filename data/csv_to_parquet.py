@@ -1,5 +1,3 @@
-import pandas as pd
-
 if __name__ == "__main__":
   import sys
 
@@ -9,11 +7,8 @@ if __name__ == "__main__":
   path_to_csv = sys.argv[1]
   path_to_parquet = sys.argv[2] if len(sys.argv) == 3 else "./data.parquet"
 
-  try:
-    df = pd.read_csv(path_to_csv)
-  except:
-    import duckdb
-    con = duckdb.connect()
-    df = con.execute("SELECT * FROM read_csv_auto('"+path_to_csv+"');").fetchdf()
+  import duckdb
+  con = duckdb.connect()
+  con.execute(f"CREATE VIEW data as (SELECT * FROM read_csv_auto('{path_to_csv}'));")
+  con.execute(f"COPY (SELECT * FROM data) TO '{path_to_parquet}' (FORMAT 'parquet')")
 
-  df.to_parquet(path_to_parquet)
