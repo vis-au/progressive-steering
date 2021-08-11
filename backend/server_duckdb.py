@@ -66,7 +66,7 @@ def send_statistics_to_frontend(precision, total_inside_box):
     eel.send_evaluation_metric({"name": "recall", "value": total_inside_box})
 
 
-def build_query(chunk_size):
+def build_steered_query(chunk_size):
   global modifier
 
   include_columns = numeric_columns + USE_CASE.get_additional_columns()
@@ -88,6 +88,14 @@ def build_query(chunk_size):
           WHERE += " AND "+param+" = "+str(value)
 
   return SELECT+" "+FROM+" "+WHERE+" AND "+modifier+" LIMIT "+str(chunk_size)
+
+def build_random_query(chunk_size):
+    include_columns = numeric_columns + USE_CASE.get_additional_columns()
+    SELECT = 'SELECT id,"'+'","'.join(include_columns)+'"'
+    FROM   = "FROM "+USE_CASE.table_name
+    WHERE = "WHERE "+USE_CASE.table_name+".id NOT IN (SELECT id from plotted_random)"
+
+    return SELECT+" "+FROM+" "+WHERE+" AND "+modifier+" LIMIT "+str(chunk_size)
 
 
 def reset():
@@ -127,15 +135,19 @@ def tuple_to_dict(tuple, state, chunk_number):
     return transformed_dict
 
 
-def mark_ids_plotted(result):
-    value_string = ""
-    for i, tuple in enumerate(result):
-        value_string += "('"+str(tuple[ID_COLUMN_INDEX])+"'), " if i < len(result)-1 else "('"+str(tuple[ID_COLUMN_INDEX])+"');"
+def mark_ids_plotted(steered_result, random_result):
+    results = [steered_result, random_result]
+    tables = ["plotted", "plotted_random"]
 
-    if len(value_string) == 0:
-        return
+    for pair in zip(results, tables):
+        result = pair[0]
+        value_string = ""
+        for i, tuple in enumerate(result):
+            value_string += "('"+str(tuple[ID_COLUMN_INDEX])+"'), " if i < len(result)-1 else "('"+str(tuple[ID_COLUMN_INDEX])+"');"
 
-    cursor.execute("INSERT INTO plotted (id) VALUES "+value_string)
+        # only run the query if there are actual values to insert, otherwise there will be an error.
+        if len(value_string) > 0:
+            cursor.execute(f"INSERT INTO {pair[1]} (id) VALUES {value_string}")
 
 
 def get_items_inside_selection_at_chunk(chunk):
@@ -159,13 +171,13 @@ def was_progression_reset_during_sleep():
     return False
 
 
-def send_results_to_frontend(chunk_number, result, random_result, state):
+def send_results_to_frontend(chunk_number, steered_result, random_result, state):
     global plotted_points
 
     chunk = {}
     random_chunk = {}
 
-    for tuple in result:
+    for tuple in steered_result:
         plotted_points[str(tuple[ID_COLUMN_INDEX])]=tuple_to_dict(tuple, state, chunk_number)
         chunk[str(tuple[ID_COLUMN_INDEX])]={
             "chunk": chunk_number,
@@ -174,8 +186,8 @@ def send_results_to_frontend(chunk_number, result, random_result, state):
         }
 
     # ensure equal chunk size between random and steered chunk
-    for tuple in random_result[len(plotted_points) - len(result) : len(plotted_points)]:
-        random_chunk[tuple[ID_COLUMN_INDEX]] = {
+    for tuple in random_result:
+        random_chunk[str(tuple[ID_COLUMN_INDEX])] = {
             "chunk": chunk_number,
             "state": "random",
             "values": tuple_to_dict(tuple, state, chunk_number)
@@ -184,15 +196,19 @@ def send_results_to_frontend(chunk_number, result, random_result, state):
     send_chunks(chunk, random_chunk)
 
 
-def get_next_result(chunk_number, random_result, state, query):
+def get_next_result(chunk_number, state, steered_query, random_query):
     global total_inside_box, selected_points
 
-    cursor.execute(query)
-    result = cursor.fetchall()
-    print("asdfasdfasdfasdfasdf", result)
+    cursor.execute(steered_query)
+    steered_result = cursor.fetchall()
+    cursor.execute(random_query)
+    random_result = cursor.fetchall()
 
-    send_results_to_frontend(chunk_number, result, random_result, state)
-    mark_ids_plotted(result)
+    if len(steered_result) < len(random_result):
+        random_result = random_result[0:len(steered_result)]
+
+    send_results_to_frontend(chunk_number, steered_result, random_result, state)
+    mark_ids_plotted(steered_result, random_result)
 
     # IMPORTANT: within this waiting period, the backend receives the "in-/outside" information by
     # the frontend, which influences precision/insde calculation below
@@ -207,14 +223,15 @@ def get_next_result(chunk_number, random_result, state, query):
 
     send_statistics_to_frontend(precision, total_inside_box)
 
-    return result
+    return steered_result
 
 
 def run_steered_progression(chunk_size, min_box_items=50):
     global progression_state, modifier, total_inside_box
 
     chunk = 0
-    active_query = build_query(chunk_size)
+    steered_query = build_steered_query(chunk_size)
+    random_query = build_random_query(chunk_size)
 
     # reset database of plotted points
     cursor.execute("DELETE FROM plotted")
@@ -228,36 +245,33 @@ def run_steered_progression(chunk_size, min_box_items=50):
         if progression_state == PROGRESSTION_STATES["done"]:
             return
 
-    # get all items from the dataset to imitate random later on
-    query_for_all_items = active_query[0: active_query.find("LIMIT")]
-    cursor.execute(query_for_all_items)
-    my_result_random = cursor.fetchall()
 
     ####################### NON-STEERING PHASE #####################################################
-    print("Entering NON-STEERING PHASE 1 - Query:", active_query, modifier)
+    print("Entering NON-STEERING PHASE 1 - Query:", steered_query, modifier)
     print("user parameters:", user_parameters)
     state="flushing"
     modifier="True"
-    active_query = build_query(chunk_size)
+    steered_query = build_steered_query(chunk_size)
+    random_query = build_random_query(chunk_size)
     my_result = []
     my_result_empty = False
 
     while not my_result_empty and (not tree_ready or total_inside_box<min_box_items or len(modifier)<=3) and len(selected_points) == 0:
-        my_result = get_next_result(chunk, my_result_random, state, active_query)
+        my_result = get_next_result(chunk, state, steered_query, random_query)
         chunk += 1
         if my_result is None:
             return
         my_result_empty = len(my_result) == 0
 
     ####################### ACTIVATION PHASE #######################################################
-    print("Entering ACTIVATION PHASE - Query:", active_query, modifier)
-    print(active_query)
+    print("Entering ACTIVATION PHASE - Query:", steered_query, modifier)
+    print(steered_query)
     total_inside_box=0
     state="collectingData"
     my_result_empty = False
 
     while not my_result_empty and (not tree_ready or total_inside_box<min_box_items or len(modifier)<=3):
-        my_result = get_next_result(chunk, my_result_random, state, active_query)
+        my_result = get_next_result(chunk, state, steered_query, random_query)
         chunk += 1
         if my_result is None:
             return
@@ -267,12 +281,12 @@ def run_steered_progression(chunk_size, min_box_items=50):
 
     ########################## STEERING PHASE ######################################################
     state="usingTree"
-    active_query=build_query(chunk_size)
-    print("Entering STEERING PHASE - Query:", active_query, len(my_result))
+    steered_query=build_steered_query(chunk_size)
+    print("Entering STEERING PHASE - Query:", steered_query, len(my_result))
     my_result_empty = False
 
     while not my_result_empty:
-        my_result = get_next_result(chunk, my_result_random, state, active_query)
+        my_result = get_next_result(chunk, state, steered_query, random_query)
         chunk += 1
         if my_result is None:
             return
@@ -283,12 +297,12 @@ def run_steered_progression(chunk_size, min_box_items=50):
     ######################### NON-STEERING PHASE ###################################################
     state="flushing"
     modifier="True"
-    active_query=build_query(chunk_size)
+    steered_query=build_steered_query(chunk_size)
     print("Entering NON-STEERING PHASE 2", tree_ready, "modifier =", modifier)
     my_result_empty = False
 
     while not my_result_empty:
-        my_result = get_next_result(chunk, my_result_random, state, active_query)
+        my_result = get_next_result(chunk, state, steered_query, random_query)
         chunk += 1
         if my_result is None:
             return
@@ -510,6 +524,7 @@ def load_use_case(use_case_label: str):
 
     # also create new empty table for plotted ids
     cursor.execute("CREATE TABLE plotted(id VARCHAR)")
+    cursor.execute("CREATE TABLE plotted_random(id VARCHAR)")
 
 
 if __name__ == "__main__":
