@@ -66,13 +66,13 @@ def send_statistics_to_frontend(precision, total_inside_box):
     eel.send_evaluation_metric({"name": "recall", "value": total_inside_box})
 
 
-def build_steered_query(chunk_size):
+def build_query(chunk_size, plotted_db, use_modifier):
   global modifier
 
   include_columns = numeric_columns + USE_CASE.get_additional_columns()
   SELECT = 'SELECT id,"'+'","'.join(include_columns)+'"'
   FROM   = "FROM "+USE_CASE.table_name
-  WHERE = "WHERE "+USE_CASE.table_name+".id NOT IN (SELECT id from plotted)"
+  WHERE = f"WHERE {USE_CASE.table_name}.id NOT IN (SELECT id from {plotted_db})"
 
   for p in user_parameters:
       param = str(p)
@@ -87,15 +87,10 @@ def build_steered_query(chunk_size):
       elif isinstance(value, (int, float, complex)):
           WHERE += " AND "+param+" = "+str(value)
 
-  return SELECT+" "+FROM+" "+WHERE+" AND "+modifier+" LIMIT "+str(chunk_size)
-
-def build_random_query(chunk_size):
-    include_columns = numeric_columns + USE_CASE.get_additional_columns()
-    SELECT = 'SELECT id,"'+'","'.join(include_columns)+'"'
-    FROM   = "FROM "+USE_CASE.table_name
-    WHERE = "WHERE "+USE_CASE.table_name+".id NOT IN (SELECT id from plotted_random)"
-
+  if use_modifier:
     return SELECT+" "+FROM+" "+WHERE+" AND "+modifier+" LIMIT "+str(chunk_size)
+  else:
+    return SELECT+" "+FROM+" "+WHERE+" LIMIT "+str(chunk_size)
 
 
 def reset():
@@ -230,8 +225,8 @@ def run_steered_progression(chunk_size, min_box_items=50):
     global progression_state, modifier, total_inside_box
 
     chunk = 0
-    steered_query = build_steered_query(chunk_size)
-    random_query = build_random_query(chunk_size)
+    steered_query = build_query(chunk_size, "plotted", True)
+    random_query = build_query(chunk_size, "plotted_random", True)
 
     # reset database of plotted points
     cursor.execute("DELETE FROM plotted")
@@ -251,8 +246,8 @@ def run_steered_progression(chunk_size, min_box_items=50):
     print("user parameters:", user_parameters)
     state="flushing"
     modifier="True"
-    steered_query = build_steered_query(chunk_size)
-    random_query = build_random_query(chunk_size)
+    steered_query = build_query(chunk_size, "plotted", True)
+    random_query = build_query(chunk_size, "plotted_random", True)
     my_result = []
     my_result_empty = False
 
@@ -281,7 +276,7 @@ def run_steered_progression(chunk_size, min_box_items=50):
 
     ########################## STEERING PHASE ######################################################
     state="usingTree"
-    steered_query=build_steered_query(chunk_size)
+    steered_query=build_query(chunk_size, "plotted", True)
     print("Entering STEERING PHASE - Query:", steered_query, len(my_result))
     my_result_empty = False
 
@@ -297,7 +292,7 @@ def run_steered_progression(chunk_size, min_box_items=50):
     ######################### NON-STEERING PHASE ###################################################
     state="flushing"
     modifier="True"
-    steered_query=build_steered_query(chunk_size)
+    steered_query=build_query(chunk_size, "plotted", True)
     print("Entering NON-STEERING PHASE 2", tree_ready, "modifier =", modifier)
     my_result_empty = False
 
