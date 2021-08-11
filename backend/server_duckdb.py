@@ -1,6 +1,7 @@
+import time
+import platform
 import eel
 import duckdb
-import platform
 import pandas as pd
 import numpy as np
 
@@ -467,13 +468,28 @@ def get_numeric_columns():
   return numeric_columns
 
 
+def load_df_from_disk():
+    global df
+
+    print("importing data from "+USE_CASE.file_path+" ...")
+    start = time.time()
+    if USE_CASE.file_path.find(".csv") > 0:
+        df = cursor.execute("SELECT * FROM read_csv_auto('"+USE_CASE.file_path+"');").fetchdf()
+    elif USE_CASE.file_path.find(".parquet") > 0:
+        df = cursor.execute("SELECT * FROM '"+USE_CASE.file_path+"';").fetchdf()
+    end = time.time()
+    print(end-start)
+
+    return df
+
+
 def load_use_case(use_case_label: str):
     global USE_CASE, df
 
     # load the constructor from the global enum and create the use case object
     USE_CASE = USE_CASE_PRESETS[use_case_label]()
 
-    df = cursor.execute("SELECT * FROM read_csv_auto('"+USE_CASE.file_path+"');").fetchdf()
+    df = load_df_from_disk()
 
     # apply use case-specific transformations to the dataframe, for example generating random ids or
     # correcting its default data types before the progression starts.
