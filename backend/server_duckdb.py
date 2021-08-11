@@ -228,8 +228,9 @@ def run_steered_progression(chunk_size, min_box_items=50):
     steered_query = build_query(chunk_size, "plotted", True)
     random_query = build_query(chunk_size, "plotted_random", True)
 
-    # reset database of plotted points
+    # reset databases of plotted points
     cursor.execute("DELETE FROM plotted")
+    cursor.execute("DELETE FROM plotted_random")
     progression_state = PROGRESSTION_STATES["ready"]
 
     # wait until user starts progression
