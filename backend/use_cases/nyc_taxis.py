@@ -1,10 +1,9 @@
-from dateutil import parser
-from use_cases.use_case import UseCase
 import eel
 from typing import Any, List
+from use_cases.use_case import UseCase
 
 # source of dataset: https://data.cityofnewyork.us/Transportation/2018-Yellow-Taxi-Trip-Data/t29m-gskq
-FILE_PATH = "../data/nyc_taxis_10Mil.parquet"
+FILE_PATH = "../data/nyc_taxis.parquet"
 TABLE_NAME = "taxis"
 X_ENCODING = "trip_duration"
 Y_ENCODING = "tip_percentile"
@@ -41,9 +40,8 @@ class UseCaseTaxis(UseCase):
     def get_dict_for_use_case(self, tuple: List[float], column_names: List[str]):
         result = super().get_dict_for_use_case(tuple, column_names)
 
-        dropoff_date = parser.parse(result["tpep_dropoff_datetime"])
-        pickup_date = parser.parse(result["tpep_pickup_datetime"])
-
+        dropoff_date = result["tpep_dropoff_datetime"]
+        pickup_date = result["tpep_pickup_datetime"]
         result[X_ENCODING] = (dropoff_date - pickup_date).total_seconds()
         result[Y_ENCODING] = (result["tip_amount"] / result["total_amount"])
 
