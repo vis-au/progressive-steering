@@ -28,6 +28,14 @@ class UseCase():
     return ["id"]
 
 
+  def get_view_filter(self):
+    ''''
+    Returns filter conditions that are appended to the query creating the view on the imported data.
+    Defaults to empty string, which corresponds to "no filter".
+    '''
+    return ""
+
+
   def get_additional_columns(self):
     '''
     Per default, the server retrieves only numerical columns. This function returns additional

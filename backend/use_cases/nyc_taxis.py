@@ -17,6 +17,10 @@ class UseCaseTaxis(UseCase):
         return ["tpep_dropoff_datetime", "tpep_pickup_datetime", "total_amount"]
 
 
+    def get_view_filter(self):
+        return "total_amount > 0"
+
+
     def send_info(self, eel: eel, column_names: List[str], cursor: Any):
         # computing min/max over large data takes long, so use precomputed values for this use case
         eel.send_dimension_total_extent({ "name": "VendorID", "min": 1, "max": 4 })

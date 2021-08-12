@@ -11,7 +11,7 @@ from use_cases.spotify import UseCaseSpotify
 from use_cases.nyc_taxis import UseCaseTaxis
 from testcase_loader import load_preset_scenarios, get_test_cases
 
-WAIT_INTERVAL = 1
+WAIT_INTERVAL = 0.25
 
 # contains information about the particular use case and is populated by load_use_case() on launch
 USE_CASE: UseCase = None
@@ -498,14 +498,16 @@ def register_dataset_as_view():
         path = "parquet_scan('"+path+"')"
 
     id_columns = USE_CASE.get_pk_columns()
+    filter = USE_CASE.get_view_filter()
+    where_clause = f"WHERE {filter}" if len(filter) > 0 else ""
 
     # the server expects a unique column "id" to identify each item in the data. If the dataset of
     # a use case does not have that, we create one for the view here from the primary key.
     if len(id_columns) == 1 and id_columns[0] == "id":
-        query = f"CREATE VIEW {table} AS SELECT * FROM {path};"
+        query = f"CREATE VIEW {table} AS SELECT * FROM {path} {where_clause};"
     else:
         subquery_id = f"CONCAT({','.join(id_columns)}) as id,"
-        query = f"CREATE VIEW {table} AS SELECT {subquery_id} * FROM {path};"
+        query = f"CREATE VIEW {table} AS SELECT {subquery_id} * FROM {path} {where_clause};"
 
     cursor.execute(query)
 
