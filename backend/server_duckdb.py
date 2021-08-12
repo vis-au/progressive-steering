@@ -497,6 +497,8 @@ def register_dataset_as_view():
 
     id_columns = USE_CASE.get_pk_columns()
 
+    # the server expects a unique column "id" to identify each item in the data. If the dataset of
+    # a use case does not have that, we create one for the view here from the primary key.
     if len(id_columns) == 1 and id_columns[0] == "id":
         query = f"CREATE VIEW {table} AS SELECT * FROM {path};"
     else:
