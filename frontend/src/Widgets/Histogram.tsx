@@ -150,7 +150,7 @@ export default class Histogram extends React.Component<Props, State> {
 
     return (
       <div className="histogram-container">
-        <label htmlFor={ id(this.props.label) } style={{ width: this.props.width }}>{ this.props.label }</label>
+        <label htmlFor={ id(this.props.label) }>{ this.props.label }</label>
         <svg
           id={ id(this.props.label) }
           className="histogram-canvas"
