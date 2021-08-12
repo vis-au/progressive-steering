@@ -419,6 +419,8 @@ def send_user_selection(selected_item_ids):
 
 @eel.expose
 def send_user_params(parameters):
+    # this function is intended to define filters over the dimensions of the data. We currently do
+    # not have any use for this feature, but the eel endpoint exists.
     print("new user parameters received")
 
 
