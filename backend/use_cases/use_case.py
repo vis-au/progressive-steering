@@ -56,7 +56,7 @@ class UseCase():
     Sends value ranges to the frontend for all dimensions that are included by the
     get_dict_for_use_case() function above. Defaults to loading min/max from the database for all
     dimensions and sending those over eel. Takes a duckdb cursor as attribute to get SQL access on
-    the data.
+    the data. Note that this min/max aggregations can take a while for large datasets.
     '''
 
     for col in column_names:

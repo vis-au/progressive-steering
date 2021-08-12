@@ -18,19 +18,25 @@ class UseCaseTaxis(UseCase):
 
 
     def send_info(self, eel: eel, column_names: List[str], cursor: Any):
-        super().send_info(eel, column_names, cursor)
+        # computing min/max over large data takes long, so use precomputed values for this use case
+        eel.send_dimension_total_extent({ "name": "VendorID", "min": 1, "max": 4 })
+        eel.send_dimension_total_extent({ "name": "passenger_count", "min": 0, "max": 192 })
+        eel.send_dimension_total_extent({ "name": "trip_distance", "min": 0, "max": 189483.84 })
+        eel.send_dimension_total_extent({ "name": "RatecodeID", "min": 1, "max": 99 })
+        eel.send_dimension_total_extent({ "name": "PULocationID", "min": 1, "max": 265 })
+        eel.send_dimension_total_extent({ "name": "DOLocationID", "min": 1, "max": 265 })
+        eel.send_dimension_total_extent({ "name": "payment_type", "min": 1, "max": 5 })
+        eel.send_dimension_total_extent({ "name": "fare_amount", "min": -800, "max": 907070.24 })
+        eel.send_dimension_total_extent({ "name": "extra", "min": -80, "max": 96.64 })
+        eel.send_dimension_total_extent({ "name": "mta_tax", "min": -80, "max": 150 })
+        eel.send_dimension_total_extent({ "name": "tip_amount", "min": -322.42, "max": 945.97 })
+        eel.send_dimension_total_extent({ "name": "toll_amount", "min": -52.5, "max": 1650 })
+        eel.send_dimension_total_extent({ "name": "improvement_surcharge", "min": -0.3, "max": 4000.3 })
+        eel.send_dimension_total_extent({ "name": "total_amount", "min": -800.3, "max": 907071.04 })
 
-        # true max lies at 86392.0, but that's an extreme outlier.
-        eel.send_dimension_total_extent({
-          "name": X_ENCODING,
-          "min": 0,
-          "max": 8000
-        })
-        eel.send_dimension_total_extent({
-          "name": Y_ENCODING,
-          "min": 0,
-          "max": 1
-        })
+        # true max for trip_duration is much higher, but that is probably due to errors in the data.
+        eel.send_dimension_total_extent({ "name": X_ENCODING, "min": 0, "max": 6000 })
+        eel.send_dimension_total_extent({ "name": Y_ENCODING, "min": 0, "max": 1 })
 
 
     def get_additional_columns(self):

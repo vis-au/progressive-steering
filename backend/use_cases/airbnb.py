@@ -60,5 +60,5 @@ class UseCaseAirbnb(UseCase):
     eel.send_dimension_total_extent({"name": "longitude", "min": 2.2, "max": 2.5})
     eel.send_dimension_total_extent({"name": "price", "min": 50, "max": 95})
     eel.send_dimension_total_extent({"name": "zipcode", "min": 74400, "max": 750011})
-    eel.send_dimension_total_extent({"name": "Saving opportunity", "min": -1, "max": 32})
+    eel.send_dimension_total_extent({"name": "Saving opportunity", "min": -0.25, "max": 31.25})
     eel.send_dimension_total_extent({"name": "Distance", "min": 0, "max": 10})
