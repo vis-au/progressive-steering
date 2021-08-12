@@ -4,7 +4,7 @@ import { polygonContains } from 'd3';
 
 import { lasso } from '../Widgets/LassoSelection';
 import HeatMapRenderer from './HeatMapRenderer';
-import { ScenarioPreset, TrainingState } from '../Data/EelBridge';
+import { getXDimension, getYDimension, ScenarioPreset, subscribeToXYDimensions, TrainingState } from '../Data/EelBridge';
 import { ScaledCartesianCoordinate } from '../PointTypes';
 import { DEFAULT_DENSITY_LEVELS, DEFAULT_KERNEL_STD, DEFAULT_POINT_COLOR, DEFAULT_POINT_RADIUS,
   DEFAULT_POINT_STROKE_WIDTH, MAX_BRUSH_SCALE_FACTOR, MIN_SELECTION_THRESHOLD,
@@ -13,13 +13,13 @@ import { DEFAULT_DENSITY_LEVELS, DEFAULT_KERNEL_STD, DEFAULT_POINT_COLOR, DEFAUL
 import "./ScatterplotRenderer.css";
 
 interface State {
-  brushedRegions: [[number, number], [number, number]][]
+  dimensionX: string | null,
+  dimensionY: string | null,
+  brushedRegions: [[number, number], [number, number]][],
 }
 interface Props {
   width: number,
   height: number,
-  dimensionX: string | null,
-  dimensionY: string | null,
   extents: Map<string, [number, number]>,
   data: any[],
   nonSteeringData: any[],
@@ -88,8 +88,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
 
     this.densityContourGenerator = d3.contourDensity()
       .size([this.props.width, this.props.height])
-      .x((d: any) => this.scaleX(d[this.props.dimensionX || ""]))
-      .y((d: any) => this.scaleY(d[this.props.dimensionY || ""]))
+      .x((d: any) => this.scaleX(d[this.state.dimensionX || ""]))
+      .y((d: any) => this.scaleY(d[this.state.dimensionY || ""]))
       .bandwidth(DEFAULT_KERNEL_STD)
       .thresholds(DEFAULT_DENSITY_LEVELS);
 
@@ -99,7 +99,11 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     this.scaleY = d3.scaleLinear()
       .range([0, this.props.height]);
 
+    subscribeToXYDimensions(this.onXYDimensionsChanged.bind(this));
+
     this.state = {
+      dimensionX: getXDimension(),
+      dimensionY: getYDimension(),
       brushedRegions: []
     };
   }
@@ -114,6 +118,20 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     return true;
   }
 
+  private onXYDimensionsChanged(x: string|null, y: string|null) {
+    if (x === null || y === null) {
+      return;
+    }
+
+    if (x !== this.state.dimensionX && y !== this.state.dimensionY) {
+      this.setState({ dimensionX: x, dimensionY: y });
+    } else if (x !== this.state.dimensionX) {
+      this.setState({ dimensionX: x});
+    } else if (x !== this.state.dimensionX && y !== this.state.dimensionY) {
+      this.setState({ dimensionX: x, dimensionY: y });
+    }
+  }
+
   private generateNewQuadtree() {
     return d3.quadtree<ScaledCartesianCoordinate>()
       .extent([[0, 0], [this.props.width, this.props.height]])
@@ -124,14 +142,14 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   private updateScales() {
     if (this.svg === null) {
       return;
-    } else if (this.props.dimensionX === null) {
+    } else if (this.state.dimensionX === null) {
       return;
-    } else if (this.props.dimensionY === null) {
+    } else if (this.state.dimensionY === null) {
       return;
     }
 
-    const rangeX = this.props.extents.get(this.props.dimensionX) || [0, 1];
-    const rangeY = this.props.extents.get(this.props.dimensionY) || [0, 1];
+    const rangeX = this.props.extents.get(this.state.dimensionX) || [0, 1];
+    const rangeY = this.props.extents.get(this.state.dimensionY) || [0, 1];
 
     this.scaleX.domain(rangeX);
     this.scaleY.domain([rangeY[1], rangeY[0]]);
@@ -227,7 +245,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     if (!this.props.useLassoSelection && (this.boxBrushBounds.length === 0 || this.boxBrushBounds.length === 0)) {
       return [];
     }
-    if (this.props.dimensionX === null || this.props.dimensionY === null) {
+    if (this.state.dimensionX === null || this.state.dimensionY === null) {
       return [];
     }
 
@@ -250,8 +268,8 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   }
 
   private isNodeInBounds(node: any, bounds: number[][]) {
-    const dimX = this.props.dimensionX as string;
-    const dimY = this.props.dimensionY as string;
+    const dimX = this.state.dimensionX as string;
+    const dimY = this.state.dimensionY as string;
 
     return (
       node[dimX] >= bounds[0][0] &&
@@ -265,7 +283,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     if (this.boxBrushBounds.length === 0 || this.boxBrushBounds.length === 0) {
       return [];
     }
-    if (this.props.dimensionX === null || this.props.dimensionY === null) {
+    if (this.state.dimensionX === null || this.state.dimensionY === null) {
       return [];
     }
 
@@ -569,7 +587,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   }
 
   private renderUnsetDimensionsWarning() {
-    if (this.props.dimensionX !== null && this.props.dimensionY !== null) {
+    if (this.state.dimensionX !== null || this.state.dimensionY !== null) {
       return null;
     }
 
@@ -615,13 +633,13 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   }
 
   private getScaledCoordinatesForData(useNonSteeringData: boolean) {
-    if (this.props.dimensionX === null || this.props.dimensionY === null) {
+    if (this.state.dimensionX === null || this.state.dimensionY === null) {
       return [];
     }
 
     const chunk = this.getLatestChunk(useNonSteeringData);
-    const dimX = this.props.dimensionX;
-    const dimY = this.props.dimensionY;
+    const dimX = this.state.dimensionX;
+    const dimY = this.state.dimensionY;
 
     const scaledCoordinates: ScaledCartesianCoordinate[] = [];
 
@@ -638,7 +656,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
   private renderPoints(useNonSteeringData: boolean = false): ScaledCartesianCoordinate[] {
     if (this.canvas === null || this.nonSteeringCanvas === null) {
       return [];
-    } else if (this.props.dimensionX === null || this.props.dimensionY === null) {
+    } else if (this.state.dimensionX === null || this.state.dimensionY === null) {
       return [];
     } else if (!this.receivedNewData()) {
       return [];

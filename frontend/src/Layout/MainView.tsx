@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { EelDataAdapter, getPOIs } from '../Data/DataAdapter';
-import { getXDimension, getYDimension, ScenarioPreset } from '../Data/EelBridge';
+import { ScenarioPreset } from '../Data/EelBridge';
 import { BrushMode } from '../Renderers/BrushMode';
 import RadVizRenderer from '../Renderers/RadVizRenderer';
 import { Renderer } from '../Renderers/Renderers';
@@ -141,8 +141,6 @@ export default class MainView extends React.Component<Props, State> {
         width={ width }
         height={ height }
         extents={ extents }
-        dimensionX={ getXDimension() }
-        dimensionY={ getYDimension() }
         data={ this.props.dataAdapter.data }
         nonSteeringData={ this.props.dataAdapter.nonSteeringData }
         chunkSize={ this.props.dataAdapter.chunkSize }

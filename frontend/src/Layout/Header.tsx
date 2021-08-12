@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { EelDataAdapter } from '../Data/DataAdapter';
+import { EelDataAdapter, getEelDataAdapter } from '../Data/DataAdapter';
 import { ScenarioPreset } from '../Data/EelBridge';
 import { Renderer } from '../Renderers/Renderers';
 import Histogram from '../Widgets/Histogram';
@@ -11,7 +11,6 @@ interface Props {
   activeRenderer: Renderer,
   dataAdapter: EelDataAdapter,
   includeDimensions: string[],
-  remainingDimensions: string[],
   selectedScenarioPreset: ScenarioPreset | null,
   onDimensionAdded: (event: React.ChangeEvent<HTMLSelectElement>) => void,
   onDimensionRemoved: (dimension: string) => void,
@@ -35,13 +34,17 @@ export default class Header extends React.Component<Props, State> {
   }
 
   private renderDimensionSelection() {
+    const remainingDimensions = getEelDataAdapter().dimensions.filter(dim => {
+      return this.props.includeDimensions.indexOf(dim) === -1;
+    });
+
     return (
       <select
         className="dimension-selection"
         value={ "Select Dimension" }
         onChange={ this.props.onDimensionAdded }>
         <option value="Select Dimension" disabled={ true }>Add histogram ...</option>
-        { this.props.remainingDimensions.map(this.renderDimensionOption.bind(this)) }
+        { remainingDimensions.map(this.renderDimensionOption.bind(this)) }
       </select>
     );
   }
@@ -67,12 +70,9 @@ export default class Header extends React.Component<Props, State> {
   }
 
   private renderDimensionHistograms() {
-    // only show 10 histograms maximum, to avoid overflow in the header bar
-    const dims = this.props.includeDimensions.slice(0, 10);
-
     return (
       <div className="dimension-histograms">
-        { dims.map(this.renderDimensionHistogram.bind(this)) }
+        { this.props.includeDimensions.map(this.renderDimensionHistogram.bind(this)) }
       </div>
     );
   }

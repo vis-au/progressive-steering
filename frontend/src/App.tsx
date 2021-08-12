@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-import { eel, ProgressionState, ScenarioPreset } from './Data/EelBridge';
+import { eel, ProgressionState, ScenarioPreset, subscribeToXYDimensions } from './Data/EelBridge';
 import { getEelDataAdapter, EelDataAdapter } from './Data/DataAdapter';
 import { Renderer } from './Renderers/Renderers';
 import Header from './Layout/Header';
@@ -12,10 +12,6 @@ import './App.css';
 
 
 const STEPS_BEFORE_PADDING_GROWS = 1;
-
-const DEFAULT_SELECTED_DIMENSIONS = ["Distance", "Saving opportunity"];
-const DEFAULT_UNSELECTED_DIMENSIONS = ["cleaning_fee", "price", "accommodates"];
-
 
 interface State {
   progressionState: ProgressionState,
@@ -29,7 +25,6 @@ interface State {
   stepsBeforePaddingGrows: number,
   activeRenderer: Renderer,
   activeBrushMode: BrushMode,
-  remainingDimensions: string[],
   includeDimensions: string[]
 }
 
@@ -45,18 +40,18 @@ export class App extends Component<{}, State> {
     this.dataAdapter.subscribeOnFilterChanged(this.onFilterChanged.bind(this));
     this.dataAdapter.subscribeOnMetricChanged(this.onMetricChanged.bind(this));
 
+    subscribeToXYDimensions(this.onXYDimensionsChanged.bind(this));
+
     // Place des Vosges, VIS deadline
     const dummyData = {
-      'lat': 48.85565,
-      'lon': 2.365492,
-      'moneyRange': [60, 90],
-      'day': "2020-04-31",
-      "userMaxDistance": 10
+      lat: 48.85565,
+      lon: 2.365492,
+      moneyRange: [60, 90],
+      day: "2020-04-31",
+      userMaxDistance: 10
     };
 
     eel.send_to_backend_userData(dummyData);
-
-    this.dataAdapter.dimensions.push(...DEFAULT_SELECTED_DIMENSIONS.concat(DEFAULT_UNSELECTED_DIMENSIONS));
 
     this.state = {
       progressionState: "ready",
@@ -70,8 +65,7 @@ export class App extends Component<{}, State> {
       stepsBeforePaddingGrows: STEPS_BEFORE_PADDING_GROWS,
       activeRenderer: "Scatter Plot",
       activeBrushMode: "box",
-      remainingDimensions: DEFAULT_UNSELECTED_DIMENSIONS,
-      includeDimensions: DEFAULT_SELECTED_DIMENSIONS
+      includeDimensions: []
     };
   }
 
@@ -97,9 +91,28 @@ export class App extends Component<{}, State> {
     this.setState({ selectedPoints: brushedPoints });
   }
 
+  private onXYDimensionsChanged(x: string|null, y: string|null) {
+    if (x === null || y === null) {
+      return;
+    }
+
+    const includeDimensions = this.state.includeDimensions;
+    const xIndex = includeDimensions.indexOf(x);
+    const yIndex = includeDimensions.indexOf(y);
+
+    if (xIndex === -1) {
+      includeDimensions.push(x);
+    }
+    if (yIndex === -1) {
+      includeDimensions.push(y);
+    }
+
+    this.setState({ includeDimensions });
+  }
+
   private onBrushedRegion(region: number[][]) {
     // no longer necessary to send the bounds of the region to the backend, since the backend is
-    // oblivious to the shape of the selection.
+    // oblivious to the shape of the selection. Keep this code in case we still need it somehow.
     // console.log(`user selected region from [${region[0]}] to [${region[1]}]. Updating steering ...`);
     // this.dataAdapter.selectRegion(region);
   }
@@ -176,7 +189,8 @@ export class App extends Component<{}, State> {
 
   private onRendererChanged(renderer: string) {
     const includeDimensions = this.state.includeDimensions;
-    const remainingDimensions = this.state.remainingDimensions;
+    const remainingDimensions = this.dataAdapter.dimensions
+      .filter(dim => includeDimensions.indexOf(dim) === -1);
 
     if (renderer === "RadViz" || renderer === "Star Coordinates") {
 
@@ -189,7 +203,6 @@ export class App extends Component<{}, State> {
 
     this.setState({
       includeDimensions,
-      remainingDimensions,
       activeRenderer: renderer as Renderer
     });
   }
@@ -211,35 +224,13 @@ export class App extends Component<{}, State> {
     });
   }
 
-  private updateDimensions() {
-    const numberDimensions = this.state.includeDimensions.length + this.state.remainingDimensions.length;
-    const hasReceivedData = this.dataAdapter.dimensions.length > 0;
-    const hasUpdatedDimensions = numberDimensions === this.dataAdapter.dimensions.length;
-
-    if (hasReceivedData && !hasUpdatedDimensions) {
-      const oldIncludedDimensions = this.dataAdapter.dimensions
-        .filter(d => this.state.includeDimensions.indexOf(d) > -1);
-
-      const newDimensions = this.dataAdapter.dimensions
-        .filter(d => this.state.includeDimensions.indexOf(d) === -1);
-
-      this.setState({
-        includeDimensions: oldIncludedDimensions,
-        remainingDimensions: newDimensions
-      });
-    }
-  }
-
   public render() {
-    this.updateDimensions();
-
     return (
       <div className="App">
         <Header
           dataAdapter={ this.dataAdapter }
           activeRenderer={ this.state.activeRenderer }
           includeDimensions={ this.state.includeDimensions }
-          remainingDimensions={ this.state.remainingDimensions }
           selectedScenarioPreset={ this.state.selectedScenarioPreset }
           onDimensionAdded={ this.onDimensionAdded.bind(this) }
           onDimensionRemoved={ this.onDimensionRemoved.bind(this) }

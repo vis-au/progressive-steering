@@ -18,15 +18,33 @@ export type ProgressionState = 'ready' | 'running' | 'paused' | 'done';
 export type TrainingState = 'collectingData' | 'usingTree' | 'flushing';
 
 // default dimensions used for scatter plot layout
-let DEFAULT_X_DIMENSION = "";
-let DEFAULT_Y_DIMENSION = "";
+export let X_DIMENSION: string|null = null;
+export let Y_DIMENSION: string|null = null;
 
 export function getXDimension() {
-  return DEFAULT_X_DIMENSION;
+  return X_DIMENSION;
 }
 
 export function getYDimension() {
-  return DEFAULT_Y_DIMENSION;
+  return Y_DIMENSION;
+}
+
+type XYCallback = (x: string|null, y: string|null) => void;
+const xyDimensionSubscribers :XYCallback[] = [];
+export function subscribeToXYDimensions(callback: XYCallback) {
+  xyDimensionSubscribers.push(callback);
+}
+export function unsubscribeToXYDimensions(callback: XYCallback) {
+  const indexInList = xyDimensionSubscribers.indexOf(callback);
+
+  if (indexInList > -1) {
+    xyDimensionSubscribers.splice(indexInList, 1);
+  }
+}
+function onXYDimensionChanged() {
+  xyDimensionSubscribers.forEach(callback => {
+    callback(X_DIMENSION, Y_DIMENSION);
+  });
 }
 
 // datamanger is a singleton instance that we reference from different places in the bridge
@@ -63,21 +81,26 @@ function addTernaryProperties(datum: any) {
 };
 
 function serializeChunk(chunk: any) {
+
   const serializedChunk: any[] = [];
   const ids = Object.keys(chunk);
 
   ids.forEach(id => {
+    if (X_DIMENSION === null || Y_DIMENSION === null) {
+      return;
+    }
+
     let datum = { ...chunk[id].values };
 
     // legacy: if server was started with DB_server.py, the x and y dimensions are not encoded in
     // values
-    datum[DEFAULT_X_DIMENSION] = chunk[id].values[DEFAULT_X_DIMENSION] === undefined
+    datum[X_DIMENSION] = chunk[id].values[X_DIMENSION] === undefined
       ? chunk[id].aboveM.saving
-      : chunk[id].values[DEFAULT_X_DIMENSION]
+      : chunk[id].values[X_DIMENSION]
 
-    datum[DEFAULT_Y_DIMENSION] = chunk[id].values[DEFAULT_Y_DIMENSION] === undefined
+    datum[Y_DIMENSION] = chunk[id].values[Y_DIMENSION] === undefined
       ? chunk[id].dist2user
-      : chunk[id].values[DEFAULT_Y_DIMENSION]
+      : chunk[id].values[Y_DIMENSION]
 
     datum["status"] = chunk[id].state;
     datum["id"] = id;
@@ -134,7 +157,7 @@ export function sendBothChunks(steeredChunk: any, nonSteeredChunk: any) {
  * @param extent minimum and maximum value for the dimension represented on the x axis.
  */
 export function sendXDomain(extent: [number, number]) {
-  const xDim = DEFAULT_X_DIMENSION;
+  const xDim = X_DIMENSION;
 
   if (xDim === null) {
     return;
@@ -148,7 +171,7 @@ export function sendXDomain(extent: [number, number]) {
  * @param extent minimum and maximum value for the dimension represented on the y axis.
  */
 export function sendYDomain(extent: [number, number]) {
-  const yDim = DEFAULT_Y_DIMENSION;
+  const yDim = Y_DIMENSION;
 
   if (yDim === null) {
     return;
@@ -169,7 +192,7 @@ export function sendDimensionTotalExtent(message: {name: string, min: number, ma
     dataAdapter.dimensions.push(name);
   }
 
-  console.log(name, min, max)
+  console.log("receieved new dimension extents:", name, [min, max])
 
   return;
 }
@@ -179,8 +202,9 @@ export function sendDimensionTotalExtent(message: {name: string, min: number, ma
  * @param xName name of the x dimension
  */
 export function setXName(xName: string) {
-  DEFAULT_X_DIMENSION = xName;
+  X_DIMENSION = xName;
   console.log("received dimension for x encoding:", xName);
+  onXYDimensionChanged();
   return;
 }
 
@@ -189,8 +213,9 @@ export function setXName(xName: string) {
  * @param yName name of the y dimension
  */
 export function setYName(yName: string) {
-  DEFAULT_Y_DIMENSION = yName;
-  console.log("received dimension for x encoding:", yName);
+  Y_DIMENSION = yName;
+  console.log("received dimension for y encoding:", yName);
+  onXYDimensionChanged();
   return;
 }
 
