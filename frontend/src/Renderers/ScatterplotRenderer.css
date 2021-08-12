@@ -1,3 +1,7 @@
+div.scatterplotRenderer {
+  position: relative;
+  width: 100%;
+}
 svg.axisCanvas,
 svg.nonSteeringAxesCanvas,
 svg.densityCanvas,
@@ -27,6 +31,9 @@ svg.nonSteeringAxesCanvas,
 canvas.nonSteeringCanvas,
 svg.recentNonSteeredPointsCanvas {
   right: 0;
+}
+svg.nonSteeringAxesCanvas {
+  cursor: auto;
 }
 
 svg.recentNonSteeredPointsCanvas circle.recent-point {

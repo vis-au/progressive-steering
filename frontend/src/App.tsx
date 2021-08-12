@@ -304,7 +304,12 @@ export class App extends Component<{}, State> {
         e.preventDefault();
       }
     });
+
+    window.addEventListener("resize", () => {
+      this.forceUpdate();
+    });
   }
+
 }
 
 export default App;

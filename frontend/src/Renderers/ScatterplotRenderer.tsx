@@ -814,7 +814,7 @@ export default class ScatterplotRenderer extends React.Component<Props, State> {
     const isPointCanvasHidden = this.props.showDots ? "" : "hidden";
 
     return (
-      <div className="scatterplotRenderer" style={ { width: canvasWidth } }>
+      <div className="scatterplotRenderer">
         { this.renderHeatMap(canvasWidth) }
         <canvas className={`scatterplotCanvas ${isPointCanvasHidden}`} width={ canvasWidth } height={ this.props.height } />
         <canvas className={ `nonSteeringCanvas ${isNonSteeringCanvasHidden} ${isPointCanvasHidden}` } width={ canvasWidth } height={ this.props.height }></canvas>

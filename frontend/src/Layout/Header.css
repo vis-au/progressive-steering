@@ -1,5 +1,7 @@
 .header {
   box-shadow: 0 3px 10px #efefef;
+  overflow: auto;
+  max-height: 1.5rem;
 }
 
 .header > div {
@@ -36,7 +38,7 @@
   overflow-x: hidden;
 }
 .header .dimension-histograms .double-slider-container {
-  margin: 0 1rem;
+  margin: 0 11rem;
 }
 
 .header #scenario-presets {

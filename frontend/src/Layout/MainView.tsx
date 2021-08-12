@@ -174,7 +174,7 @@ export default class MainView extends React.Component<Props, State> {
   }
 
   public render() {
-    const width = window.innerWidth - 1;
+    const width = window.innerWidth - 4;
     const height = window.innerHeight - 85;
 
     return (
