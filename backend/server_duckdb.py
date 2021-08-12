@@ -43,7 +43,7 @@ selected_points = [] # cumulated airb&b ID of points plotted in the user box til
 
 user_selection_updated = False # new box
 total_inside_box = 0 # number of points plotted in the user box till the actual chunk
-tree_ready = False # it is used to interrupt the initial chunking cycle
+has_tree_been_trained_before = False # it is used to interrupt the initial chunking cycle
 chunk_size = 100 # number of points retrieved per chunk
 modifier = "True" # modify initial query with conditions coming from the tree
 last_selected_items = []
@@ -95,7 +95,7 @@ def build_query(chunk_size, plotted_db, use_modifier):
 
 def reset():
     global plotted_points, selected_points
-    global user_selection_updated, total_inside_box, tree_ready, chunk_size, modifier
+    global user_selection_updated, total_inside_box, has_tree_been_trained_before, chunk_size, modifier
     global last_selected_items, use_floats_for_savings, numeric_columns
     global progression_state
 
@@ -106,7 +106,7 @@ def reset():
 
     user_selection_updated=False
     total_inside_box=0
-    tree_ready=False
+    has_tree_been_trained_before=False
     chunk_size=100
     modifier="True"
     last_selected_items=[]
@@ -252,7 +252,7 @@ def run_steered_progression(chunk_size, min_box_items=50):
     my_result = []
     my_result_empty = False
 
-    while not my_result_empty and (not tree_ready or total_inside_box<min_box_items or len(modifier)<=3) and len(selected_points) == 0:
+    while not my_result_empty and (not has_tree_been_trained_before or total_inside_box<min_box_items or len(modifier)<=3) and len(selected_points) == 0:
         my_result = get_next_result(chunk, state, steered_query, random_query)
         chunk += 1
         if my_result is None:
@@ -266,7 +266,7 @@ def run_steered_progression(chunk_size, min_box_items=50):
     state="collectingData"
     my_result_empty = False
 
-    while not my_result_empty and (not tree_ready or total_inside_box<min_box_items or len(modifier)<=3):
+    while not my_result_empty and (not has_tree_been_trained_before or total_inside_box<min_box_items or len(modifier)<=3):
         my_result = get_next_result(chunk, state, steered_query, random_query)
         chunk += 1
         if my_result is None:
@@ -294,7 +294,7 @@ def run_steered_progression(chunk_size, min_box_items=50):
     state="flushing"
     modifier="True"
     steered_query=build_query(chunk_size, "plotted", True)
-    print("Entering NON-STEERING PHASE 2", tree_ready, "modifier =", modifier)
+    print("Entering NON-STEERING PHASE 2", has_tree_been_trained_before, "modifier =", modifier)
     my_result_empty = False
 
     while not my_result_empty:
@@ -358,7 +358,7 @@ def send_to_backend_userData(user_data):
 
 def update_steering_modifier():
     global modifier
-    global tree_ready
+    global has_tree_been_trained_before
     global USE_CASE
 
     plotted_list = []
@@ -387,7 +387,7 @@ def update_steering_modifier():
     modifier="("+steer.get_steering_condition(features, of_interest_np, "sql")+")"
 
     if len(modifier)>3:
-        tree_ready=True
+        has_tree_been_trained_before=True
     else:
         modifier="True"
 
@@ -414,7 +414,8 @@ def send_user_selection(selected_item_ids):
 
     eel.sleep(0.01)
 
-    update_steering_modifier()
+    if not has_tree_been_trained_before:
+        update_steering_modifier()
 
 
 @eel.expose
