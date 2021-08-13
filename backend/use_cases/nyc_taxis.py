@@ -7,10 +7,11 @@ FILE_PATH = "../data/nyc_taxis.csv"
 TABLE_NAME = "taxis"
 X_ENCODING = "trip_duration"
 Y_ENCODING = "tip_percentile"
+TRAINING_FEATURES = ["passenger_count", "trip_distance", "fare_amount", "extra", "mta_tax", "tip_amount", "improvement_surcharge", "total_amount"]
 
 class UseCaseTaxis(UseCase):
     def __init__(self):
-        super().__init__(FILE_PATH, TABLE_NAME, X_ENCODING, Y_ENCODING)
+        super().__init__(FILE_PATH, TABLE_NAME, X_ENCODING, Y_ENCODING, TRAINING_FEATURES)
 
 
     def get_pk_columns(self):
