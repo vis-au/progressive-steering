@@ -39,7 +39,7 @@ DEFAULT_MODIFIER = "True"
 # phases that the steering can be in
 IN_NON_STEERING_PHASE = "flushing"
 IN_ACTIVATION_PHASE = "collectingData"
-IN_STEERING_PHASE = "steering"
+IN_STEERING_PHASE = "usingTree"
 
 # enum of states for progression
 READY = "ready"
