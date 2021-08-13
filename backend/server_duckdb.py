@@ -95,8 +95,8 @@ def build_query(chunk_size, plotted_db, use_modifier):
 
   include_columns = numeric_columns + USE_CASE.get_additional_columns()
   SELECT = f'SELECT {ID},"'+'","'.join(include_columns)+'"'
-  FROM   = "FROM "+USE_CASE.table_name
-  WHERE = f"WHERE {USE_CASE.table_name}.id NOT IN (SELECT {ID} from {plotted_db})"
+  FROM   = f"FROM {USE_CASE.table_name}"
+  WHERE  = f"WHERE {USE_CASE.table_name}.id NOT IN (SELECT {ID} from {plotted_db})"
 
   for p in user_parameters:
       param = str(p)
@@ -105,16 +105,16 @@ def build_query(chunk_size, plotted_db, use_modifier):
       if isinstance(value, list):
           min_value = str(value[0])
           max_value = str(value[1])
-          WHERE += " AND "+param+" >= "+min_value+" AND "+param+" <= "+max_value
+          WHERE += f" AND {param} >= {min_value} AND {param} <= {max_value}"
       elif isinstance(value, str):
-          WHERE += " AND "+param+" = "+value
+          WHERE += f" AND {param} = {value}"
       elif isinstance(value, (int, float, complex)):
-          WHERE += " AND "+param+" = "+str(value)
+          WHERE += f" AND {param} = {str(value)}"
 
   if use_modifier:
-    return SELECT+" "+FROM+" "+WHERE+" AND "+modifier+" LIMIT "+str(chunk_size)
+    return f"{SELECT} {FROM} {WHERE}  AND {modifier} LIMIT {str(chunk_size)}"
   else:
-    return SELECT+" "+FROM+" "+WHERE+" LIMIT "+str(chunk_size)
+    return f"{SELECT} {FROM} {WHERE} LIMIT {str(chunk_size)}"
 
 
 def reset():
@@ -507,15 +507,15 @@ def get_numeric_columns():
 
 
 def register_dataset_as_view():
-    print("importing data from "+USE_CASE.file_path+" ...")
+    print(f"importing data from {USE_CASE.file_path} ...")
 
     table = USE_CASE.table_name
     path = USE_CASE.file_path
 
     if USE_CASE.file_path.find(".csv") > 0:
-        path = "read_csv_auto('"+path+"')"
+        path = f"read_csv_auto('{path}')"
     elif USE_CASE.file_path.find(".parquet") > 0:
-        path = "parquet_scan('"+path+"')"
+        path = f"parquet_scan('{path}')"
 
     id_columns = USE_CASE.get_pk_columns()
     filter = USE_CASE.get_view_filter()
