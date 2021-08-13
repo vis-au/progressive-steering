@@ -153,19 +153,17 @@ def tuple_to_dict(tuple, steering_phase, chunk_number):
     return transformed_dict
 
 
-def mark_ids_plotted(steered_result, random_result):
+def mark_results_as_plotted(steered_result, random_result):
     results = [steered_result, random_result]
     tables = [PLOTTED, PLOTTED_RANDOM]
 
-    for pair in zip(results, tables):
-        result = pair[0]
-        value_string = ""
-        for i, tuple in enumerate(result):
-            value_string += "('"+str(tuple[ID_COLUMN_INDEX])+"'), " if i < len(result)-1 else "('"+str(tuple[ID_COLUMN_INDEX])+"');"
+    for result, table in zip(results, tables):
+        ids = [str(tuple[ID_COLUMN_INDEX]) for tuple in result]
+        value_string = f"({'),('.join(ids)})"
 
         # only run the query if there are actual values to insert, otherwise there will be an error.
-        if len(value_string) > 0:
-            cursor.execute(f"INSERT INTO {pair[1]} ({ID}) VALUES {value_string}")
+        if len(ids) > 0:
+            cursor.execute(f"INSERT INTO {table} ({ID}) VALUES {value_string};")
 
 
 def get_items_inside_selection_at_chunk(chunk):
@@ -225,7 +223,7 @@ def get_next_result(chunk_number, steering_phase, steered_query, random_query):
         random_result = random_result[0:len(steered_result)]
 
     send_results_to_frontend(chunk_number, steered_result, random_result, steering_phase)
-    mark_ids_plotted(steered_result, random_result)
+    mark_results_as_plotted(steered_result, random_result)
 
     # IMPORTANT: within this waiting period, the backend receives the "in-/outside" information by
     # the frontend, which influences precision/insde calculation below
@@ -547,8 +545,8 @@ def load_use_case(use_case_label: str):
     numeric_columns = get_numeric_columns()
 
     # also create new empty table for plotted ids
-    cursor.execute(f"CREATE TABLE {PLOTTED}({ID} VARCHAR)")
-    cursor.execute(f"CREATE TABLE {PLOTTED_RANDOM}({ID} VARCHAR)")
+    cursor.execute(f"CREATE TABLE {PLOTTED}({ID} VARCHAR UNIQUE PRIMARY KEY)")
+    cursor.execute(f"CREATE TABLE {PLOTTED_RANDOM}({ID} VARCHAR UNIQUE PRIMARY KEY)")
 
 
 if __name__ == "__main__":
