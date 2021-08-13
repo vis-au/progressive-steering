@@ -159,7 +159,7 @@ def mark_results_as_plotted(steered_result, random_result):
 
     for result, table in zip(results, tables):
         ids = [str(tuple[ID_COLUMN_INDEX]) for tuple in result]
-        value_string = f"({'),('.join(ids)})"
+        value_string = "('"+"'),('".join(ids)+"')"
 
         # only run the query if there are actual values to insert, otherwise there will be an error.
         if len(ids) > 0:
