@@ -23,16 +23,40 @@ USE_CASE_PRESETS = {
     "taxis": UseCaseTaxis
 }
 
+# each item in the data is required to have a unique identifier column ID
+ID = "id"
+
+# names of helper tables used to store information about data inside/outside the selection
+PLOTTED = "plotted" # for steerable progression
+PLOTTED_RANDOM = "plotted_random" # for random progression
+
 # we reorder the columns when loading the data such that a unique id sits at position 0
 ID_COLUMN_INDEX = 0
 
+# isomorphic term added to queries while no steering query has been genereated
+DEFAULT_MODIFIER = "True"
+
+# phases that the steering can be in
+IN_NON_STEERING_PHASE = "flushing"
+IN_ACTIVATION_PHASE = "collectingData"
+IN_STEERING_PHASE = "steering"
+
 # enum of states for progression
+READY = "ready"
+RUNNING = "running"
+PAUSED = "paused"
+DONE = "done"
 PROGRESSTION_STATES = {
-    "ready": 0,
-    "running": 1,
-    "paused": 2,
-    "done": 3
+    READY: 0,
+    RUNNING: 1,
+    PAUSED: 2,
+    DONE: 3
 }
+
+# meta properties added to processed data items
+CHUNK_PROP = "chunk" # indicates the chunk an item was retrieved in
+INSIDE_PROP = "inside" # indicates whether an item is inside/outside the selection
+STATE_PROP = "state" # indicates state of progression during an item's retrieval
 
 # user constants
 user_parameters={}
@@ -45,13 +69,13 @@ user_selection_updated = False # new box
 total_inside_box = 0 # number of points plotted in the user box till the actual chunk
 has_tree_been_trained_before = False # it is used to interrupt the initial chunking cycle
 chunk_size = 100 # number of points retrieved per chunk
-modifier = "True" # modify initial query with conditions coming from the tree
+modifier = DEFAULT_MODIFIER # modify initial query with conditions coming from the tree
 last_selected_items = []
 numeric_columns = [] # list of all columns containing numeric values
 use_floats_for_savings=True
 
 # progression state can be paused/restarted interactively by the user
-progression_state = PROGRESSTION_STATES["ready"]
+progression_state = PROGRESSTION_STATES[READY]
 
 # initialize the database connection
 cursor = duckdb.connect()
@@ -70,9 +94,9 @@ def build_query(chunk_size, plotted_db, use_modifier):
   global modifier
 
   include_columns = numeric_columns + USE_CASE.get_additional_columns()
-  SELECT = 'SELECT id,"'+'","'.join(include_columns)+'"'
+  SELECT = f'SELECT {ID},"'+'","'.join(include_columns)+'"'
   FROM   = "FROM "+USE_CASE.table_name
-  WHERE = f"WHERE {USE_CASE.table_name}.id NOT IN (SELECT id from {plotted_db})"
+  WHERE = f"WHERE {USE_CASE.table_name}.id NOT IN (SELECT {ID} from {plotted_db})"
 
   for p in user_parameters:
       param = str(p)
@@ -94,45 +118,44 @@ def build_query(chunk_size, plotted_db, use_modifier):
 
 
 def reset():
-    global plotted_points, selected_points
-    global user_selection_updated, total_inside_box, has_tree_been_trained_before, chunk_size, modifier
-    global last_selected_items, use_floats_for_savings, numeric_columns
-    global progression_state
+    global plotted_points, selected_points, user_selection_updated, total_inside_box
+    global has_tree_been_trained_before, chunk_size, modifier, last_selected_items
+    global use_floats_for_savings, numeric_columns, progression_state
 
     print("resetting global state")
 
     plotted_points = {}
     selected_points = []
 
-    user_selection_updated=False
-    total_inside_box=0
-    has_tree_been_trained_before=False
-    chunk_size=100
-    modifier="True"
-    last_selected_items=[]
+    user_selection_updated = False
+    total_inside_box = 0
+    has_tree_been_trained_before = False
+    chunk_size = 100
+    modifier = DEFAULT_MODIFIER
+    last_selected_items = []
     numeric_columns = get_numeric_columns()
-    use_floats_for_savings=True
+    use_floats_for_savings = True
 
-    progression_state = PROGRESSTION_STATES["ready"]
+    progression_state = PROGRESSTION_STATES[READY]
 
 
-def tuple_to_dict(tuple, state, chunk_number):
+def tuple_to_dict(tuple, steering_phase, chunk_number):
     # first use the use-case-specific transform function to generate the dict that is send to the
     # frontend from the touple
     include_columns = numeric_columns + USE_CASE.get_additional_columns()
-    transformed_dict = USE_CASE.get_dict_for_use_case(tuple, ["id"]+include_columns)
+    transformed_dict = USE_CASE.get_dict_for_use_case(tuple, [ID]+include_columns)
 
     # then add the required properties
-    transformed_dict["chunk"] = chunk_number
-    transformed_dict["state"] = state
-    transformed_dict["inside"] = 0
+    transformed_dict[CHUNK_PROP] = chunk_number
+    transformed_dict[STATE_PROP] = steering_phase
+    transformed_dict[INSIDE_PROP] = 0
 
     return transformed_dict
 
 
 def mark_ids_plotted(steered_result, random_result):
     results = [steered_result, random_result]
-    tables = ["plotted", "plotted_random"]
+    tables = [PLOTTED, PLOTTED_RANDOM]
 
     for pair in zip(results, tables):
         result = pair[0]
@@ -142,56 +165,55 @@ def mark_ids_plotted(steered_result, random_result):
 
         # only run the query if there are actual values to insert, otherwise there will be an error.
         if len(value_string) > 0:
-            cursor.execute(f"INSERT INTO {pair[1]} (id) VALUES {value_string}")
+            cursor.execute(f"INSERT INTO {pair[1]} ({ID}) VALUES {value_string}")
 
 
 def get_items_inside_selection_at_chunk(chunk):
     inb = 0
 
     for k in plotted_points:
-        if plotted_points[str(k)]["inside"]==1 and plotted_points[str(k)]["chunk"]==chunk:
+        if plotted_points[str(k)][INSIDE_PROP]==1 and plotted_points[str(k)][CHUNK_PROP]==chunk:
             inb+=1
 
     return inb
 
 
 def was_progression_reset_during_sleep():
-    while progression_state == PROGRESSTION_STATES["paused"]:
+    while progression_state == PROGRESSTION_STATES[PAUSED]:
         eel.sleep(1)
-    if progression_state == PROGRESSTION_STATES["ready"]:
+    if progression_state == PROGRESSTION_STATES[READY]:
         return True
-    elif progression_state == PROGRESSTION_STATES["done"]:
+    elif progression_state == PROGRESSTION_STATES[DONE]:
         return True
 
     return False
 
 
-def send_results_to_frontend(chunk_number, steered_result, random_result, state):
+def send_results_to_frontend(chunk_number, steered_result, random_result, steering_phase):
     global plotted_points
 
     chunk = {}
     random_chunk = {}
 
     for tuple in steered_result:
-        plotted_points[str(tuple[ID_COLUMN_INDEX])]=tuple_to_dict(tuple, state, chunk_number)
+        plotted_points[str(tuple[ID_COLUMN_INDEX])]=tuple_to_dict(tuple, steering_phase, chunk_number)
         chunk[str(tuple[ID_COLUMN_INDEX])]={
-            "chunk": chunk_number,
-            "state": state,
+            CHUNK_PROP: chunk_number,
+            STATE_PROP: steering_phase,
             "values": plotted_points[str(tuple[ID_COLUMN_INDEX])]
         }
 
     # ensure equal chunk size between random and steered chunk
     for tuple in random_result:
         random_chunk[str(tuple[ID_COLUMN_INDEX])] = {
-            "chunk": chunk_number,
-            "state": "random",
-            "values": tuple_to_dict(tuple, state, chunk_number)
+            CHUNK_PROP: chunk_number,
+            "values": tuple_to_dict(tuple, steering_phase, chunk_number)
         }
 
     send_chunks(chunk, random_chunk)
 
 
-def get_next_result(chunk_number, state, steered_query, random_query):
+def get_next_result(chunk_number, steering_phase, steered_query, random_query):
     global total_inside_box, selected_points
 
     cursor.execute(steered_query)
@@ -202,7 +224,7 @@ def get_next_result(chunk_number, state, steered_query, random_query):
     if len(steered_result) < len(random_result):
         random_result = random_result[0:len(steered_result)]
 
-    send_results_to_frontend(chunk_number, steered_result, random_result, state)
+    send_results_to_frontend(chunk_number, steered_result, random_result, steering_phase)
     mark_ids_plotted(steered_result, random_result)
 
     # IMPORTANT: within this waiting period, the backend receives the "in-/outside" information by
@@ -214,7 +236,7 @@ def get_next_result(chunk_number, state, steered_query, random_query):
     recent_inside = get_items_inside_selection_at_chunk(chunk_number)
     total_inside_box += recent_inside
     precision = recent_inside/chunk_size
-    print("chunk:", chunk_number, state, "in selection:", total_inside_box, "Precision:", precision)
+    print("chunk:", chunk_number, steering_phase, "in selection:", total_inside_box, "Precision:", precision)
 
     send_statistics_to_frontend(precision, total_inside_box)
 
@@ -225,35 +247,34 @@ def run_steered_progression(chunk_size, min_box_items=50):
     global progression_state, modifier, total_inside_box
 
     chunk = 0
-    steered_query = build_query(chunk_size, "plotted", True)
-    random_query = build_query(chunk_size, "plotted_random", True)
+    steered_query = build_query(chunk_size, PLOTTED, True)
+    random_query = build_query(chunk_size, PLOTTED_RANDOM, True)
 
     # reset databases of plotted points
-    cursor.execute("DELETE FROM plotted")
-    cursor.execute("DELETE FROM plotted_random")
-    progression_state = PROGRESSTION_STATES["ready"]
+    cursor.execute(f"DELETE FROM {PLOTTED}")
+    cursor.execute(f"DELETE FROM {PLOTTED_RANDOM}")
+    progression_state = PROGRESSTION_STATES[READY]
 
     # wait until user starts progression
-    while progression_state == PROGRESSTION_STATES["ready"]:
+    while progression_state == PROGRESSTION_STATES[READY]:
         eel.sleep(.1)
-        # HACK: if the user reloads the page, the state variable is briefly set to "done" before a
+        # HACK: if the user reloads the page, the state variable is briefly set to DONE before a
         # new progression is spawned, causing this function to return, which terminates its "thread"
-        if progression_state == PROGRESSTION_STATES["done"]:
+        if progression_state == PROGRESSTION_STATES[DONE]:
             return
-
 
     ####################### NON-STEERING PHASE #####################################################
     print("Entering NON-STEERING PHASE 1 - Query:", steered_query, modifier)
     print("user parameters:", user_parameters)
-    state="flushing"
-    modifier="True"
-    steered_query = build_query(chunk_size, "plotted", True)
-    random_query = build_query(chunk_size, "plotted_random", True)
+    steering_phase=IN_NON_STEERING_PHASE
+    modifier=DEFAULT_MODIFIER
+    steered_query = build_query(chunk_size, PLOTTED, True)
+    random_query = build_query(chunk_size, PLOTTED_RANDOM, True)
     my_result = []
     my_result_empty = False
 
     while not my_result_empty and (not has_tree_been_trained_before or total_inside_box<min_box_items or len(modifier)<=3) and len(selected_points) == 0:
-        my_result = get_next_result(chunk, state, steered_query, random_query)
+        my_result = get_next_result(chunk, steering_phase, steered_query, random_query)
         chunk += 1
         if my_result is None:
             return
@@ -263,11 +284,11 @@ def run_steered_progression(chunk_size, min_box_items=50):
     print("Entering ACTIVATION PHASE - Query:", steered_query, modifier)
     print(steered_query)
     total_inside_box=0
-    state="collectingData"
+    steering_phase=IN_ACTIVATION_PHASE
     my_result_empty = False
 
     while not my_result_empty and (not has_tree_been_trained_before or total_inside_box<min_box_items or len(modifier)<=3):
-        my_result = get_next_result(chunk, state, steered_query, random_query)
+        my_result = get_next_result(chunk, steering_phase, steered_query, random_query)
         chunk += 1
         if my_result is None:
             return
@@ -276,13 +297,13 @@ def run_steered_progression(chunk_size, min_box_items=50):
     print("Exiting ACTIVATION PHASE")
 
     ########################## STEERING PHASE ######################################################
-    state="usingTree"
-    steered_query=build_query(chunk_size, "plotted", True)
+    steering_phase=IN_STEERING_PHASE
+    steered_query=build_query(chunk_size, PLOTTED, True)
     print("Entering STEERING PHASE - Query:", steered_query, len(my_result))
     my_result_empty = False
 
     while not my_result_empty:
-        my_result = get_next_result(chunk, state, steered_query, random_query)
+        my_result = get_next_result(chunk, steering_phase, steered_query, random_query)
         chunk += 1
         if my_result is None:
             return
@@ -291,21 +312,21 @@ def run_steered_progression(chunk_size, min_box_items=50):
     print("Exiting STEERING PHASE")
 
     ######################### NON-STEERING PHASE ###################################################
-    state="flushing"
-    modifier="True"
-    steered_query=build_query(chunk_size, "plotted", True)
+    steering_phase=IN_NON_STEERING_PHASE
+    modifier=DEFAULT_MODIFIER
+    steered_query=build_query(chunk_size, PLOTTED, True)
     print("Entering NON-STEERING PHASE 2", has_tree_been_trained_before, "modifier =", modifier)
     my_result_empty = False
 
     while not my_result_empty:
-        my_result = get_next_result(chunk, state, steered_query, random_query)
+        my_result = get_next_result(chunk, steering_phase, steered_query, random_query)
         chunk += 1
         if my_result is None:
             return
         my_result_empty = len(my_result) == 0
 
     print("Exiting NON-STEERING PHASE 2")
-    print("DONE")
+    print(DONE)
 
     return
 
@@ -315,12 +336,12 @@ def start_progression():
 
     while True:
         reset()
-        # HACK: set the state variable to "done" here, in order to terminate all progression
+        # HACK: set the state variable to DONE here, in order to terminate all progression
         # "threads" currently running, ensuring that only a single progression is run over the data.
-        progression_state = PROGRESSTION_STATES["done"]
+        progression_state = PROGRESSTION_STATES[DONE]
         eel.sleep(.1)
         eel.spawn(run_steered_progression(chunk_size))
-        if progression_state == PROGRESSTION_STATES["done"]:
+        if progression_state == PROGRESSTION_STATES[DONE]:
             return
 
 
@@ -384,12 +405,12 @@ def update_steering_modifier():
         feature_names = USE_CASE.feature_columns
 
     features = plotted_df.loc[:, feature_names]
-    modifier="("+steer.get_steering_condition(features, of_interest_np, "sql")+")"
+    modifier=f"({steer.get_steering_condition(features, of_interest_np, 'sql')})"
 
     if len(modifier)>3:
         has_tree_been_trained_before=True
     else:
-        modifier="True"
+        modifier = DEFAULT_MODIFIER
 
     return modifier
 
@@ -401,14 +422,14 @@ def send_user_selection(selected_item_ids):
     global last_selected_items
 
     if len(selected_item_ids)==0:
-        return(0)
+        return (0)
 
     print(len(selected_item_ids), "new items received...", selected_item_ids)
 
     last_selected_items=selected_item_ids.copy()
 
-    for k in selected_item_ids:
-        plotted_points[str(k)]["inside"]=1
+    for id in selected_item_ids:
+        plotted_points[str(id)][INSIDE_PROP]=1
 
     selected_points.extend(selected_item_ids)
 
@@ -426,19 +447,19 @@ def send_user_params(parameters):
 
 
 @eel.expose
-def send_progression_state(state):
+def send_progression_state(new_state):
     global progression_state, PROGRESSTION_STATES
 
-    if state == "ready":
-        progression_state = PROGRESSTION_STATES["ready"]
-    elif state == "running":
-        progression_state = PROGRESSTION_STATES["running"]
-    elif state == "paused":
-        progression_state = PROGRESSTION_STATES["paused"]
-    elif state == "done":
-        progression_state = PROGRESSTION_STATES["done"]
+    if new_state == READY:
+        progression_state = PROGRESSTION_STATES[READY]
+    elif new_state == RUNNING:
+        progression_state = PROGRESSTION_STATES[RUNNING]
+    elif new_state == PAUSED:
+        progression_state = PROGRESSTION_STATES[PAUSED]
+    elif new_state == DONE:
+        progression_state = PROGRESSTION_STATES[DONE]
 
-    print("new progression state", state)
+    print("new progression state", new_state)
 
 
 def start_eel():
@@ -481,7 +502,7 @@ def get_numeric_columns():
 
     for col in all_columns:
         # avoid having duplicate id column, even if it's numeric
-        if col[1] in numeric_types and col[0] != "id":
+        if col[1] in numeric_types and col[0] != ID:
             numeric_columns.append(col[0])
 
     return numeric_columns
@@ -502,12 +523,12 @@ def register_dataset_as_view():
     filter = USE_CASE.get_view_filter()
     where_clause = f"WHERE {filter}" if len(filter) > 0 else ""
 
-    # the server expects a unique column "id" to identify each item in the data. If the dataset of
+    # the server expects a unique column ID to identify each item in the data. If the dataset of
     # a use case does not have that, we create one for the view here from the primary key.
-    if len(id_columns) == 1 and id_columns[0] == "id":
+    if len(id_columns) == 1 and id_columns[0] == ID:
         query = f"CREATE VIEW {table} AS SELECT * FROM {path} {where_clause};"
     else:
-        subquery_id = f"CONCAT({','.join(id_columns)}) as id,"
+        subquery_id = f"CONCAT({','.join(id_columns)}) as {ID},"
         query = f"CREATE VIEW {table} AS SELECT {subquery_id} * FROM {path} {where_clause};"
 
     cursor.execute(query)
@@ -526,8 +547,8 @@ def load_use_case(use_case_label: str):
     numeric_columns = get_numeric_columns()
 
     # also create new empty table for plotted ids
-    cursor.execute("CREATE TABLE plotted(id VARCHAR)")
-    cursor.execute("CREATE TABLE plotted_random(id VARCHAR)")
+    cursor.execute(f"CREATE TABLE {PLOTTED}({ID} VARCHAR)")
+    cursor.execute(f"CREATE TABLE {PLOTTED_RANDOM}({ID} VARCHAR)")
 
 
 if __name__ == "__main__":
