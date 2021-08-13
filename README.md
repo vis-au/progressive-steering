@@ -2,14 +2,14 @@
 
 This repository contains the source code of ProSteer, a benchmarking environment for steering in progressive visual analytics.
 
-ProSteer consists of two components: A `backend` component to retrieve data from a MySQL database that is currently of interest to the user, and a `frontend` component that progressively visualizes this data chunk-by-chunk and that allows to select data of interest using brushing.
+ProSteer consists of two components: A [`backend`](./backend/) component that reads data from a file using SQL, and a [`frontend`](./frontend/) component that progressively visualizes this data chunk-by-chunk and that allows to select data of interest using brushing.
 
 ## Contents
 
 The ProSteer project is structured in the following way:
 
 ```
-MySQL data/                 the AirBnB test dataset
+data/                       datasets used in the use cases
 backend/                    the code for the backend component
 exploratory-environment/    benchmarking results
 frontend/                   the code fo the interactive frontend component
