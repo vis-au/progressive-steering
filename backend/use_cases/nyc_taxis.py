@@ -21,6 +21,9 @@ class UseCaseTaxis(UseCase):
     def get_view_filter(self):
         return "total_amount > 0"
 
+    def get_min_points_before_training(self):
+        return 200
+
 
     def send_info(self, eel: eel, column_names: List[str], cursor: Any):
         # computing min/max over large data takes long, so use precomputed values for this use case

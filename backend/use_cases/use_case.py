@@ -38,10 +38,20 @@ class UseCase():
 
   def get_additional_columns(self):
     '''
-    Per default, the server retrieves only numerical columns. This function returns additional
-    columns that should be included in the result set.
+    Returns additional columns that should be included in the result set. Per default, the server
+    retrieves only numerical columns.
     '''
     return []
+
+
+  def get_min_points_before_training(self):
+    '''
+    Returns the minimum number of selected points, before the server should start train the decision
+    tree. Depends on the variance and size of the dataset: The more varied the data in the feature
+    columns, the more points need to be included to ensure that the tree captures the features
+    for the region of interest. Defaults to 50.
+    '''
+    return 50
 
 
   def get_dict_for_use_case(self, tuple: List[float], column_names: List[str]):

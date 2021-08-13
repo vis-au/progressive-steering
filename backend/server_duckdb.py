@@ -72,7 +72,7 @@ chunk_size = 100 # number of points retrieved per chunk
 modifier = DEFAULT_MODIFIER # modify initial query with conditions coming from the tree
 last_selected_items = []
 numeric_columns = [] # list of all columns containing numeric values
-use_floats_for_savings=True
+use_floats_for_savings = True
 
 # progression state can be paused/restarted interactively by the user
 progression_state = PROGRESSTION_STATES[READY]
@@ -241,12 +241,14 @@ def get_next_result(chunk_number, steering_phase, steered_query, random_query):
     return steered_result
 
 
-def run_steered_progression(chunk_size, min_box_items=50):
+def run_steered_progression(chunk_size):
     global progression_state, modifier, total_inside_box
 
     chunk = 0
     steered_query = build_query(chunk_size, PLOTTED, True)
     random_query = build_query(chunk_size, PLOTTED_RANDOM, True)
+
+    min_box_items = USE_CASE.get_min_points_before_training()
 
     # reset databases of plotted points
     cursor.execute(f"DELETE FROM {PLOTTED}")
@@ -378,7 +380,6 @@ def send_to_backend_userData(user_data):
 def update_steering_modifier():
     global modifier
     global has_tree_been_trained_before
-    global USE_CASE
 
     plotted_list = []
     of_interest_list = []
@@ -526,8 +527,8 @@ def register_dataset_as_view():
     if len(id_columns) == 1 and id_columns[0] == ID:
         query = f"CREATE VIEW {table} AS SELECT * FROM {path} {where_clause};"
     else:
-        subquery_id = f"CONCAT({','.join(id_columns)}) as {ID},"
-        query = f"CREATE VIEW {table} AS SELECT {subquery_id} * FROM {path} {where_clause};"
+        subquery_id = f"CONCAT({','.join(id_columns)}) as {ID}"
+        query = f"CREATE VIEW {table} AS SELECT {subquery_id}, * FROM {path} {where_clause};"
 
     cursor.execute(query)
 
