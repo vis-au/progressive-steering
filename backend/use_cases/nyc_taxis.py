@@ -3,7 +3,7 @@ from typing import Any, List
 from use_cases.use_case import UseCase
 
 # source of dataset: https://data.cityofnewyork.us/Transportation/2018-Yellow-Taxi-Trip-Data/t29m-gskq
-FILE_PATH = "../data/nyc_taxis.csv"
+FILE_PATH = "../data/nyc_taxis.csv.gz"
 TABLE_NAME = "taxis"
 X_ENCODING = "trip_duration"
 Y_ENCODING = "tip_percentile"
