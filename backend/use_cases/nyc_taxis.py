@@ -24,10 +24,10 @@ class UseCaseTaxis(UseCase):
 
     def send_info(self, eel: eel, column_names: List[str], cursor: Any):
         # computing min/max over large data takes long, so use precomputed values for this use case
-        eel.send_dimension_total_extent({ "name": "VendorID", "min": 1, "max": 4 })
+        eel.send_dimension_total_extent({ "name": "VendorID", "min": 1, "max": 2 })
         eel.send_dimension_total_extent({ "name": "passenger_count", "min": 0, "max": 192 })
         eel.send_dimension_total_extent({ "name": "trip_distance", "min": 0, "max": 189483.84 })
-        eel.send_dimension_total_extent({ "name": "RatecodeID", "min": 1, "max": 99 })
+        eel.send_dimension_total_extent({ "name": "RatecodeID", "min": 1, "max": 6 })
         eel.send_dimension_total_extent({ "name": "PULocationID", "min": 1, "max": 265 })
         eel.send_dimension_total_extent({ "name": "DOLocationID", "min": 1, "max": 265 })
         eel.send_dimension_total_extent({ "name": "payment_type", "min": 1, "max": 5 })
