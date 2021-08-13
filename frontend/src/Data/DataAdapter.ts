@@ -1,8 +1,9 @@
 import { sendUserSelectionBounds, sendUserSelection, sendUserParameters, SelectionSize, ScenarioPreset, ProgressionState, sendProgressionState, TrainingState } from "./EelBridge";
 import * as d3 from 'd3';
-import { DEFAULT_TOTAL_DATA_SIZE, DEFAULT_POIS } from "./EelBackendDummy";
+import { DEFAULT_POIS } from "./EelBackendDummy";
 
 class DataAdapter {
+  private _totalDataSize: number = 8780;
   private _chunkSize: number = 0;
   private _progressionState: ProgressionState = 'ready';
   private _trainingState: TrainingState = "collectingData";
@@ -281,8 +282,12 @@ class DataAdapter {
     return this.dimensionFilters;
   }
 
-  public getTotalDataSize() {
-    return DEFAULT_TOTAL_DATA_SIZE;
+  public get totalDataSize() {
+    return this._totalDataSize;
+  }
+
+  public set totalDataSize(size: number) {
+    this._totalDataSize = size;
   }
 
   public get dimensions(): string[] {

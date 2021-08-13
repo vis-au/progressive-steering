@@ -237,6 +237,15 @@ export function sendCity(city: string) {
 }
 
 /**
+ * Send the total size of the dataset.
+ * @param size
+ */
+export function sendTotalDataSize(size: number) {
+  console.log(`dataset has total size of ${size} items`);
+  dataAdapter.totalDataSize = +size;
+}
+
+/**
  * Send the minimum number of points that must be contained in a selection to the frontend.
  * @param minSelectionSize minimum number of data poits to be contained in a filter selection.
  */
@@ -274,6 +283,7 @@ window.eel.expose(setMinSelectionSize, 'set_min_selection_size');
 window.eel.expose(sendDimensionTotalExtent, 'send_dimension_total_extent');
 window.eel.expose(sendCity, 'send_city');
 window.eel.expose(sendEvaluationMetric, 'send_evaluation_metric');
+window.eel.expose(sendTotalDataSize, 'send_total_data_size');
 
 
 runDummyBackend();

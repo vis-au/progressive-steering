@@ -21,6 +21,17 @@ class UseCaseTaxis(UseCase):
     def get_view_filter(self):
         return "total_amount > 0"
 
+
+    def get_total_dataset_size(self):
+        # data contains items with total_amount == 0, so sizes are a bit off.
+        if "nyc_taxis." in FILE_PATH:
+            return 112145904
+        elif "nyc_taxis_10Mil." in FILE_PATH:
+            return 9992803
+        elif "nyc_taxis_1Mil." in FILE_PATH:
+            return 999298
+
+
     def get_min_points_before_training(self):
         return 200
 

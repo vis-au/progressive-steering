@@ -7,7 +7,6 @@ export const CHUNK_SIZE = 100;
 export const DATA_EXTENT = 1.0;
 export const DEFAULT_DIMENSIONS = ["id", "street", "price"];
 
-export const DEFAULT_TOTAL_DATA_SIZE = 8780;
 export type EvaluationMetricType = 'precision' | 'recall' | 'Points received';
 export const DEFAULT_EVALUATION_METRICS: EvaluationMetricType[] = ["recall", "precision"];
 

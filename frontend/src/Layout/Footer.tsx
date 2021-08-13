@@ -228,7 +228,7 @@ export default class Footer extends React.Component<Props, State> {
           <ProgressBar
             label="Progress"
             width={ 95 }
-            max={ this.props.dataAdapter.getTotalDataSize() }
+            max={ this.props.dataAdapter.totalDataSize }
             current={ this.props.dataAdapter.data.length }
           />
           { this.renderProgressionControls() }

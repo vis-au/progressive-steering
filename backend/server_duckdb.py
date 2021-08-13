@@ -356,14 +356,22 @@ def save_as_user_parameters(user_data):
 
 
 def send_info_to_frontend():
-  # send general information to the frontend
-  eel.set_x_name(USE_CASE.x_encoding)
-  eel.set_y_name(USE_CASE.y_encoding)
+    # send general information to the frontend
+    eel.set_x_name(USE_CASE.x_encoding)
+    eel.set_y_name(USE_CASE.y_encoding)
 
-  # also send use case specific bounds to the frontend
-  USE_CASE.send_info(eel, numeric_columns, cursor)
+    total_size = USE_CASE.get_total_dataset_size()
 
-  return
+    # if use case does not specify a size, compute it dynamically.
+    if total_size < 0:
+        total_size = cursor.execute(f"SELECT COUNT(*) FROM {USE_CASE.table_name};").fetchall()[0][0]
+
+    eel.send_total_data_size(total_size)
+
+    # also send use case specific bounds to the frontend
+    USE_CASE.send_info(eel, numeric_columns, cursor)
+
+    return
 
 
 @eel.expose

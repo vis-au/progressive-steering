@@ -11,14 +11,6 @@ class UseCase():
     return None
 
 
-  def get_user_parameters(self, user_data):
-    '''
-    Given the parameters provided by the user when launching the application, this function transforms
-    them into a uniformed format from which we generate steered/non-steered SQL queries.
-    '''
-    return {}
-
-
   def get_pk_columns(self):
     '''
     Returns the columns of the data that make up the primary key of the dataset.
@@ -36,12 +28,29 @@ class UseCase():
     return ""
 
 
+  def get_user_parameters(self, user_data):
+    '''
+    Given the parameters provided by the user when launching the application, this function transforms
+    them into a uniformed format from which we generate steered/non-steered SQL queries.
+    '''
+    return {}
+
+
   def get_additional_columns(self):
     '''
     Returns additional columns that should be included in the result set. Per default, the server
     retrieves only numerical columns.
     '''
     return []
+
+
+  def get_total_dataset_size(self):
+    '''
+    Returns the total number of items in the dataset. Can be dynamically computed using SQL, but for
+    large datasets in CSV, the COUNT(*) aggregate makes this very slow. Defaults to -1, which
+    indicates that this value is unspecified.
+    '''
+    return -1
 
 
   def get_min_points_before_training(self):
