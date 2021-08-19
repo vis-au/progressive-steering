@@ -4,6 +4,7 @@ import * as d3 from 'd3';
 import { ScaledCartesianCoordinate } from '../PointTypes';
 
 import './HeatMapRenderer.css';
+import ColorLegend from '../Widgets/ColorLegend';
 
 interface Props {
   canvasWidth: number,
@@ -100,6 +101,18 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
     return differenceBins;
   }
 
+  private getColorScale() {
+    const scale = this.props.useDeltaHeatMap
+      ? d3.scaleDiverging(DEFAULT_DIVERGING_COLOR_SCHEME)
+      .clamp(true)
+      .domain([100, 0, -100])
+      : d3.scaleSequential(DEFAULT_SEQUENTIAL_COLOR_SCHEME)
+      .clamp(true)
+      .domain([0, 200]);
+
+    return scale;
+  }
+
   private updateCells(useNonSteeringCanvas: boolean = false) {
     this.binScaleX.domain(this.props.scaleX.range() as [number, number]);
     this.binScaleY.domain(this.props.scaleY.range() as [number, number]);
@@ -116,42 +129,58 @@ export default class HeatMapRenderer extends React.Component<Props, State> {
     const positionX = d3.scaleLinear().domain([0, BINS_X]).range([0, this.props.canvasWidth]);
     const positionY = d3.scaleLinear().domain([0, BINS_Y]).range([0, this.props.height]);
 
-    let scaleColor: d3.ScaleDiverging<string> | d3.ScaleSequential<string> = d3.scaleSequential(DEFAULT_SEQUENTIAL_COLOR_SCHEME)
-    .clamp(true)
-    .domain([0, 200]);
+    const scaleColor = this.getColorScale();
 
-    if (this.props.useDeltaHeatMap) {
-      scaleColor = d3.scaleDiverging(DEFAULT_DIVERGING_COLOR_SCHEME)
-        .clamp(true)
-        .domain([100, 0, -100]);
-    }
+    const block = svg.selectAll("g.density-value").data(binsFlat).join("g")
+      .attr("class", "density-value")
+      .attr("transform", (_, i) => {
+        return `translate(${positionX(i % BINS_X)},${positionY(Math.floor((i) / BINS_X))})`;
+      });
 
-    svg.selectAll("rect.density").data(binsFlat).join("rect")
+    block.append("rect")
       .attr("class", "density")
-      .attr("x", (d, i) => positionX(i % BINS_X))
-      .attr("y", (d, i) => positionY(Math.floor((i) / BINS_X)))
       .attr("width", this.props.canvasWidth / BINS_X - 2)
       .attr("height", this.props.height / BINS_Y - 2)
       .attr("fill", d => scaleColor(d))
       .attr("fill-opacity", this.props.cellOpacity)
       .attr("stroke", "white");
 
-    svg.selectAll("text.density").data(binsFlat).join("text")
+    const fontSize = 8;
+
+    block.append("rect")
+      .attr("class", "background")
+      .attr("width", 20)
+      .attr("height", fontSize)
+      .attr("fill", "rgba(255,255,255,0.3)")
+
+    block.append("text")
       .attr("class", "density")
-      .attr("x", (d, i) => positionX(i % BINS_X))
-      .attr("y", (d, i) => positionY(Math.floor((i) / BINS_X)))
-      .attr("font-size", 8)
+      .attr("font-size", fontSize)
       .attr("dy", 8)
       .text(d => d);
   }
 
   public render() {
     const isNonSteeringCanvasHidden = this.props.showNonSteeredCanvas ? "" : "hidden";
+    const colorLegendWidth = 50;
 
     return (
       <div className="heatMapRenderer">
         <svg className="heat-map-canvas steering" width={ this.props.canvasWidth } height={ this.props.height }></svg>
         <svg className={`heat-map-canvas non-steering ${isNonSteeringCanvasHidden}`} width={ this.props.canvasWidth } height={ this.props.height }></svg>
+
+        <ColorLegend
+          id={ "heatmap-left" }
+          colorScale={ this.getColorScale() }
+          x={ window.innerWidth - colorLegendWidth - 5 }
+          y={ 85 }
+          mode={ "vertical" }
+          alignment={ "right" }
+          height={ 170 }
+          width={ colorLegendWidth }
+          padding={ 40 }
+          steps={ 10 }
+        />
       </div>
     );
   }
