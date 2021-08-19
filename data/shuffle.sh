@@ -22,8 +22,9 @@ echo "reading header and writing to temporary file ..."
 head -1 $in_file_path > $temp_header_file_path
 
 # get all rows without the header from the input file, shuffle them and write the shuffled rows back
+# src: https://stackoverflow.com/a/40814865
 echo "shuffling data and writing to temporary file ..."
-tail --line=+2 $in_file_path | shuf > $temp_data_file_path
+tail --line=+2 $in_file_path | awk 'BEGIN{srand();} {printf "%0.15f\t%s\n", rand(), $0;}' | sort -n | cut -f 2- > $temp_data_file_path
 
 # create the output file if not exist
 touch $out_file_path
