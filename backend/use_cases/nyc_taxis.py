@@ -3,7 +3,7 @@ from typing import Any, List
 from use_cases.use_case import UseCase
 
 # source of dataset: https://data.cityofnewyork.us/Transportation/2018-Yellow-Taxi-Trip-Data/t29m-gskq
-FILE_PATH = "../data/nyc_taxis.csv.gz"
+FILE_PATH = "../data/nyc_taxis.shuffled.csv.gz"
 TABLE_NAME = "taxis"
 X_ENCODING = "trip_duration"
 Y_ENCODING = "tip_percentile"
@@ -15,7 +15,7 @@ class UseCaseTaxis(UseCase):
 
 
     def get_pk_columns(self):
-        return ["tpep_dropoff_datetime", "tpep_pickup_datetime", "total_amount"]
+        return ["tripID"]
 
 
     def get_view_filter(self):
@@ -30,6 +30,8 @@ class UseCaseTaxis(UseCase):
             return 9992803
         elif "nyc_taxis_1Mil." in FILE_PATH:
             return 999298
+        else:
+            return 100000
 
 
     def get_min_points_before_training(self):
