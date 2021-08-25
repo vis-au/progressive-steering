@@ -8,7 +8,7 @@ import steering_duckdb as steer
 from use_cases.use_case import UseCase
 from use_cases.airbnb import UseCaseAirbnb
 from use_cases.spotify import UseCaseSpotify
-from use_cases.nyc_taxis import UseCaseTaxis
+from use_cases.taxis import UseCaseTaxis
 from testcase_loader import load_preset_scenarios, get_test_cases
 
 WAIT_INTERVAL = 0.25
@@ -431,7 +431,7 @@ def send_user_selection(selected_item_ids):
     if len(selected_item_ids)==0:
         return (0)
 
-    print(len(selected_item_ids), "new items received...", selected_item_ids)
+    print(len(selected_item_ids), "new selected items received...")
 
     last_selected_items=selected_item_ids.copy()
 
