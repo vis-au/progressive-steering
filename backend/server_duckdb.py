@@ -70,7 +70,6 @@ total_inside_box = 0 # number of points plotted in the user box till the actual 
 has_tree_been_trained_before = False # it is used to interrupt the initial chunking cycle
 chunk_size = 100 # number of points retrieved per chunk
 modifier = DEFAULT_MODIFIER # modify initial query with conditions coming from the tree
-last_selected_items = []
 numeric_columns = [] # list of all columns containing numeric values
 use_floats_for_savings = True
 
@@ -119,8 +118,8 @@ def build_query(chunk_size, plotted_db, use_modifier):
 
 def reset():
     global plotted_points, selected_points, user_selection_updated, total_inside_box
-    global has_tree_been_trained_before, chunk_size, modifier, last_selected_items
-    global use_floats_for_savings, numeric_columns, progression_state
+    global has_tree_been_trained_before, chunk_size, modifier, use_floats_for_savings
+    global numeric_columns, progression_state
 
     print("resetting global state")
 
@@ -132,7 +131,6 @@ def reset():
     has_tree_been_trained_before = False
     chunk_size = 100
     modifier = DEFAULT_MODIFIER
-    last_selected_items = []
     numeric_columns = get_numeric_columns()
     use_floats_for_savings = True
 
@@ -423,17 +421,14 @@ def update_steering_modifier():
 
 
 @eel.expose
-def send_user_selection(selected_item_ids):
+def send_user_selection(selected_item_ids: list):
     global plotted_points
     global selected_points
-    global last_selected_items
 
     if len(selected_item_ids)==0:
         return (0)
 
     print(len(selected_item_ids), "new selected items received...")
-
-    last_selected_items=selected_item_ids.copy()
 
     for id in selected_item_ids:
         plotted_points[str(id)][INSIDE_PROP]=1
