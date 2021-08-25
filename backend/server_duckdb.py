@@ -11,7 +11,6 @@ from use_cases.spotify import UseCaseSpotify
 from use_cases.taxis import UseCaseTaxis
 from testcase_loader import load_preset_scenarios, get_test_cases
 
-WAIT_INTERVAL = 0.25
 
 # contains information about the particular use case and is populated by load_use_case() on launch
 USE_CASE: UseCase = None
@@ -68,7 +67,6 @@ selected_points = [] # cumulated airb&b ID of points plotted in the user box til
 user_selection_updated = False # new box
 total_inside_box = 0 # number of points plotted in the user box till the actual chunk
 has_tree_been_trained_before = False # it is used to interrupt the initial chunking cycle
-chunk_size = 100 # number of points retrieved per chunk
 modifier = DEFAULT_MODIFIER # modify initial query with conditions coming from the tree
 numeric_columns = [] # list of all columns containing numeric values
 use_floats_for_savings = True
@@ -89,9 +87,10 @@ def send_statistics_to_frontend(precision, total_inside_box):
     eel.send_evaluation_metric({"name": "recall", "value": total_inside_box})
 
 
-def build_query(chunk_size, plotted_db, use_modifier):
+def build_query(plotted_db, use_modifier):
   global modifier
 
+  chunk_size = USE_CASE.get_chunk_size()
   include_columns = numeric_columns + USE_CASE.get_additional_columns()
   SELECT = f'SELECT {ID},"'+'","'.join(include_columns)+'"'
   FROM   = f"FROM {USE_CASE.table_name}"
@@ -118,8 +117,8 @@ def build_query(chunk_size, plotted_db, use_modifier):
 
 def reset():
     global plotted_points, selected_points, user_selection_updated, total_inside_box
-    global has_tree_been_trained_before, chunk_size, modifier, use_floats_for_savings
-    global numeric_columns, progression_state
+    global has_tree_been_trained_before, modifier, use_floats_for_savings, numeric_columns
+    global progression_state
 
     print("resetting global state")
 
@@ -129,7 +128,6 @@ def reset():
     user_selection_updated = False
     total_inside_box = 0
     has_tree_been_trained_before = False
-    chunk_size = 100
     modifier = DEFAULT_MODIFIER
     numeric_columns = get_numeric_columns()
     use_floats_for_savings = True
@@ -225,13 +223,13 @@ def get_next_result(chunk_number, steering_phase, steered_query, random_query):
 
     # IMPORTANT: within this waiting period, the backend receives the "in-/outside" information by
     # the frontend, which influences precision/insde calculation below
-    eel.sleep(WAIT_INTERVAL)
+    eel.sleep(USE_CASE.get_wait_interval())
     if was_progression_reset_during_sleep():
         return None
 
     recent_inside = get_items_inside_selection_at_chunk(chunk_number)
     total_inside_box += recent_inside
-    precision = recent_inside/chunk_size
+    precision = recent_inside/USE_CASE.get_chunk_size()
     print("chunk:", chunk_number, steering_phase, "in selection:", total_inside_box, "Precision:", precision)
 
     send_statistics_to_frontend(precision, total_inside_box)
@@ -239,12 +237,12 @@ def get_next_result(chunk_number, steering_phase, steered_query, random_query):
     return steered_result
 
 
-def run_steered_progression(chunk_size):
+def run_steered_progression():
     global progression_state, modifier, total_inside_box
 
     chunk = 0
-    steered_query = build_query(chunk_size, PLOTTED, True)
-    random_query = build_query(chunk_size, PLOTTED_RANDOM, True)
+    steered_query = build_query(PLOTTED, True)
+    random_query = build_query(PLOTTED_RANDOM, True)
 
     min_box_items = USE_CASE.get_min_points_before_training()
 
@@ -266,8 +264,8 @@ def run_steered_progression(chunk_size):
     print("user parameters:", user_parameters)
     steering_phase=IN_NON_STEERING_PHASE
     modifier=DEFAULT_MODIFIER
-    steered_query = build_query(chunk_size, PLOTTED, True)
-    random_query = build_query(chunk_size, PLOTTED_RANDOM, True)
+    steered_query = build_query(PLOTTED, True)
+    random_query = build_query(PLOTTED_RANDOM, True)
     my_result = []
     my_result_empty = False
 
@@ -296,7 +294,7 @@ def run_steered_progression(chunk_size):
 
     ########################## STEERING PHASE ######################################################
     steering_phase=IN_STEERING_PHASE
-    steered_query=build_query(chunk_size, PLOTTED, True)
+    steered_query=build_query(PLOTTED, True)
     print("Entering STEERING PHASE - Query:", steered_query, len(my_result))
     my_result_empty = False
 
@@ -312,7 +310,7 @@ def run_steered_progression(chunk_size):
     ######################### NON-STEERING PHASE ###################################################
     steering_phase=IN_NON_STEERING_PHASE
     modifier=DEFAULT_MODIFIER
-    steered_query=build_query(chunk_size, PLOTTED, True)
+    steered_query=build_query(PLOTTED, True)
     print("Entering NON-STEERING PHASE 2", has_tree_been_trained_before, "modifier =", modifier)
     my_result_empty = False
 
@@ -338,7 +336,7 @@ def start_progression():
         # "threads" currently running, ensuring that only a single progression is run over the data.
         progression_state = PROGRESSTION_STATES[DONE]
         eel.sleep(.1)
-        eel.spawn(run_steered_progression(chunk_size))
+        eel.spawn(run_steered_progression())
         if progression_state == PROGRESSTION_STATES[DONE]:
             return
 

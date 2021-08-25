@@ -38,6 +38,14 @@ class UseCaseTaxis(UseCase):
         return 200
 
 
+    def get_chunk_size(self):
+        return 10000
+
+
+    def get_wait_interval(self):
+        return 10
+
+
     def send_info(self, eel: eel, column_names: List[str], cursor: Any):
         # computing min/max over large data takes long, so use precomputed values for this use case
         eel.send_dimension_total_extent({ "name": "VendorID", "min": 1, "max": 2 })

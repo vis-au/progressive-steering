@@ -63,6 +63,20 @@ class UseCase():
     return 50
 
 
+  def get_chunk_size(self):
+    ''''
+    Returns the number of items retrieved from the data per iteration. Defaults to 100.
+    '''
+    return 100
+
+
+  def get_wait_interval(self):
+    ''''
+    Returns the waiting period between chunks in seconds. Defaults to 0.25.
+    '''
+    return 0.25
+
+
   def get_dict_for_use_case(self, tuple: List[float], column_names: List[str]):
     '''
     Describes the transformation of a tuple retrieved from the data to the format expected by the
