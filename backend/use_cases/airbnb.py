@@ -34,6 +34,10 @@ class UseCaseAirbnb(UseCase):
     }
 
 
+  def get_total_dataset_size(self):
+    return 8780
+
+
   def get_dict_for_use_case(self, tuple, column_names):
     return {
         "accommodates": tuple[column_names.index("accommodates")],
