@@ -18,8 +18,7 @@ def get_box_data(test_case, cursor):
 def load_preset_scenarios(cursor):
     global use_floats_for_savings
     global preset_test_cases
-    s=eval(open("DB_server_config.txt", encoding="UTF8").read())
-    use_floats_for_savings=s["floatSaving"]
+    use_floats_for_savings=True
     preset_test_cases=eval(open("testCases.txt", encoding="UTF8").read())
     print("Configuration loaded")
     print("floatSaving: ", use_floats_for_savings)
