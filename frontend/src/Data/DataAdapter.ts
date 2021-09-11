@@ -6,7 +6,7 @@ class DataAdapter {
   private _totalDataSize: number = 8780;
   private _chunkSize: number = 0;
   private _progressionState: ProgressionState = 'ready';
-  private _trainingState: TrainingState = "collectingData";
+  private _trainingState: TrainingState = "flushing";
   private _data: any[] = [];
   private _nonSteeringData: any[] = [];
   private _cumulativeDataSize: number[] = [0];
