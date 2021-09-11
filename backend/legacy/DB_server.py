@@ -566,7 +566,7 @@ def start_eel(develop):
     print(develop)
 
     if develop:
-        directory = "../frontend/src"
+        directory = "../../frontend/src"
         app = None
         page = {"port": 3000}
     else:
