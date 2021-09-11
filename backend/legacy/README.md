@@ -3,7 +3,7 @@ This directory contains files of the MySQL-based __legacy__ backend for the prog
 
 __PLEASE NOTICE:__
 
-__The code in this directory is no longer actively maintained. We recommend using the more accessible ```duckdb``` backend, which does not require a full installation of MySQL (see instructions in parent folder)[../].__
+__The code in this directory is no longer actively maintained. We recommend using the more accessible ```duckdb``` backend, which does not require a full installation of MySQL see instructions in [the parent folder](../).__
 
 ```
 legacy
