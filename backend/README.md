@@ -59,7 +59,7 @@ The supported use cases are listed below:
 |---|---|---|
 | ```airbnb``` | The default dataset. The data consists of AirBnB listings for Paris. As a  use case, consider booking a hotel in the city that is located close to a  conference venue. We compute the walking distance in minutes from a preset  hotel to each listing in the dataset, as well as the price difference to  other listings in a 300m radius. | [airbnb.py](./use_cases/airbnb.py) |
 | ```spotify``` | A dataset containing songs from spotify, which lists metrics like  danceability and loudness for each song. This use case primarily exists to  demonstrate steering-by-example without any additional computations on the  data. | [spotify.py](./use_cases/spotify.py) |
-| ```taxis``` | A dataset containing (most) individual cab rides in New York City from 2018,  listing start and end time, as well as a subdivision of the total amount  paid into tips, taxes, tolls and more. For every ride, compute the duration  and the tipped percentage of the total amount.  | [nyc_taxis.py](./use_cases/nyc_taxis.py) |
+| ```taxis``` | A dataset containing (most) individual cab rides in New York City from 2018,  listing start and end time, as well as a subdivision of the total amount  paid into tips, taxes, tolls and more. For every ride, compute the duration  and the tipped percentage of the total amount.  | [taxis.py](./use_cases/taxis.py) |
 
 
 ## Adding your own Use Case
