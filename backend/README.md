@@ -3,20 +3,16 @@ This directory contains the files of the backend for the progressive steering ap
 
 ```
 backend
-|- boxGenerator.py -->
-|- boxGenerator2.py -->
-|- DB_server.py --> Launches the eel backend
-|- evaluation_pipeline.py -->
-|- evaluationMetrics.py -->
-|- steering_module.py -->
-|- Update_DB.py -->
+|- legacy/ --> outdated server environment
+|- server_duckdb.py --> Launches the eel backend
+|- steering_duckdb.py --> decision tree functionality
+|- testcase_loader.py --> loads preset view selections
+|- testCases.txt --> defines preset view selections
 ```
 ## Setup
 ### Prerequisites
 The backend module assumes that your have a recent version of Python 3.x installed on your machine, together with pip for downloading dependencies.
 Please follow [the official Python tutorial](https://wiki.python.org/moin/BeginnersGuide/Download) to learn more.
-
-The backend also assumes that you have a [MySQL](https://dev.mysql.com/downloads/) database server running on `localhost:3306`.
 
 
 #### Install Python dependencies
