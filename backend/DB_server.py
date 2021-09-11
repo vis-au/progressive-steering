@@ -183,7 +183,7 @@ def feedTuples(query, chunkSize, minimumBoxItems=50):
              mycursor.execute("INSERT INTO plotted (id) VALUES (" +str(x[0])+")")
              mydb.commit()
 
-             DIZ_plotted[x[0]]={
+             DIZ_plotted[int(x[0])]={
                 "host_id": x[0],
                 "state": state,
                 "zipcode": x[7],
@@ -206,7 +206,7 @@ def feedTuples(query, chunkSize, minimumBoxItems=50):
              actualChunk[x[0]]={
                 "chunk": chunks,
                 "state": state,
-                "values": DIZ_plotted[x[0]],
+                "values": DIZ_plotted[int(x[0])],
                 "dist2user": distance(userLat, userLon, x[10], x[11]),
                 "aboveM": aboveMinimum(x[0], x[16], userLat, userLon,0.3, x[45], x[46])
             }
@@ -218,7 +218,7 @@ def feedTuples(query, chunkSize, minimumBoxItems=50):
          inb=0
 
          for k in DIZ_plotted:
-             if DIZ_plotted [k]["inside"]==1 and DIZ_plotted [k]["chunk"]==chunks:
+             if DIZ_plotted[k]["inside"]==1 and DIZ_plotted[k]["chunk"]==chunks:
                  inb+=1
 
          totalInb+=inb
@@ -455,7 +455,7 @@ def send_user_selection(selected_items):
     print("new", len(selected_items), "items received...", selected_items)
     for k in selected_items:
         #print("k=", k)
-        DIZ_plotted[k]["inside"]=1
+        DIZ_plotted[int(k)]["inside"]=1
     IN.extend(selected_items)
     #print("new selected items received", selected_items)
 
@@ -602,7 +602,7 @@ def start_eel(develop):
 def obtainTuples(arrayID):
     result=[]
     for elem in arrayID:
-        result.append(DIZ_plotted[elem])
+        result.append(DIZ_plotted[int(elem)])
     return result
 
 def my_other_thread():
@@ -613,7 +613,7 @@ def my_other_thread():
 def insideUserBox():
     tot=0
     for k in DIZ_plotted:
-        if DIZ_plotted[k]["inside"]==1:
+        if DIZ_plotted[int(k)]["inside"]==1:
             tot+=1
     return tot
 
