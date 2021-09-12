@@ -1,5 +1,5 @@
 # Progressive Steering - Backend
-This directory contains the files of the backend for the progressive steering application.
+This directory contains the files of the backend for ProSteer, our steering-by-example demo application.
 
 ```
 backend

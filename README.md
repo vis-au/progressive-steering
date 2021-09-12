@@ -1,6 +1,6 @@
 # ProSteer
 
-This repository contains the source code of ProSteer, a benchmarking environment for steering in progressive visual analytics.
+This repository contains the source code of ProSteer, a benchmarking environment for steering-by-example for progressive visual analytics.
 
 ProSteer consists of two components: A [`backend`](./backend/) component that reads data from a file using SQL, and a [`frontend`](./frontend/) component that progressively visualizes this data chunk-by-chunk and that allows to select data of interest using brushing.
 

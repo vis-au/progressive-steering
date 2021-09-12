@@ -1,5 +1,5 @@
 # Progressive Steering - LEGACY Backend
-This directory contains files of the MySQL-based __legacy__ backend for the progressive steering application.
+This directory contains files of the MySQL-based __legacy__ backend for ProSteer, our steering-by-example demo application.
 
 __PLEASE NOTICE:__
 

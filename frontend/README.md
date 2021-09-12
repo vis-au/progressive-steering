@@ -1,5 +1,5 @@
 # Progressive Steering - Frontend
-This directory contains the files of the frontend module for ProSteer.
+This directory contains the files of the frontend module for ProSteer, our steering-by-example demo application.
 
 ```
 frontend
