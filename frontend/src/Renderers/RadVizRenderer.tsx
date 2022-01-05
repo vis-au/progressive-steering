@@ -252,7 +252,11 @@ export default class RadVizRenderer extends React.Component<Props, State> {
       ? this.nonSteeringCanvas
       : this.canvas;
 
-    const renderData = this.props.data.map(d => {
+    const data = useNonSteeringData
+      ? this.props.nonSteeringData
+      : this.props.data;
+
+    const renderData = data.map(d => {
       const datum: any = {};
       // HACK: we need to be able to identify each item by a unique identifier when checking for
       // "recent" point later on, but we cannot use a property here, as the radviz renderer would
@@ -280,6 +284,8 @@ export default class RadVizRenderer extends React.Component<Props, State> {
     if (!useNonSteeringData || this.props.showNonSteeringData) {
       container.call(radVizGenerator as any);
     }
+
+    // correct the styling by radviz to be consistent with other plots.
     container.selectAll("g").filter((d, i) => i === 2)
       .selectAll("circle")
         .style("opacity", 0.53)
@@ -287,15 +293,16 @@ export default class RadVizRenderer extends React.Component<Props, State> {
 
     const recentChunkIds = this.getLatestChunk().map(d => d.id);
     const recentChunkRadViz = radVizGenerator.data().entries
+      .map(d => {
+        // data returned by the radviz generator only contains the dimensions that are rendered, so
+        // here we add all other dimensions back in.
+        d.original = d.original._values();
+        return d;
+      })
       .map(entry => {
         return { px: scaleX(entry.x2), py: scaleY(entry.x1), values: entry };
       })
-      .filter(d => recentChunkIds.indexOf(d.values.original._values().id) > -1)
-      .map(d => {
-        // make the data look as if radviz had not transformed it
-        d.values.original = d.values.original._values();
-        return d;
-      });
+      .filter(d => recentChunkIds.indexOf(d.values.original.id) > -1);
 
     return recentChunkRadViz;
   }
