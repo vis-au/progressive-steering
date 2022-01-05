@@ -289,6 +289,7 @@ export default class RadVizRenderer extends React.Component<Props, State> {
     container.selectAll("g").filter((d, i) => i === 2)
       .selectAll("circle")
         .style("opacity", 0.53)
+        .style("fill", useNonSteeringData ? "#555" : "steelblue")
         .style("stroke", "none");
 
     const recentChunkIds = this.getLatestChunk().map(d => d.id);
@@ -382,17 +383,22 @@ export default class RadVizRenderer extends React.Component<Props, State> {
     return { steered, nonSteered };
   }
 
-  private renderDetailsPanel() {
-    if (this.state.brushedPoints.length === 0) {
+  private renderDetailsPanel(useNonSteeringData: boolean) {
+    if (this.selection === null) {
       return null;
     }
 
+    const x = this.selection[0][0];
+    const y = this.selection[0][1];
+
+    const currentlyBrushedPoints = this.getPointsInRegion(this.selection, useNonSteeringData);
+
     return (
-      <div className="detailsPanel" style={ { left: 10, top: 75 } }>
-        <pre>
-          { `Brushed ${this.state.brushedPoints.length} points.` }
-        </pre>
-      </div>
+      <g className="selected-points-label" transform={ `translate(50, 50)` }>
+        <text x={x} y={y} fontSize={3} fontWeight={"bold"} transform="translate(0, -1)">
+          {currentlyBrushedPoints.length} points in selection
+        </text>
+      </g>
     );
   }
 
@@ -441,16 +447,24 @@ export default class RadVizRenderer extends React.Component<Props, State> {
 
     return (
       <div className="radVizRenderer">
-        { this.renderDetailsPanel() }
         <div className="left">
           <div id="radVizCanvas" style={ { width: canvasWidth, height: this.props.height } }/>
-          <svg className="recentRadVizCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ this.props.height } height={ this.props.height } />
-          <svg className="radVizAxesCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ this.props.height } height={ this.props.height } />
+          <div className="steeredCanvases" style={ { width: canvasWidth, height: this.props.height } }>
+            <svg className="recentRadVizCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ this.props.height } height={ this.props.height } />
+            <svg className="radVizAxesCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ this.props.height } height={ this.props.height }>
+              { this.renderDetailsPanel(false) }
+            </svg>
+          </div>
         </div>
         <div className={`right ${isNonSteeringCanvasVisible}`}>
           <div id="nonSteeringRadVizCanvas" style={ { width: canvasWidth, height: this.props.height } }/>
-          <svg className="nonSteeringRadVizAxesCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ canvasWidth } height={ this.props.height }>{ this.renderBrushedRegions() }</svg>
-          <svg className="recentNonSteeredRadVizsCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ this.props.height } height={ this.props.height }/>
+          <div className="nonSteeredCanvases" style={ { width: canvasWidth, height: this.props.height } }>
+            <svg className="nonSteeringRadVizAxesCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ this.props.height } height={ this.props.height }>
+              { this.renderBrushedRegions() }
+              { this.renderDetailsPanel(true) }
+            </svg>
+            <svg className="recentNonSteeredRadVizCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ this.props.height } height={ this.props.height }/>
+          </div>
         </div>
       </div>
     );

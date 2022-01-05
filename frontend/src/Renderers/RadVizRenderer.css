@@ -5,16 +5,31 @@ div.radVizRenderer {
   justify-content: space-between;
 }
 div#radVizCanvas,
-svg.radVizAxesCanvas,
-svg.recentRadVizCanvas {
+div.steeredCanvases {
   position: absolute;
   left: 0;
 }
 div#nonSteeringRadVizCanvas,
+div.nonSteeredCanvases {
+  position: absolute;
+  right: 0;
+}
+
+div.nonSteeredCanvases rect.brushedRegion {
+  stroke-width: 0.3px;
+  stroke: #333;
+}
+
+div.steeredCanvases .selected-points-label,
+div.nonSteeredCanvases .selected-points-label {
+  fill: black;
+}
+
+svg.radVizAxesCanvas,
+svg.recentRadVizCanvas,
 svg.nonSteeringRadVizAxesCanvas,
 svg.recentNonSteeredRadVizCanvas {
   position: absolute;
-  right: 0;
 }
 
 svg.recentRadVizCanvas circle.recent-point {
@@ -35,21 +50,7 @@ svg.recentNonSteeredRadVizCanvas circle.recent-point.inside-selection {
   fill: #555;
 }
 
-div.detailsPanel {
-  position: absolute;
-  left: 0;
-  top: 0;
-  background: #fff;
-}
-
 svg.radVizAxesCanvas .selection {
   stroke-width: 0.15px;
   stroke: black;
-}
-
-div.detailsPanel {
-  position: absolute;
-  left: 0;
-  top: 0;
-  background: #fff;
 }
