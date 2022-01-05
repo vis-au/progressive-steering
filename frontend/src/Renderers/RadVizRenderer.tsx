@@ -254,7 +254,10 @@ export default class RadVizRenderer extends React.Component<Props, State> {
 
     const renderData = this.props.data.map(d => {
       const datum: any = {};
-      datum.id = d.id;
+      // HACK: we need to be able to identify each item by a unique identifier when checking for
+      // "recent" point later on, but we cannot use a property here, as the radviz renderer would
+      // plot it. This function is later stripped off the object before returning the data.
+      datum._values = function() { return d };
       this.props.dimensions.forEach(dim => {
         datum[dim] = d[dim];
       });
@@ -277,13 +280,22 @@ export default class RadVizRenderer extends React.Component<Props, State> {
     if (!useNonSteeringData || this.props.showNonSteeringData) {
       container.call(radVizGenerator as any);
     }
+    container.selectAll("g").filter((d, i) => i === 2)
+      .selectAll("circle")
+        .style("opacity", 0.53)
+        .style("stroke", "none");
 
     const recentChunkIds = this.getLatestChunk().map(d => d.id);
     const recentChunkRadViz = radVizGenerator.data().entries
       .map(entry => {
         return { px: scaleX(entry.x2), py: scaleY(entry.x1), values: entry };
       })
-      .filter(d => recentChunkIds.indexOf(d.values.original.id) > -1);
+      .filter(d => recentChunkIds.indexOf(d.values.original._values().id) > -1)
+      .map(d => {
+        // make the data look as if radviz had not transformed it
+        d.values.original = d.values.original._values();
+        return d;
+      });
 
     return recentChunkRadViz;
   }
@@ -321,13 +333,13 @@ export default class RadVizRenderer extends React.Component<Props, State> {
         .classed("steered", !useNonSteeringData)
         .attr("cx", d => d.px)
         .attr("cy", d => d.py)
-        .attr("r", DEFAULT_POINT_RADIUS / 10)
+        .attr("r", DEFAULT_POINT_RADIUS/4)
         .on("mouseover", this.showDetails.bind(this))
         .on("mouseleave", this.hideDetails.bind(this))
-        .style("stroke-width", 1);
+        .style("stroke-width", 0.2);
 
     points.transition().duration(250)
-      .attr("r", DEFAULT_POINT_RADIUS / 10);
+      .attr("r", DEFAULT_POINT_RADIUS/4);
   }
 
   private renderSteeringPoints() {
