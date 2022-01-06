@@ -395,6 +395,7 @@ export default class RadVizRenderer extends React.Component<Props, State> {
 
     return (
       <g className="selected-points-label" transform={ `translate(50, 50)` }>
+        <rect x={x-2} y={y-3.65} width={37} height={4.2 } fill="rgba(255,255,255,0.73)"/>
         <text x={x} y={y} fontSize={3} fontWeight={"bold"} transform="translate(0, -1)">
           {currentlyBrushedPoints.length} points in selection
         </text>
@@ -459,11 +460,11 @@ export default class RadVizRenderer extends React.Component<Props, State> {
         <div className={`right ${isNonSteeringCanvasVisible}`}>
           <div id="nonSteeringRadVizCanvas" style={ { width: canvasWidth, height: this.props.height } }/>
           <div className="nonSteeredCanvases" style={ { width: canvasWidth, height: this.props.height } }>
+            <svg className="recentNonSteeredRadVizCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ this.props.height } height={ this.props.height }/>
             <svg className="nonSteeringRadVizAxesCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ this.props.height } height={ this.props.height }>
               { this.renderBrushedRegions() }
               { this.renderDetailsPanel(true) }
             </svg>
-            <svg className="recentNonSteeredRadVizCanvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" width={ this.props.height } height={ this.props.height }/>
           </div>
         </div>
       </div>
