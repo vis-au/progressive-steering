@@ -18,11 +18,11 @@ def _find_path(tree, node_numb, path, x):
     left = False
     right = False
 
-    if (children_left[node_numb] != -1):
+    if children_left[node_numb] != -1:
         left = _find_path(tree, children_left[node_numb], path, x)
-    if (children_right[node_numb] != -1):
+    if children_right[node_numb] != -1:
         right = _find_path(tree, children_right[node_numb], path, x)
-    if left or right :
+    if left or right:
         return True
 
     path.remove(node_numb)
@@ -46,15 +46,19 @@ def _extract_paths(X, model):
 def _get_rule(tree, path, column_names):
     children_left = tree.children_left
 
-    mask = ''
+    mask = ""
     for index, node in enumerate(path):
-        #We check if we are not in the leaf
-        if index!=len(path)-1:
+        # We check if we are not in the leaf
+        if index != len(path) - 1:
             # Do we go under or over the threshold ?
-            if (children_left[node] == path[index+1]):
-                mask += "(df['{}']<= {}) \t ".format(column_names[feature[node]], threshold[node])
+            if children_left[node] == path[index + 1]:
+                mask += "(df['{}']<= {}) \t ".format(
+                    column_names[feature[node]], threshold[node]
+                )
             else:
-                mask += "(df['{}']> {}) \t ".format(column_names[feature[node]], threshold[node])
+                mask += "(df['{}']> {}) \t ".format(
+                    column_names[feature[node]], threshold[node]
+                )
     # We insert the & at the right places
     mask = mask.replace("\t", "&", mask.count("\t") - 1)
     mask = mask.replace("\t", "")
@@ -63,14 +67,16 @@ def _get_rule(tree, path, column_names):
 
 def _extract_conjunction(rule, conjunction):
     condition = ""
-    listconditions=rule.strip( ).split("&")
-    i=0
+    listconditions = rule.strip().split("&")
+    i = 0
     for s in listconditions:
-        #print(s)
+        # print(s)
         listLabel = s.strip().split("'")
-        condition = condition+listLabel[1] + " " + listLabel[2][1 : len(listLabel[2]) - 1]
+        condition = (
+            condition + listLabel[1] + " " + listLabel[2][1 : len(listLabel[2]) - 1]
+        )
 
-        if (i != len(listconditions) - 1):
+        if i != len(listconditions) - 1:
             condition = condition + " " + conjunction + " "
 
         i += 1
@@ -93,7 +99,6 @@ def _generate_expression(sample, tree, paths, mode):
             expression = "(" + new_conjunction + ")"
         else:
             expression = expression + " " + disjunctor + " (" + new_conjunction + ")"
-
 
         j += 1
 

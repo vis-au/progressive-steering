@@ -19,15 +19,15 @@ USE_CASE: UseCase = None
 USE_CASE_PRESETS = {
     "airbnb": UseCaseAirbnb,
     "spotify": UseCaseSpotify,
-    "taxis": UseCaseTaxis
+    "taxis": UseCaseTaxis,
 }
 
 # each item in the data is required to have a unique identifier column ID
 ID = "id"
 
 # names of helper tables used to store information about data inside/outside the selection
-PLOTTED = "plotted" # for steerable progression
-PLOTTED_RANDOM = "plotted_random" # for random progression
+PLOTTED = "plotted"  # for steerable progression
+PLOTTED_RANDOM = "plotted_random"  # for random progression
 
 # we reorder the columns when loading the data such that a unique id sits at position 0
 ID_COLUMN_INDEX = 0
@@ -45,30 +45,29 @@ READY = "ready"
 RUNNING = "running"
 PAUSED = "paused"
 DONE = "done"
-PROGRESSTION_STATES = {
-    READY: 0,
-    RUNNING: 1,
-    PAUSED: 2,
-    DONE: 3
-}
+PROGRESSTION_STATES = {READY: 0, RUNNING: 1, PAUSED: 2, DONE: 3}
 
 # meta properties added to processed data items
-CHUNK_PROP = "chunk" # indicates the chunk an item was retrieved in
-INSIDE_PROP = "inside" # indicates whether an item is inside/outside the selection
-STATE_PROP = "state" # indicates state of progression during an item's retrieval
+CHUNK_PROP = "chunk"  # indicates the chunk an item was retrieved in
+INSIDE_PROP = "inside"  # indicates whether an item is inside/outside the selection
+STATE_PROP = "state"  # indicates state of progression during an item's retrieval
 
 # user constants
-user_parameters={}
+user_parameters = {}
 
 # Global variables
-plotted_points = {} # all plotted points
-selected_points = [] # cumulated airb&b ID of points plotted in the user box till the actual chunk
+plotted_points = {}  # all plotted points
+selected_points = (
+    []
+)  # cumulated airb&b ID of points plotted in the user box till the actual chunk
 
-user_selection_updated = False # new box
-total_inside_box = 0 # number of points plotted in the user box till the actual chunk
-has_tree_been_trained_before = False # it is used to interrupt the initial chunking cycle
-modifier = DEFAULT_MODIFIER # modify initial query with conditions coming from the tree
-numeric_columns = [] # list of all columns containing numeric values
+user_selection_updated = False  # new box
+total_inside_box = 0  # number of points plotted in the user box till the actual chunk
+has_tree_been_trained_before = (
+    False  # it is used to interrupt the initial chunking cycle
+)
+modifier = DEFAULT_MODIFIER  # modify initial query with conditions coming from the tree
+numeric_columns = []  # list of all columns containing numeric values
 use_floats_for_savings = True
 
 # progression state can be paused/restarted interactively by the user
@@ -88,31 +87,31 @@ def send_statistics_to_frontend(precision, total_inside_box):
 
 
 def build_query(plotted_db, use_modifier):
-  global modifier
+    global modifier
 
-  chunk_size = USE_CASE.get_chunk_size()
-  include_columns = numeric_columns + USE_CASE.get_additional_columns()
-  SELECT = f'SELECT {ID},"'+'","'.join(include_columns)+'"'
-  FROM   = f"FROM {USE_CASE.table_name}"
-  WHERE  = f"WHERE {USE_CASE.table_name}.id NOT IN (SELECT {ID} from {plotted_db})"
+    chunk_size = USE_CASE.get_chunk_size()
+    include_columns = numeric_columns + USE_CASE.get_additional_columns()
+    SELECT = f'SELECT {ID},"' + '","'.join(include_columns) + '"'
+    FROM = f"FROM {USE_CASE.table_name}"
+    WHERE = f"WHERE {USE_CASE.table_name}.id NOT IN (SELECT {ID} from {plotted_db})"
 
-  for p in user_parameters:
-      param = str(p)
-      value = user_parameters[p]
+    for p in user_parameters:
+        param = str(p)
+        value = user_parameters[p]
 
-      if isinstance(value, list):
-          min_value = str(value[0])
-          max_value = str(value[1])
-          WHERE += f" AND {param} >= {min_value} AND {param} <= {max_value}"
-      elif isinstance(value, str):
-          WHERE += f" AND {param} = {value}"
-      elif isinstance(value, (int, float, complex)):
-          WHERE += f" AND {param} = {str(value)}"
+        if isinstance(value, list):
+            min_value = str(value[0])
+            max_value = str(value[1])
+            WHERE += f" AND {param} >= {min_value} AND {param} <= {max_value}"
+        elif isinstance(value, str):
+            WHERE += f" AND {param} = {value}"
+        elif isinstance(value, (int, float, complex)):
+            WHERE += f" AND {param} = {str(value)}"
 
-  if use_modifier:
-    return f"{SELECT} {FROM} {WHERE}  AND {modifier} LIMIT {str(chunk_size)}"
-  else:
-    return f"{SELECT} {FROM} {WHERE} LIMIT {str(chunk_size)}"
+    if use_modifier:
+        return f"{SELECT} {FROM} {WHERE}  AND {modifier} LIMIT {str(chunk_size)}"
+    else:
+        return f"{SELECT} {FROM} {WHERE} LIMIT {str(chunk_size)}"
 
 
 def reset():
@@ -139,7 +138,7 @@ def tuple_to_dict(tuple, steering_phase, chunk_number):
     # first use the use-case-specific transform function to generate the dict that is send to the
     # frontend from the touple
     include_columns = numeric_columns + USE_CASE.get_additional_columns()
-    transformed_dict = USE_CASE.get_dict_for_use_case(tuple, [ID]+include_columns)
+    transformed_dict = USE_CASE.get_dict_for_use_case(tuple, [ID] + include_columns)
 
     # then add the required properties
     transformed_dict[CHUNK_PROP] = chunk_number
@@ -155,7 +154,7 @@ def mark_results_as_plotted(steered_result, random_result):
 
     for result, table in zip(results, tables):
         ids = [str(tuple[ID_COLUMN_INDEX]) for tuple in result]
-        value_string = "('"+"'),('".join(ids)+"')"
+        value_string = "('" + "'),('".join(ids) + "')"
 
         # only run the query if there are actual values to insert, otherwise there will be an error.
         if len(ids) > 0:
@@ -166,8 +165,11 @@ def get_items_inside_selection_at_chunk(chunk):
     inb = 0
 
     for k in plotted_points:
-        if plotted_points[str(k)][INSIDE_PROP]==1 and plotted_points[str(k)][CHUNK_PROP]==chunk:
-            inb+=1
+        if (
+            plotted_points[str(k)][INSIDE_PROP] == 1
+            and plotted_points[str(k)][CHUNK_PROP] == chunk
+        ):
+            inb += 1
 
     return inb
 
@@ -183,25 +185,29 @@ def was_progression_reset_during_sleep():
     return False
 
 
-def send_results_to_frontend(chunk_number, steered_result, random_result, steering_phase):
+def send_results_to_frontend(
+    chunk_number, steered_result, random_result, steering_phase
+):
     global plotted_points
 
     chunk = {}
     random_chunk = {}
 
     for tuple in steered_result:
-        plotted_points[str(tuple[ID_COLUMN_INDEX])]=tuple_to_dict(tuple, steering_phase, chunk_number)
-        chunk[str(tuple[ID_COLUMN_INDEX])]={
+        plotted_points[str(tuple[ID_COLUMN_INDEX])] = tuple_to_dict(
+            tuple, steering_phase, chunk_number
+        )
+        chunk[str(tuple[ID_COLUMN_INDEX])] = {
             CHUNK_PROP: chunk_number,
             STATE_PROP: steering_phase,
-            "values": plotted_points[str(tuple[ID_COLUMN_INDEX])]
+            "values": plotted_points[str(tuple[ID_COLUMN_INDEX])],
         }
 
     # ensure equal chunk size between random and steered chunk
     for tuple in random_result:
         random_chunk[str(tuple[ID_COLUMN_INDEX])] = {
             CHUNK_PROP: chunk_number,
-            "values": tuple_to_dict(tuple, steering_phase, chunk_number)
+            "values": tuple_to_dict(tuple, steering_phase, chunk_number),
         }
 
     send_chunks(chunk, random_chunk)
@@ -216,9 +222,11 @@ def get_next_result(chunk_number, steering_phase, steered_query, random_query):
     random_result = cursor.fetchall()
 
     if len(steered_result) < len(random_result):
-        random_result = random_result[0:len(steered_result)]
+        random_result = random_result[0 : len(steered_result)]
 
-    send_results_to_frontend(chunk_number, steered_result, random_result, steering_phase)
+    send_results_to_frontend(
+        chunk_number, steered_result, random_result, steering_phase
+    )
     mark_results_as_plotted(steered_result, random_result)
 
     # IMPORTANT: within this waiting period, the backend receives the "in-/outside" information by
@@ -229,8 +237,16 @@ def get_next_result(chunk_number, steering_phase, steered_query, random_query):
 
     recent_inside = get_items_inside_selection_at_chunk(chunk_number)
     total_inside_box += recent_inside
-    precision = recent_inside/USE_CASE.get_chunk_size()
-    print("chunk:", chunk_number, steering_phase, "in selection:", total_inside_box, "Precision:", precision)
+    precision = recent_inside / USE_CASE.get_chunk_size()
+    print(
+        "chunk:",
+        chunk_number,
+        steering_phase,
+        "in selection:",
+        total_inside_box,
+        "Precision:",
+        precision,
+    )
 
     send_statistics_to_frontend(precision, total_inside_box)
 
@@ -253,7 +269,7 @@ def run_steered_progression():
 
     # wait until user starts progression
     while progression_state == PROGRESSTION_STATES[READY]:
-        eel.sleep(.1)
+        eel.sleep(0.1)
         # HACK: if the user reloads the page, the state variable is briefly set to DONE before a
         # new progression is spawned, causing this function to return, which terminates its "thread"
         if progression_state == PROGRESSTION_STATES[DONE]:
@@ -262,14 +278,22 @@ def run_steered_progression():
     ####################### NON-STEERING PHASE #####################################################
     print("Entering NON-STEERING PHASE 1 - Query:", steered_query, modifier)
     print("user parameters:", user_parameters)
-    steering_phase=IN_NON_STEERING_PHASE
-    modifier=DEFAULT_MODIFIER
+    steering_phase = IN_NON_STEERING_PHASE
+    modifier = DEFAULT_MODIFIER
     steered_query = build_query(PLOTTED, True)
     random_query = build_query(PLOTTED_RANDOM, True)
     my_result = []
     my_result_empty = False
 
-    while not my_result_empty and (not has_tree_been_trained_before or total_inside_box<min_box_items or len(modifier)<=3) and len(selected_points) == 0:
+    while (
+        not my_result_empty
+        and (
+            not has_tree_been_trained_before
+            or total_inside_box < min_box_items
+            or len(modifier) <= 3
+        )
+        and len(selected_points) == 0
+    ):
         my_result = get_next_result(chunk, steering_phase, steered_query, random_query)
         chunk += 1
         if my_result is None:
@@ -279,11 +303,15 @@ def run_steered_progression():
     ####################### ACTIVATION PHASE #######################################################
     print("Entering ACTIVATION PHASE - Query:", steered_query, modifier)
     print(steered_query)
-    total_inside_box=0
-    steering_phase=IN_ACTIVATION_PHASE
+    total_inside_box = 0
+    steering_phase = IN_ACTIVATION_PHASE
     my_result_empty = False
 
-    while not my_result_empty and (not has_tree_been_trained_before or total_inside_box<min_box_items or len(modifier)<=3):
+    while not my_result_empty and (
+        not has_tree_been_trained_before
+        or total_inside_box < min_box_items
+        or len(modifier) <= 3
+    ):
         my_result = get_next_result(chunk, steering_phase, steered_query, random_query)
         chunk += 1
         if my_result is None:
@@ -293,8 +321,8 @@ def run_steered_progression():
     print("Exiting ACTIVATION PHASE")
 
     ########################## STEERING PHASE ######################################################
-    steering_phase=IN_STEERING_PHASE
-    steered_query=build_query(PLOTTED, True)
+    steering_phase = IN_STEERING_PHASE
+    steered_query = build_query(PLOTTED, True)
     print("Entering STEERING PHASE - Query:", steered_query, len(my_result))
     my_result_empty = False
 
@@ -308,10 +336,15 @@ def run_steered_progression():
     print("Exiting STEERING PHASE")
 
     ######################### NON-STEERING PHASE ###################################################
-    steering_phase=IN_NON_STEERING_PHASE
-    modifier=DEFAULT_MODIFIER
-    steered_query=build_query(PLOTTED, True)
-    print("Entering NON-STEERING PHASE 2", has_tree_been_trained_before, "modifier =", modifier)
+    steering_phase = IN_NON_STEERING_PHASE
+    modifier = DEFAULT_MODIFIER
+    steered_query = build_query(PLOTTED, True)
+    print(
+        "Entering NON-STEERING PHASE 2",
+        has_tree_been_trained_before,
+        "modifier =",
+        modifier,
+    )
     my_result_empty = False
 
     while not my_result_empty:
@@ -335,7 +368,7 @@ def start_progression():
         # HACK: set the state variable to DONE here, in order to terminate all progression
         # "threads" currently running, ensuring that only a single progression is run over the data.
         progression_state = PROGRESSTION_STATES[DONE]
-        eel.sleep(.1)
+        eel.sleep(0.1)
         eel.spawn(run_steered_progression())
         if progression_state == PROGRESSTION_STATES[DONE]:
             return
@@ -347,8 +380,8 @@ def get_use_cases():
 
 
 def save_as_user_parameters(user_data):
-  global user_parameters
-  user_parameters = USE_CASE.get_user_parameters(user_data)
+    global user_parameters
+    user_parameters = USE_CASE.get_user_parameters(user_data)
 
 
 def send_info_to_frontend():
@@ -360,7 +393,9 @@ def send_info_to_frontend():
 
     # if use case does not specify a size, compute it dynamically.
     if total_size < 0:
-        total_size = cursor.execute(f"SELECT COUNT(*) FROM {USE_CASE.table_name};").fetchall()[0][0]
+        total_size = cursor.execute(
+            f"SELECT COUNT(*) FROM {USE_CASE.table_name};"
+        ).fetchall()[0][0]
 
     eel.send_total_data_size(total_size)
 
@@ -372,13 +407,13 @@ def send_info_to_frontend():
 
 @eel.expose
 def send_to_backend_userData(user_data):
-  print("received user selection", user_data)
+    print("received user selection", user_data)
 
-  save_as_user_parameters(user_data)
-  send_info_to_frontend()
+    save_as_user_parameters(user_data)
+    send_info_to_frontend()
 
-  # TODO: it seems counter-intuitive that this function would also start the progression.
-  start_progression()
+    # TODO: it seems counter-intuitive that this function would also start the progression.
+    start_progression()
 
 
 def update_steering_modifier():
@@ -408,10 +443,10 @@ def update_steering_modifier():
         feature_names = USE_CASE.feature_columns
 
     features = plotted_df.loc[:, feature_names]
-    modifier=f"({steer.get_steering_condition(features, of_interest_np, 'sql')})"
+    modifier = f"({steer.get_steering_condition(features, of_interest_np, 'sql')})"
 
-    if len(modifier)>3:
-        has_tree_been_trained_before=True
+    if len(modifier) > 3:
+        has_tree_been_trained_before = True
     else:
         modifier = DEFAULT_MODIFIER
 
@@ -423,13 +458,13 @@ def send_user_selection(selected_item_ids: list):
     global plotted_points
     global selected_points
 
-    if len(selected_item_ids)==0:
-        return (0)
+    if len(selected_item_ids) == 0:
+        return 0
 
     print(len(selected_item_ids), "new selected items received...")
 
     for id in selected_item_ids:
-        plotted_points[str(id)][INSIDE_PROP]=1
+        plotted_points[str(id)][INSIDE_PROP] = 1
 
     selected_points.extend(selected_item_ids)
 
@@ -491,7 +526,15 @@ def get_numeric_columns():
         return
 
     # see https://duckdb.org/docs/sql/data_types/overview
-    numeric_types = ["BIGINT", "DOUBLE", "HUGEINT", "INTEGER", "REAL", "SMALLINT", "TINYINT"]
+    numeric_types = [
+        "BIGINT",
+        "DOUBLE",
+        "HUGEINT",
+        "INTEGER",
+        "REAL",
+        "SMALLINT",
+        "TINYINT",
+    ]
     numeric_columns = []
 
     response = cursor.execute(f"DESCRIBE {USE_CASE.table_name};").fetchall()
@@ -558,7 +601,10 @@ if __name__ == "__main__":
     known_use_cases = list(USE_CASE_PRESETS.keys())
     use_case_label = sys.argv[1] if len(sys.argv) > 1 else "airbnb"
     if use_case_label not in known_use_cases:
-        raise Exception("Unknown use case. Please provide one of the following use cases: "+str(known_use_cases))
+        raise Exception(
+            "Unknown use case. Please provide one of the following use cases: "
+            + str(known_use_cases)
+        )
 
     load_use_case(use_case_label)
 

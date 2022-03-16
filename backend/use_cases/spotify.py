@@ -6,6 +6,7 @@ TABLE_NAME = "spotify_data"
 X_ENCODING = "danceability"
 Y_ENCODING = "speechiness"
 
+
 class UseCaseSpotify(UseCase):
-  def __init__(self):
-    super().__init__(FILE_PATH, TABLE_NAME, X_ENCODING, Y_ENCODING)
+    def __init__(self):
+        super().__init__(FILE_PATH, TABLE_NAME, X_ENCODING, Y_ENCODING)
