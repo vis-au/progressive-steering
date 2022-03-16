@@ -23,39 +23,40 @@ class UseCase:
 
     def get_view_filter(self):
         """'
-        Returns filter conditions that are appended to the query creating the view on the imported data.
-        Defaults to empty string, which corresponds to "no filter".
+        Returns filter conditions that are appended to the query creating the view on the imported
+        data. Defaults to empty string, which corresponds to "no filter".
         """
         return ""
 
     def get_user_parameters(self, user_data):
         """
-        Given the parameters provided by the user when launching the application, this function transforms
-        them into a uniformed format from which we generate steered/non-steered SQL queries.
+        Given the parameters provided by the user when launching the application, this function
+        transforms them into a uniformed format from which we generate steered/non-steered SQL
+        queries.
         """
         return {}
 
     def get_additional_columns(self):
         """
-        Returns additional columns that should be included in the result set. Per default, the server
-        retrieves only numerical columns.
+        Returns additional columns that should be included in the result set. Per default, the
+        server retrieves only numerical columns.
         """
         return []
 
     def get_total_dataset_size(self):
         """
-        Returns the total number of items in the dataset. Can be dynamically computed using SQL, but for
-        large datasets in CSV, the COUNT(*) aggregate makes this very slow. Defaults to -1, which
-        indicates that this value is unspecified.
+        Returns the total number of items in the dataset. Can be dynamically computed using SQL, but
+        for large datasets in CSV, the COUNT(*) aggregate makes this very slow. Defaults to -1,
+        which indicates that this value is unspecified.
         """
         return -1
 
     def get_min_points_before_training(self):
         """
-        Returns the minimum number of selected points, before the server should start train the decision
-        tree. Depends on the variance and size of the dataset: The more varied the data in the feature
-        columns, the more points need to be included to ensure that the tree captures the features
-        for the region of interest. Defaults to 50.
+        Returns the minimum number of selected points, before the server should start train the
+        decision tree. Depends on the variance and size of the dataset: The more varied the data in
+        the feature columns, the more points need to be included to ensure that the tree captures
+        the features for the region of interest. Defaults to 50.
         """
         return 50
 
@@ -73,10 +74,10 @@ class UseCase:
 
     def get_dict_for_use_case(self, tuple: List[float], column_names: List[str]):
         """
-        Describes the transformation of a tuple retrieved from the data to the format expected by the
-        client. The returned dict is required to encode the x and y dimensions. Defaults to a
-        simple conversion from tuple to dict. Takes a duckdb cursor as parameter to get SQL access on
-        the data.
+        Describes the transformation of a tuple retrieved from the data to the format expected by
+        the client. The returned dict is required to encode the x and y dimensions. Defaults to a
+        simple conversion from tuple to dict. Takes a duckdb cursor as parameter to get SQL access
+        on the data.
         """
         result = {}
 
@@ -88,9 +89,9 @@ class UseCase:
     def send_info(self, eel: eel, column_names: List[str], cursor: Any):
         """
         Sends value ranges to the frontend for all dimensions that are included by the
-        get_dict_for_use_case() function above. Defaults to loading min/max from the database for all
-        dimensions and sending those over eel. Takes a duckdb cursor as attribute to get SQL access on
-        the data. Note that this min/max aggregations can take a while for large datasets.
+        get_dict_for_use_case() function above. Defaults to loading min/max from the database for
+        all dimensions and sending those over eel. Takes a duckdb cursor as attribute to get SQL
+        access on the data. Note that this min/max aggregations can take a while for large datasets.
         """
 
         for col in column_names:

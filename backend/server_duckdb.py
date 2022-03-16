@@ -505,7 +505,8 @@ def start_eel():
     eel.init(directory, [".tsx", ".ts", ".jsx", ".js", ".html"])
     print("Backend launched successfully. Waiting for requests ...")
 
-    # These will be queued until the first connection is made, but won"t be repeated on a page reload
+    # These will be queued until the first connection is made, but won"t be repeated on a page
+    # reload
     eel_kwargs = dict(
         host="localhost",
         port=8080,
