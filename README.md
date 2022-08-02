@@ -29,12 +29,16 @@ Detailed installation instructions can be found in the respective READMEs for th
 ## Citing ProSteer
 
 ```bib
-@article{lorem-ipsum,
-  doi = {dolor},
-  year = {1999},
-  author = {Sit armet, Magni aut quibusdam},
-  title = {Laborum earum autem rem dolor animi},
-  journal = {Non sit repudiandae rem quo quod suscipit provident},
-  url = {https://example.org/},
+@article{10.1145/3531229,
+  author = {Hogr\"{a}fer, Marius and Angelini, Marco and Santucci, Giuseppe and Schulz, Hans-J\"{o}rg},
+  title = {Steering-by-Example for Progressive Visual Analytics},
+  year = {2022},
+  publisher = {Association for Computing Machinery},
+  address = {New York, NY, USA},
+  issn = {2157-6904},
+  doi = {10.1145/3531229},
+  journal = {ACM Trans. Intell. Syst. Technol.},
+  month = {apr},
+  keywords = {interactive data exploration, computational steering, progressive computation}
 }
 ```
