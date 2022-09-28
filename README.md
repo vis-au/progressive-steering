@@ -32,12 +32,12 @@ Detailed installation instructions can be found in the respective READMEs for th
 @article{10.1145/3531229,
   title = {Steering-by-example for {P}rogressive {V}isual {A}nalytics},
   author = {Hogr\"{a}fer, Marius and Angelini, Marco and Santucci, Giuseppe and Schulz, Hans-J\"{o}rg},
-	volume = {13},
-	number = {6},
-	issn = {2157-6904},
-	doi = {10.1145/3531229},
-	journal = {ACM Transactions on Intelligent Systems and Technology},
-	year = {2022},
-	pages = {96:1--96:26}
+  volume = {13},
+  number = {6},
+  issn = {2157-6904},
+  doi = {10.1145/3531229},
+  journal = {ACM Transactions on Intelligent Systems and Technology},
+  year = {2022},
+  pages = {96:1--96:26}
 }
 ```
