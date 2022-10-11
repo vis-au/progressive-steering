@@ -13,7 +13,7 @@
     "d3-radviz": "git://github.com/aware-diag-sapienza/d3-radviz.git#fix-type-definitions-file",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-scripts": "^3.4.3",
+    "react-scripts": "^5.0.1",
     "typescript": "3.4.5"
   },
   "scripts": {
